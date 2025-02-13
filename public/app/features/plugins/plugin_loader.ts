@@ -30,7 +30,6 @@ import { sharedDependenciesMap } from './loader/sharedDependencies';
 import { decorateSystemJSFetch, decorateSystemJSResolve, decorateSystemJsOnload } from './loader/systemjsHooks';
 import { SystemJSWithLoaderHooks } from './loader/types';
 import { buildImportMap, resolveModulePath } from './loader/utils';
-import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
 import { shouldLoadPluginInFrontendSandbox } from './sandbox/sandbox_plugin_loader_registry';
 import { pluginsLogger } from './utils';
 
@@ -137,6 +136,7 @@ export async function importPluginModule({
 
   // the sandboxing environment code cannot work in nodejs and requires a real browser
   if (await shouldLoadPluginInFrontendSandbox({ pluginId })) {
+    const { importPluginModuleInSandbox } = await import('./sandbox/sandbox_plugin_loader');
     return importPluginModuleInSandbox({ pluginId });
   }
 
