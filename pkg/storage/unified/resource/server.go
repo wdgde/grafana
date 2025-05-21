@@ -135,9 +135,9 @@ type BlobSupport interface {
 	// TODO? List+Delete?  This is for admin access
 }
 
-// storageGateway is the interface that defines how the raw object is saved.
+// rawStorageGateway is the interface that defines how the raw object is saved.
 // It doesn't provide any semantics around metadata.
-type storageGateway interface {
+type rawStorageGateway interface {
 	Set(ctx context.Context, guid, tenant, group, resource string, data []byte) error
 	Get(ctx context.Context, guid, tenant, group, resource string) ([]byte, error)
 	Delete(ctx context.Context, guid, tenant, group, resource string) error
@@ -230,7 +230,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 	// Create a no-op raw storage. Only if blob storage is enabled
 	// we will override it.
-	var rawStorage storageGateway = raw.NoopDataStore{}
+	var rawStorage rawStorageGateway = raw.NoopDataStore{}
 
 	// Initialize the blob storage
 	blobstore := opts.Blob.Backend
@@ -305,7 +305,7 @@ type server struct {
 
 	backend        StorageBackend
 	blob           BlobSupport
-	rawStorage     storageGateway
+	rawStorage     rawStorageGateway
 	search         *searchSupport
 	diagnostics    resourcepb.DiagnosticsServer
 	access         claims.AccessClient
@@ -587,7 +587,10 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		rsp.Error = AsErrorResult(err)
 	}
 
-	s.rawStorage.Set(ctx, "guid", event.Key.Namespace, event.Key.Group, event.Key.Resource, event.Value)
+	if err := s.rawStorage.Set(ctx, event.GUID, event.Key.Namespace, event.Key.Group, event.Key.Resource, event.Value); err != nil {
+		// For now we only log the error, later this will be more critical.
+		s.log.Debug("writing the raw object to the bucket failed on create", "guid", event.GUID, "namespace", event.Key.Namespace, "err", err)
+	}
 
 	s.log.Debug("server.WriteEvent", "type", event.Type, "rv", rsp.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "name", event.Key.Name, "resource", event.Key.Resource)
 	return rsp, nil
@@ -639,6 +642,12 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
+		return rsp, nil
+	}
+
+	if err := s.rawStorage.Set(ctx, event.GUID, event.Key.Namespace, event.Key.Group, event.Key.Resource, event.Value); err != nil {
+		// For now we only log the error, later this will be more critical.
+		s.log.Debug("writing the raw object to the bucket failed on update", "guid", event.GUID, "namespace", event.Key.Namespace, "err", err)
 	}
 	return rsp, nil
 }
@@ -728,6 +737,7 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
+		return rsp, nil
 	}
 	return rsp, nil
 }
