@@ -49,6 +49,7 @@ import {
   setPanelRenderer,
   setPluginPage,
 } from '@grafana/runtime/internal';
+import { setScenarioRegistryHook } from '@grafana/test-utils/unstable';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -92,6 +93,7 @@ import { usePluginComponent } from './features/plugins/extensions/usePluginCompo
 import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { usePluginFunctions } from './features/plugins/extensions/usePluginFunctions';
 import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
+import { useScenarioRegistry } from './features/plugins/extensions/useScenarioRegistry';
 import { getAppPluginsToAwait, getAppPluginsToPreload } from './features/plugins/extensions/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
@@ -176,6 +178,9 @@ export class GrafanaApp {
       initExtensions();
 
       initAlerting();
+
+      // create and register the scenarios registry
+      setScenarioRegistryHook(useScenarioRegistry);
 
       standardEditorsRegistry.setInit(getAllOptionEditors);
       standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);

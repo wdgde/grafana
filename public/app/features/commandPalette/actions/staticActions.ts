@@ -5,7 +5,7 @@ import { t } from '@grafana/i18n/internal';
 import { enrichHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import { performInviteUserClick, shouldRenderInviteUserButton } from 'app/core/components/InviteUserButton/utils';
 import { changeTheme } from 'app/core/services/theme';
-import { currentMockApiState, toggleMockApiAndReload } from 'app/mock-api-utils';
+import { getMockEnabledStateFromLocalstorage, toggleMockApiAndReload } from 'app/mock-api-utils';
 
 import { useSelector } from '../../../types';
 import { CommandPaletteAction } from '../types';
@@ -105,7 +105,7 @@ function getGlobalActions(): CommandPaletteAction[] {
   if (process.env.NODE_ENV === 'development') {
     // eslint-disable @grafana/no-untranslated-strings
     const section = 'Dev tooling';
-    const currentState = currentMockApiState();
+    const currentState = getMockEnabledStateFromLocalstorage();
     const mockApiAction = currentState ? 'Disable' : 'Enable';
     actions.push({
       id: 'preferences/dev/toggle-mock-api',

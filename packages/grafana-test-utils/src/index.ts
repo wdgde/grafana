@@ -5,4 +5,6 @@
  * @packageDocumentation
  */
 
-export {};
+import { Scenario, ScenarioRegistry } from './registry';
+
+export { type Scenario, ScenarioRegistry };
