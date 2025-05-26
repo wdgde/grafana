@@ -19,7 +19,7 @@ import {
 // Creates a default, english i18next instance when running outside of grafana.
 // we don't support changing the locale of grafana ui when outside of Grafana
 function initI18n() {
-  initPluginTranslations('grafana-ui');
+  initPluginTranslations('grafana');
 }
 
 export const Trans = (props: TransProps): ReactElement => {
