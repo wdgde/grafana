@@ -55,9 +55,9 @@ jest.mock('./layers', () => {
 
 describe('tooltip utils', () => {
   let panel: GeomapPanel;
-  let mockEvent: MapBrowserEvent<MouseEvent>;
-  let mockWebGLLayer: WebGLPointsLayer<VectorSource<Point>>;
-  let mockVectorSource: VectorSource<Point>;
+  let mockEvent: MapBrowserEvent<PointerEvent>;
+  let mockWebGLLayer: WebGLPointsLayer<VectorSource>;
+  let mockVectorSource: VectorSource;
 
   // Consolidated feature constants
   let feature1: Feature;
@@ -77,7 +77,7 @@ describe('tooltip utils', () => {
         pageX: 100,
         pageY: 100,
       },
-    } as MapBrowserEvent<MouseEvent>;
+    } as MapBrowserEvent<PointerEvent>;
 
     // Create features for testing
     feature1 = new Feature({
@@ -111,7 +111,7 @@ describe('tooltip utils', () => {
     });
 
     // Create mock vector source
-    mockVectorSource = new VectorSource<Point>();
+    mockVectorSource = new VectorSource<Feature<Point>>();
     mockVectorSource.forEachFeature = jest.fn();
 
     // Create mock WebGL layer

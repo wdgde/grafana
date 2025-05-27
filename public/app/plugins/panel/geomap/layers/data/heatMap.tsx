@@ -76,9 +76,9 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
         source.update(frame);
 
         const weightDim = getScaledDimension(frame, config.weight);
-        source.forEachFeature( (f) => {
+        source.forEachFeature((f) => {
           const idx: number = f.get('rowIndex');
-          if(idx != null) {
+          if (idx != null) {
             f.set(WEIGHT_KEY, weightDim.get(idx));
           }
         });

@@ -102,7 +102,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
       const styleBase = routeStyle(style.base);
       if (style.config.size && style.config.size.fixed) {
         // Applies width to base style if specified
-        styleBase.getStroke().setWidth(style.config.size.fixed);
+        styleBase.getStroke()?.setWidth(style.config.size.fixed);
       }
       vectorLayer.setStyle(styleBase);
     } else {

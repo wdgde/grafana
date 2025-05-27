@@ -32,8 +32,8 @@ import { hasVariableDependencies, hasLayerData } from './utils';
 // Test fixtures
 const createTestFeature = () => new Feature(new Point([0, 0]));
 
-const createTestVectorSource = (hasFeature = false): VectorSource<Point> => {
-  const source = new VectorSource<Point>();
+const createTestVectorSource = (hasFeature = false): VectorSource<Feature<Point>> => {
+  const source = new VectorSource<Feature<Point>>();
   if (hasFeature) {
     source.addFeature(createTestFeature());
   }

@@ -388,7 +388,7 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
                 image: new RegularShape({
                   fill: new Fill({ color: 'rgba(0,0,0,0)' }),
                   points: 4,
-                  radius: cfg.size,
+                  radius: cfg.size ?? 2,
                   rotation: (rotation * Math.PI) / 180 + Math.PI / 4,
                 }),
               }),

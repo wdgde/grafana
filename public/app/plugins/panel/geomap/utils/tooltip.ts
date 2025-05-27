@@ -23,7 +23,7 @@ export const setTooltipListeners = (panel: GeomapPanel) => {
   });
 };
 
-export const pointerClickListener = (evt: MapBrowserEvent<MouseEvent>, panel: GeomapPanel) => {
+export const pointerClickListener = (evt: MapBrowserEvent<PointerEvent>, panel: GeomapPanel) => {
   if (pointerMoveListener(evt, panel)) {
     evt.preventDefault();
     evt.stopPropagation();
@@ -32,7 +32,7 @@ export const pointerClickListener = (evt: MapBrowserEvent<MouseEvent>, panel: Ge
   }
 };
 
-export const pointerMoveListener = (evt: MapBrowserEvent<MouseEvent>, panel: GeomapPanel) => {
+export const pointerMoveListener = (evt: MapBrowserEvent<PointerEvent>, panel: GeomapPanel) => {
   // If measure menu is open, bypass tooltip logic and display measuring mouse events
   if (panel.state.measureMenuActive) {
     return true;
