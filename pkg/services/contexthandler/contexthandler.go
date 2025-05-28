@@ -101,6 +101,8 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			UseSessionStorageRedirect: h.features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection),
 		}
 
+		fmt.Println("CM Potato: 0.5")
+
 		// inject ReqContext in the context
 		ctx = context.WithValue(ctx, reqContextKey{}, reqContext)
 		// store list of possible auth header in context
@@ -143,9 +145,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 
 		// End the span to make next handlers not wrapped within middleware span
 		span.End()
-		if next != nil {
-			next.ServeHTTP(w, r.WithContext(ctx))
-		}
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
