@@ -12,6 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
+const (
+	KubeAggregatorUser = "system:kube-aggregator"
+)
+
 // WithRequester makes sure there is an identity.Requester in context
 func WithRequester(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -37,6 +41,7 @@ func WithRequester(handler http.Handler) http.Handler {
 				Permissions: map[int64]map[string][]string{},
 			}))
 		} else if ok && info.GetName() == user.APIServerUser ||
+			info.GetName() == KubeAggregatorUser ||
 			slices.Contains(info.GetGroups(), user.SystemPrivilegedGroup) {
 			// For system:apiserver we use the identity of the service itself
 			ctx, _ = identity.WithServiceIdentity(ctx, 1)
