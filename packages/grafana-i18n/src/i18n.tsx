@@ -31,16 +31,21 @@ export async function loadPluginResources(id: string, language: string, loaders?
 
 // exported for testing
 export async function initDefaultI18nInstance() {
+  console.log('initDefaultI18nInstance called');
   // If the resources are not an object, we need to initialize the plugin translations
   if (getI18nInstance().options?.resources && typeof getI18nInstance().options.resources === 'object') {
     return;
   }
 
-  await getI18nInstance().use(initReactI18next).init({
-    resources: {},
-    returnEmptyString: false,
-    lng: DEFAULT_LANGUAGE, // this should be the locale of the phrases in our source JSX
-  });
+  console.log('actually initDefaultI18nInstance');
+  await getI18nInstance()
+    .use(initReactI18next)
+    .init({
+      resources: {},
+      returnEmptyString: false,
+      supportedLngs: [DEFAULT_LANGUAGE],
+      lng: DEFAULT_LANGUAGE, // this should be the locale of the phrases in our source JSX
+    });
 }
 
 // exported for testing
@@ -56,6 +61,8 @@ export function initDefaultReactI18nInstance() {
 }
 
 export async function initPluginTranslations(id: string, loaders?: ResourceLoader[]) {
+  console.log('initPluginTranslations', 'id', id, 'loaders', loaders);
+
   await initDefaultI18nInstance();
   initDefaultReactI18nInstance();
 
@@ -69,6 +76,11 @@ export async function initPluginTranslations(id: string, loaders?: ResourceLoade
 }
 
 export function getI18nInstance() {
+  const stack = new Error().stack;
+  console.log('grafana-i18n getI18nInstance called', i18n, 'stack', stack);
+
+  window.devI18nextInstances = window.devI18nextInstances || [];
+  window.devI18nextInstances.push(i18n);
   return i18n;
 }
 
@@ -87,6 +99,8 @@ async function initTranslations({
   language = DEFAULT_LANGUAGE,
   module,
 }: InitializeI18nOptions): Promise<{ language: string | undefined }> {
+  console.log('initTranslations', 'ns', ns, 'language', language, 'module', module);
+
   const options: InitOptions = {
     // We don't bundle any translations, we load them async
     partialBundledLanguages: true,
@@ -171,7 +185,15 @@ export function addResourceBundle(language: string, namespace: string, resources
 }
 
 export const t: TFunction = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
+  let didGroup = false;
+
   if (!tFunc) {
+    didGroup = true;
+    console.group('t() was called before i18n was initialized');
+    const stack = new Error().stack;
+    console.log(stack);
+    console.log('isDev', process.env.NODE_ENV === 'development');
+
     if (process.env.NODE_ENV !== 'test') {
       console.warn(
         't() was called before i18n was initialized. This is probably caused by calling t() in the root module scope, instead of lazily on render'
@@ -185,7 +207,12 @@ export const t: TFunction = (id: string, defaultMessage: string, values?: Record
     tFunc = getI18nInstance().t;
   }
 
-  return tFunc(id, defaultMessage, values);
+  const result = tFunc(id, defaultMessage, values);
+  if (didGroup) {
+    console.groupEnd();
+  }
+
+  return result;
 };
 
 export function useTranslate() {

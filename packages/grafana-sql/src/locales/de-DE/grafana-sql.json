@@ -1,0 +1,152 @@
+{
+  "components": {
+    "confirm-modal": {
+      "builder-mode": "Der Builder-Modus zeigt Änderungen im Code nicht an. Der Abfrage-Builder zeigt die zuletzt im Builder-Modus vorgenommenen Änderungen an.",
+      "cancel": "Abbrechen",
+      "clipboard": "Möchten Sie Ihren Code in die Zwischenablage kopieren?",
+      "copy-code-and-switch": "Code kopieren und wechseln",
+      "discard-code-and-switch": "Code verwerfen und wechseln",
+      "warning": "Warnung"
+    },
+    "connection-limits": {
+      "auto-max-idle": "Automatischer maximaler Leerlauf",
+      "content-auto-max-idle": "Wenn aktiviert, wird die Anzahl der <1>maximalen Leerlaufverbindungen</1> automatisch auf denselben Wert wie <3>maximale offene Verbindungen</3> gesetzt. Wenn die Anzahl der maximalen offenen Verbindungen nicht festgelegt ist, wird sie auf den Standardwert ({{defaultMaxIdle}}) gesetzt.",
+      "content-max-idle": "Die maximale Anzahl der Verbindungen im Leerlauf-Verbindungspool. Wenn <1>maximale offene Verbindungen</1> größer als 0, aber kleiner als die <3>maximalen Leerlaufverbindungen</3> ist, werden die <5>maximalen Leerlaufverbindungen</5> entsprechend dem Limit der <8>maximalen offenen Verbindungen</8> reduziert. Ist der Wert auf 0 gesetzt, werden keine Leerlaufverbindungen beibehalten.",
+      "max-idle": "Max. Leerlauf",
+      "title-connection-limits": "Verbindungsgrenzen"
+    },
+    "dataset-selector": {
+      "aria-label-dataset-selector": "Datensatz-Auswahl"
+    },
+    "error-boundary": {
+      "fall-back": {
+        "error": "Fehler"
+      }
+    },
+    "get-custom-operators": {
+      "custom-operators": {
+        "label": {
+          "macros": "Makros"
+        }
+      }
+    },
+    "make-render-column": {
+      "render-column": {
+        "aria-label-group-by": "Gruppieren nach",
+        "title-remove-group-by-column": "Gruppierungsspalte entfernen"
+      }
+    },
+    "max-lifetime-field": {
+      "content-max-lifetime": "Die maximale Zeitdauer in Sekunden, in der eine Verbindung wiederverwendet werden darf. Wenn auf 0 gesetzt, werden Verbindungen unbegrenzt wiederverwendet.",
+      "max-lifetime": "Max. Lebensdauer"
+    },
+    "max-open-connections-field": {
+      "content-max-open": "Die maximale Anzahl geöffneter Verbindungen zur Datenbank. Wenn <1>maximale Leerlaufverbindungen</1> größer als 0 ist und die <3>maximale Anzahl offener Verbindungen</3> kleiner ist als die <5>maximalen Leerlaufverbindungen</5>, werden die <7>maximalen Leerlaufverbindungen</7> entsprechend dem Limit der <9>maximalen offenen Verbindungen</9> reduziert. Wenn auf 0 gesetzt, gibt es keine Begrenzung für offene Verbindungen.",
+      "max-open": "Max. offene Verbindungen"
+    },
+    "order-by-row": {
+      "aria-label-order-by": "Sortieren nach",
+      "label-limit": "Limit",
+      "label-offset": "Offset",
+      "label-order-by": "Sortieren nach"
+    },
+    "preview": {
+      "label-element": {
+        "preview": "Vorschau",
+        "tooltip-copy-to-clipboard": "In die Zwischenablage kopieren"
+      }
+    },
+    "query-header": {
+      "content-invalid-query": "Ihre Abfrage ist ungültig. Überprüfen Sie unten die Details. <1></1> Sie können diese Abfrage jedoch trotzdem ausführen.",
+      "label-dataset": "Datensatz",
+      "label-filter": "Filter",
+      "label-format": "Format",
+      "label-group": "Gruppieren",
+      "label-order": "Sortierung",
+      "label-preview": "Vorschau",
+      "label-table": "Tabelle",
+      "placeholder-select-format": "Format auswählen",
+      "run-query": "Abfrage ausführen"
+    },
+    "query-toolbox": {
+      "content-hit-ctrlcmdreturn-to-run-query": "Drücken Sie STRG/CMD+Return, um die Abfrage auszuführen",
+      "tooltip-collapse": "Editor einklappen",
+      "tooltip-expand": "Editor erweitern",
+      "tooltip-format-query": "Abfrage formatieren"
+    },
+    "query-validator": {
+      "query-will-process": "<0></0> Diese Abfrage verarbeitet bei Ausführung <2>{{bytes}}</2>.",
+      "validating-query": "Abfrage wird validiert..."
+    },
+    "raw-editor": {
+      "render-placeholder": {
+        "editing-in-expanded-code-editor": "Bearbeitung im erweiterten Code-Editor"
+      },
+      "title-query-num": "Abfrage {{queryNum}}"
+    },
+    "select-column": {
+      "label-column": "Spalte"
+    },
+    "select-custom-function-parameters": {
+      "aria-label-parameter": "Parameter {{index}} für Spalte {{columnIndex}}",
+      "render-parameters": {
+        "params": {
+          "title-remove-parameter": "Parameter entfernen"
+        }
+      },
+      "title-add-parameter": "Parameter hinzufügen"
+    },
+    "select-row": {
+      "aggregate-options": {
+        "options": {
+          "label": {
+            "aggregations": "Aggregation",
+            "macros": "Makros"
+          }
+        }
+      },
+      "label": {
+        "time": "Zeit",
+        "value": "Wert"
+      },
+      "label-alias": "Alias",
+      "label-data-operations": "Datenoperationen",
+      "title-add-column": "Spalte hinzufügen",
+      "title-remove-column": "Spalte entfernen"
+    },
+    "settings": {
+      "aria-label-conjunction": "Verknüpfung",
+      "aria-label-field": "Feld",
+      "aria-label-operator": "Operator",
+      "title-button-filter": "{{ buttonLabel }}-Filter"
+    },
+    "sql-query-editor-lazy": {
+      "text-loading-editor": "Editor wird geladen"
+    },
+    "sqlorder-by-row": {
+      "label": {
+        "selected-columns": "Ausgewählte Spalten"
+      }
+    },
+    "table-selector": {
+      "aria-label-table-selector": "Tabellenauswahl",
+      "placeholder-loading": "Tabellen werden geladen",
+      "placeholder-select-table": "Tabelle auswählen"
+    },
+    "tlssecrets-config": {
+      "content-tlsssl-client-certificate": "Um sich mit einem TLS/SSL-Client-Zertifikat zu authentifizieren, geben Sie hier das Client-Zertifikat an.",
+      "content-tlsssl-client-key": "Um sich mit einem TLS/SSL-Client-Zertifikat zu authentifizieren, geben Sie hier den Schlüssel an.",
+      "content-tlsssl-root-certificate": "Wenn der ausgewählte TLS/SSL-Modus ein Server-Stammzertifikat erfordert, geben Sie es hier an",
+      "tlsssl-client-certificate": "TLS/SSL-Client-Zertifikat",
+      "tlsssl-client-key": "TLS/SSL-Client-Schlüssel",
+      "tlsssl-root-certificate": "TLS/SSL-Stammzertifikat"
+    },
+    "visual-editor": {
+      "label-filter-by-column-value": "Nach Spaltenwert filtern",
+      "label-group-by-column": "Nach Spalte gruppieren"
+    },
+    "widgets": {
+      "aria-label-macros-value-selector": "Makrowert-Auswahl"
+    }
+  }
+}
