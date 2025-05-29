@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -18,8 +19,8 @@ const (
 
 var UserResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"users", "user", "User",
-	func() runtime.Object { return &User{} },
-	func() runtime.Object { return &UserList{} },
+	func() runtime.Object { return &iam.User{} },
+	func() runtime.Object { return &iam.UserList{} },
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
@@ -28,7 +29,7 @@ var UserResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
-			u, ok := obj.(*User)
+			u, ok := obj.(*iam.User)
 			if ok {
 				return []interface{}{
 					u.Name,
@@ -158,8 +159,8 @@ var (
 func AddKnownTypes(scheme *runtime.Scheme, version string) {
 	scheme.AddKnownTypes(
 		schema.GroupVersion{Group: GROUP, Version: version},
-		&User{},
-		&UserList{},
+		&iam.User{},
+		&iam.UserList{},
 		&UserTeamList{},
 		&ServiceAccount{},
 		&ServiceAccountList{},
