@@ -52,10 +52,17 @@ func TestDeletionService_Delete(t *testing.T) {
 	requester = &identity.StaticRequester{
 		OrgID: 1,
 		Permissions: map[int64]map[string][]string{
+<<<<<<< HEAD
 			1: {
 				accesscontrol.ActionOrgsRead: {"*"},
 			},
 			2: {
+=======
+			1: map[string][]string{
+				accesscontrol.ActionOrgsRead: {"*"},
+			},
+			2: map[string][]string{
+>>>>>>> 5303a1cc7ed (Org: Fix org deletion (#106193))
 				accesscontrol.ActionOrgsRead: {"*"},
 			},
 		},
