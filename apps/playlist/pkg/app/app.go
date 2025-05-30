@@ -18,6 +18,7 @@ import (
 
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
+	"github.com/grafana/grafana/apps/playlist/pkg/conversion"
 )
 
 type PlaylistConfig struct {
@@ -151,14 +152,9 @@ func (p *PlaylistConverter) Convert(obj k8s.RawKind, targetAPIVersion string) ([
 		dst := playlistv0alpha1.Playlist{}
 		src.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 		dst.SetGroupVersionKind(targetGVK)
-		dst.Spec.Title = src.Spec.Title
-		dst.Spec.Interval = src.Spec.Interval
-		dst.Spec.Items = make([]playlistv0alpha1.PlaylistItem, len(src.Spec.Items))
-		for i, item := range src.Spec.Items {
-			dst.Spec.Items[i] = playlistv0alpha1.PlaylistItem{
-				Type:  playlistv0alpha1.PlaylistItemType(item.Type),
-				Value: item.Value,
-			}
+		err = conversion.Convert_v1_Playlist_To_v0alpha1_Playlist(&src, &dst, nil)
+		if err != nil {
+			return nil, err
 		}
 		buf := bytes.Buffer{}
 		err = playlistv0alpha1.PlaylistKind().Codecs[resource.KindEncodingJSON].Write(&buf, &dst)
@@ -177,17 +173,9 @@ func (p *PlaylistConverter) Convert(obj k8s.RawKind, targetAPIVersion string) ([
 		dst := playlistv1.Playlist{}
 		src.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 		dst.SetGroupVersionKind(targetGVK)
-		dst.Spec.Title = src.Spec.Title
-		dst.Spec.Interval = src.Spec.Interval
-		dst.Spec.Items = make([]playlistv1.PlaylistItem, len(src.Spec.Items))
-		for i, item := range src.Spec.Items {
-			if item.Type == playlistv0alpha1.PlaylistItemTypeDashboardById {
-				return nil, fmt.Errorf("cannot convert dashboard by id to v1")
-			}
-			dst.Spec.Items[i] = playlistv1.PlaylistItem{
-				Type:  playlistv1.PlaylistItemType(item.Type),
-				Value: item.Value,
-			}
+		err = conversion.Convert_v0alpha1_Playlist_To_v1_Playlist(&src, &dst, nil)
+		if err != nil {
+			return nil, err
 		}
 		buf := bytes.Buffer{}
 		err = playlistv1.PlaylistKind().Codecs[resource.KindEncodingJSON].Write(&buf, &dst)

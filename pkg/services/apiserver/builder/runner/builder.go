@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 
+	playlistconversion "github.com/grafana/grafana/apps/playlist/pkg/conversion"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -104,6 +105,13 @@ func (b *appBuilder) InstallSchema(scheme *runtime.Scheme) error {
 			if err != nil {
 				return err
 			}
+		}
+	}
+
+	// register any app conversions
+	if gv.Group == "playlist.grafana.app" {
+		if err := playlistconversion.RegisterConversions(scheme); err != nil {
+			return err
 		}
 	}
 	return scheme.SetVersionPriority(gv)
