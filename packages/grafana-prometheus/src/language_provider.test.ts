@@ -18,6 +18,7 @@ import {
   removeQuotesIfExist,
   PrometheusLanguageProviderInterface,
   PrometheusLanguageProvider,
+  populateMatchParamsFromQueries,
 } from './language_provider';
 import { getPrometheusTime, getRangeSnapInterval } from './language_utils';
 import { PrometheusCacheLevel, PromQuery } from './types';
@@ -855,6 +856,52 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       expect(provider.retrieveHistogramMetrics()).toEqual(['histogram1', 'histogram2']);
       expect(provider.retrieveMetrics()).toEqual(['metric1', 'metric2']);
       expect(provider.retrieveLabelKeys()).toEqual(['label1', 'label2']);
+    });
+  });
+
+  describe('populateMatchParamsFromQueries', () => {
+    it('should add match params from queries', () => {
+      const initialParams = new URLSearchParams();
+      const queries: PromQuery[] = [
+        { expr: 'metric1', refId: '1' },
+        { expr: 'metric2', refId: '2' },
+      ];
+
+      const result = populateMatchParamsFromQueries(initialParams, queries);
+
+      const matches = Array.from(result.getAll('match[]'));
+      expect(matches).toContain('metric1');
+      expect(matches).toContain('metric2');
+    });
+
+    it('should handle binary queries', () => {
+      const initialParams = new URLSearchParams();
+      const queries: PromQuery[] = [{ expr: 'binary{label="val"} + second{}', refId: '1' }];
+
+      const result = populateMatchParamsFromQueries(initialParams, queries);
+
+      const matches = Array.from(result.getAll('match[]'));
+      expect(matches).toContain('binary');
+      expect(matches).toContain('second');
+    });
+
+    it('should handle undefined queries', () => {
+      const initialParams = new URLSearchParams({ param: 'value' });
+
+      const result = populateMatchParamsFromQueries(initialParams, undefined);
+
+      expect(result.toString()).toBe('param=value');
+    });
+
+    it('should handle UTF8 metrics', () => {
+      // Using the mocked isValidLegacyName function from jest.mock setup
+      const initialParams = new URLSearchParams();
+      const queries: PromQuery[] = [{ expr: '{"utf8.metric", label="value"}', refId: '1' }];
+
+      const result = populateMatchParamsFromQueries(initialParams, queries);
+
+      const matches = Array.from(result.getAll('match[]'));
+      expect(matches).toContain('{"utf8.metric"}');
     });
   });
 });

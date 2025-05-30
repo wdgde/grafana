@@ -45,6 +45,7 @@ import { PrometheusAnnotationSupport } from './annotations';
 import {
   exportToAbstractQuery,
   importFromAbstractQuery,
+  populateMatchParamsFromQueries,
   PrometheusLanguageProvider,
   PrometheusLanguageProviderInterface,
   SUGGESTIONS_LIMIT,
@@ -523,8 +524,9 @@ export class PrometheusDatasource
     }
 
     if (!options || options.filters.length === 0) {
-      await this.languageProvider.fetchLabels(options.timeRange, options.queries);
-      return this.languageProvider.getLabelKeys().map((k) => ({ value: k, text: k }));
+      const match = populateMatchParamsFromQueries(new URLSearchParams(), options.queries).toString();
+      await this.languageProvider.queryLabelKeys(options.timeRange, match);
+      return this.languageProvider.retrieveLabelKeys().map((k) => ({ value: k, text: k }));
     }
 
     const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
@@ -534,13 +536,10 @@ export class PrometheusDatasource
     }));
     const expr = promQueryModeller.renderLabels(labelFilters);
 
-    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(
-      options.timeRange,
-      expr
-    );
+    let labelsIndex: string[] = await this.languageProvider.queryLabelKeys(options.timeRange, expr);
 
     // filter out already used labels
-    return Object.keys(labelsIndex)
+    return labelsIndex
       .filter((labelName) => !options.filters.find((filter) => filter.key === labelName))
       .map((k) => ({ value: k, text: k }));
   }
@@ -551,7 +550,6 @@ export class PrometheusDatasource
       options.timeRange = getDefaultTimeRange();
     }
 
-    const requestId = `[${this.uid}][${options.key}]`;
     if (config.featureToggles.promQLScope && (options?.scopes?.length ?? 0) > 0) {
       return (
         await this.languageProvider.fetchSuggestions(
@@ -561,7 +559,7 @@ export class PrometheusDatasource
           options.filters,
           options.key,
           undefined,
-          requestId
+          `[${this.uid}][${options.key}]`
         )
       ).map((v) => ({ value: v, text: v }));
     }
@@ -575,9 +573,7 @@ export class PrometheusDatasource
     const expr = promQueryModeller.renderLabels(labelFilters);
 
     if (this.hasLabelsMatchAPISupport()) {
-      return (
-        await this.languageProvider.fetchSeriesValuesWithMatch(options.timeRange, options.key, expr, requestId)
-      ).map((v) => ({
+      return (await this.languageProvider.queryLabelValues(options.timeRange, options.key, expr)).map((v) => ({
         value: v,
         text: v,
       }));
