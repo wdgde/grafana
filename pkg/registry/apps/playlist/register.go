@@ -2,15 +2,18 @@ package playlist
 
 import (
 	"fmt"
+	"maps"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/playlist/pkg/apis"
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	playlistapp "github.com/grafana/grafana/apps/playlist/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -36,8 +39,16 @@ func RegisterApp(
 		cfg:     cfg,
 		service: p,
 	}
+
+	openAPI := func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+		defs := playlistv0alpha1.GetOpenAPIDefinitions(ref)
+		v1Defs := playlistv1.GetOpenAPIDefinitions(ref)
+		maps.Copy(defs, v1Defs)
+		return defs
+	}
+
 	appCfg := &runner.AppBuilderConfig{
-		OpenAPIDefGetter:    playlistv0alpha1.GetOpenAPIDefinitions,
+		OpenAPIDefGetter:    openAPI,
 		LegacyStorageGetter: provider.legacyStorageGetter,
 		ManagedKinds:        playlistapp.GetKinds(),
 		CustomConfig: any(&playlistapp.PlaylistConfig{

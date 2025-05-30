@@ -12,7 +12,10 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 
 	v0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	v1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 )
+
+var ()
 
 var appManifestData = app.ManifestData{
 	AppName: "playlist",
@@ -21,10 +24,28 @@ var appManifestData = app.ManifestData{
 		{
 			Kind:       "Playlist",
 			Scope:      "Namespaced",
-			Conversion: false,
+			Conversion: true,
 			Versions: []app.ManifestKindVersion{
 				{
 					Name: "v0alpha1",
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+						Mutation: &app.MutationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+				},
+
+				{
+					Name: "v1",
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{
@@ -55,6 +76,7 @@ func RemoteManifest() app.Manifest {
 
 var kindVersionToGoType = map[string]resource.Kind{
 	"Playlist/v0alpha1": v0alpha1.PlaylistKind(),
+	"Playlist/v1":       v1.PlaylistKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
