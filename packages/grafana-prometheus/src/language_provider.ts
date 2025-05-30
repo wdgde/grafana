@@ -528,16 +528,22 @@ export interface PrometheusLanguageProviderInterface
 
 export class PrometheusLanguageProvider extends PromQlLanguageProvider implements PrometheusLanguageProviderInterface {
   private _metricsMetadata?: PromMetricsMetadata;
-  private _resourceClient: ResourceApiClient;
+  private _resourceClient?: ResourceApiClient;
 
-  constructor(public datasource: PrometheusDatasource) {
+  constructor(datasource: PrometheusDatasource) {
     super(datasource);
+  }
 
-    if (this.datasource.hasLabelsMatchAPISupport()) {
-      this._resourceClient = new LabelsApiClient(this.request, this.datasource);
-    } else {
-      this._resourceClient = new SeriesApiClient(this.request, this.datasource);
+  private get resourceClient(): ResourceApiClient {
+    if (!this._resourceClient) {
+      if (this.datasource.hasLabelsMatchAPISupport()) {
+        this._resourceClient = new LabelsApiClient(this.request, this.datasource);
+      } else {
+        this._resourceClient = new SeriesApiClient(this.request, this.datasource);
+      }
     }
+
+    return this._resourceClient;
   }
 
   /**
@@ -548,7 +554,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     if (this.datasource.lookupsDisabled) {
       return [];
     }
-    await Promise.all([this._resourceClient.start(timeRange), this.queryMetricsMetadata()]);
+    await Promise.all([this.resourceClient.start(timeRange), this.queryMetricsMetadata()]);
     return this._backwardCompatibleStart();
   };
 
@@ -589,15 +595,15 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
   };
 
   public retrieveHistogramMetrics = (): string[] => {
-    return this._resourceClient?.histogramMetrics;
+    return this.resourceClient?.histogramMetrics;
   };
 
   public retrieveMetrics = (): string[] => {
-    return this._resourceClient?.metrics;
+    return this.resourceClient?.metrics;
   };
 
   public retrieveLabelKeys = (): string[] => {
-    return this._resourceClient?.labelKeys;
+    return this.resourceClient?.labelKeys;
   };
 
   public queryMetricsMetadata = async (): Promise<PromMetricsMetadata> => {
@@ -610,7 +616,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
   };
 
   public queryLabelKeys = async (timeRange: TimeRange, match?: string, limit?: string): Promise<string[]> => {
-    return await this._resourceClient.queryLabelKeys(timeRange, match, limit);
+    return await this.resourceClient.queryLabelKeys(timeRange, match, limit);
   };
 
   public queryLabelValues = async (
@@ -619,7 +625,7 @@ export class PrometheusLanguageProvider extends PromQlLanguageProvider implement
     match?: string,
     limit?: string
   ): Promise<string[]> => {
-    return await this._resourceClient.queryLabelValues(timeRange, labelKey, match, limit);
+    return await this.resourceClient.queryLabelValues(timeRange, labelKey, match, limit);
   };
 }
 

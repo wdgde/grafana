@@ -760,7 +760,7 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
       const mockMetadata = { metric1: { type: 'counter', help: 'help text' } };
 
       // Mock the resource client's start method
-      const resourceClientStartSpy = jest.spyOn(provider['_resourceClient'], 'start');
+      const resourceClientStartSpy = jest.spyOn(provider['resourceClient'], 'start');
       const queryMetadataSpy = jest.spyOn(provider as any, '_queryMetadata').mockResolvedValue(mockMetadata);
 
       await provider.start();
@@ -816,7 +816,7 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
     it('should delegate to resource client queryLabelKeys', async () => {
       const provider = new PrometheusLanguageProvider(defaultDatasource);
       const resourceClientSpy = jest
-        .spyOn(provider['_resourceClient'], 'queryLabelKeys')
+        .spyOn(provider['resourceClient'], 'queryLabelKeys')
         .mockResolvedValue(['label1', 'label2']);
 
       const result = await provider.queryLabelKeys(timeRange, '{job="grafana"}');
@@ -828,7 +828,7 @@ describe('PrometheusLanguageProvider with feature toggle', () => {
     it('should delegate to resource client queryLabelValues', async () => {
       const provider = new PrometheusLanguageProvider(defaultDatasource);
       const resourceClientSpy = jest
-        .spyOn(provider['_resourceClient'], 'queryLabelValues')
+        .spyOn(provider['resourceClient'], 'queryLabelValues')
         .mockResolvedValue(['value1', 'value2']);
 
       const result = await provider.queryLabelValues(timeRange, 'job', '{job="grafana"}');
