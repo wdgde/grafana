@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"text/template"
 
-	claims "github.com/grafana/authlib/types"
+	claims "github.com/grafana/authlib/types" // Added import
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 

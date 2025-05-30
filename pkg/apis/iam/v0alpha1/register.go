@@ -2,9 +2,10 @@ package v0alpha1
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
-	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,10 +18,11 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var UserResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
-	"users", "user", "User",
-	func() runtime.Object { return &iam.User{} },
-	func() runtime.Object { return &iam.UserList{} },
+var userKind = iamv0alpha1.UserKind()
+var UserResourceInfo = utils.NewResourceInfo(userKind.Group(), userKind.Version(),
+	userKind.GroupVersionResource().Resource, strings.ToLower(userKind.Kind()), userKind.Kind(),
+	func() runtime.Object { return userKind.ZeroValue() },
+	func() runtime.Object { return userKind.ZeroListValue() },
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
@@ -29,7 +31,7 @@ var UserResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
-			u, ok := obj.(*iam.User)
+			u, ok := obj.(*iamv0alpha1.User)
 			if ok {
 				return []interface{}{
 					u.Name,
@@ -159,8 +161,8 @@ var (
 func AddKnownTypes(scheme *runtime.Scheme, version string) {
 	scheme.AddKnownTypes(
 		schema.GroupVersion{Group: GROUP, Version: version},
-		&iam.User{},
-		&iam.UserList{},
+		&iamv0alpha1.User{},
+		&iamv0alpha1.UserList{},
 		&UserTeamList{},
 		&ServiceAccount{},
 		&ServiceAccountList{},

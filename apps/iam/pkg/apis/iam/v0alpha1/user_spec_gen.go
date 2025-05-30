@@ -4,12 +4,12 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type UserSpec struct {
-	Name          string `json:"name"`
-	Login         string `json:"login"`
+	Disabled      bool   `json:"disabled"`
 	Email         string `json:"email"`
 	EmailVerified bool   `json:"emailVerified"`
-	Disabled      bool   `json:"disabled"`
-	InternalID    int64  `json:"internalID"`
+	Login         string `json:"login"`
+	Name          string `json:"name"`
+	Provisioned   bool   `json:"provisioned"`
 }
 
 // NewUserSpec creates a new UserSpec object.

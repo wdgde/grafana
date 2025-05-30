@@ -1846,17 +1846,10 @@ func schema_pkg_apis_iam_v0alpha1_UserSpec(ref common.ReferenceCallback) common.
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"name": {
+					"disabled": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"login": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
+							Default: false,
+							Type:    []string{"boolean"},
 							Format:  "",
 						},
 					},
@@ -1874,22 +1867,29 @@ func schema_pkg_apis_iam_v0alpha1_UserSpec(ref common.ReferenceCallback) common.
 							Format:  "",
 						},
 					},
-					"disabled": {
+					"login": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"provisioned": {
 						SchemaProps: spec.SchemaProps{
 							Default: false,
 							Type:    []string{"boolean"},
 							Format:  "",
 						},
 					},
-					"internalID": {
-						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
-						},
-					},
 				},
-				Required: []string{"name", "login", "email", "emailVerified", "disabled", "internalID"},
+				Required: []string{"disabled", "email", "emailVerified", "login", "name", "provisioned"},
 			},
 		},
 	}

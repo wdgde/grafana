@@ -1,10 +1,10 @@
 package v0alpha1
 
 UserSpec: {
-    name: string
-    login: string
+    disabled: bool
     email: string
     emailVerified: bool
-    disabled: bool
-    internalID: int64 @json("-")
+    login: string
+    name: string
+    provisioned: bool
 }

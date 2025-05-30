@@ -1,7 +1,18 @@
 package v0alpha1
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+)
 
 func (s User) AuthID() string {
-	return fmt.Sprintf("%d", s.Spec.InternalID)
+	meta, err := utils.MetaAccessor(&s)
+	if err != nil {
+		return ""
+	}
+	// TODO: Workaround until we move all definitions
+	// After having all resource definitions here in the app, we can remove this
+	// and we need to change the List authorization to use the MetaAccessor and the GetDeprecatedInternalID method
+	return fmt.Sprintf("%d", meta.GetDeprecatedInternalID())
 }

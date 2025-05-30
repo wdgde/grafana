@@ -2,6 +2,7 @@ package iam
 
 import (
 	"context"
+	"maps"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,8 +16,10 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/authlib/types"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
@@ -26,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
+	legacyUser "github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
@@ -42,12 +46,14 @@ type IdentityAccessManagementAPIBuilder struct {
 	display *user.LegacyDisplayREST
 
 	// Not set for multi-tenant deployment for now
-	sso ssosettings.Service
+	sso     ssosettings.Service
+	userSvc legacyUser.Service
 }
 
 func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 	ssoService ssosettings.Service,
+	userSvc legacyUser.Service,
 	sql db.DB,
 	ac accesscontrol.AccessControl,
 ) (*IdentityAccessManagementAPIBuilder, error) {
@@ -60,6 +66,7 @@ func RegisterAPIService(
 		authorizer:   authorizer,
 		accessClient: client,
 		display:      user.NewLegacyDisplayREST(store),
+		userSvc:      userSvc,
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -100,7 +107,7 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 	return scheme.SetVersionPriority(iamv0.SchemeGroupVersion)
 }
 
-func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {
+func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
 
 	teamResource := iamv0.TeamResourceInfo
@@ -111,7 +118,18 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
 
 	userResource := iamv0.UserResourceInfo
-	storage[userResource.StoragePath()] = user.NewLegacyStore(b.store, b.accessClient)
+	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, userResource, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+
+	dw, err := opts.DualWriteBuilder(
+		userResource.GroupResource(),
+		user.NewLegacyStore(b.store, b.accessClient, b.userSvc),
+		store,
+	)
+	storage[userResource.StoragePath()] = dw
+
 	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
 
 	serviceAccountResource := iamv0.ServiceAccountResourceInfo
@@ -128,7 +146,13 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return iamv0.GetOpenAPIDefinitions
+	return func(rc common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+		// TODO: remove this once we have all the kinds registered in the app.
+		dst := iamv0alpha1.GetOpenAPIDefinitions(rc)
+		maps.Copy(dst, iamv0.GetOpenAPIDefinitions(rc))
+
+		return dst
+	}
 }
 
 func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
