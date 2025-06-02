@@ -4,6 +4,9 @@ correlation: {
 	kind:		"Correlation"
 	pluralName:	"Correlations"
 	current:	"v0alpha1"
+	apiResource: {
+		groupOverride: "correlation.grafana.app"
+	}
 	versions: {
 		"v0alpha1": {
 			codegen: {
