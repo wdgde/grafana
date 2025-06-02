@@ -18,7 +18,7 @@ var ()
 
 var appManifestData = app.ManifestData{
 	AppName: "correlation",
-	Group:   "correlation.ext.grafana.com",
+	Group:   "correlation.grafana.app",
 	Kinds: []app.ManifestKind{
 		{
 			Kind:       "Correlation",

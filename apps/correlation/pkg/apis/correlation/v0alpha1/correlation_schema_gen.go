@@ -10,7 +10,7 @@ import (
 
 // schema is unexported to prevent accidental overwrites
 var (
-	schemaCorrelation = resource.NewSimpleSchema("correlation.ext.grafana.com", "v0alpha1", &Correlation{}, &CorrelationList{}, resource.WithKind("Correlation"),
+	schemaCorrelation = resource.NewSimpleSchema("correlation.grafana.app", "v0alpha1", &Correlation{}, &CorrelationList{}, resource.WithKind("Correlation"),
 		resource.WithPlural("correlations"), resource.WithScope(resource.NamespacedScope))
 	kindCorrelation = resource.Kind{
 		Schema: schemaCorrelation,
