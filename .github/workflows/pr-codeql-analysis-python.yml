@@ -28,7 +28,7 @@ jobs:
     - name: Check for Python files
       id: check-python
       run: |
-        if [ -z "$(find . -name '*.py' -type f)" ]; then
+        if [ -z "$(find . -path "./pkg/extensions" -prune -o -type f -name "*.py" -print)" ]; then
           echo "No Python files found, skipping analysis"
           echo "skip=true" >> "$GITHUB_OUTPUT"
         else
