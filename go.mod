@@ -2,6 +2,8 @@ module github.com/grafana/grafana
 
 go 1.24.3
 
+replace github.com/grafana/grafana/apps/correlation => ./apps/correlation // @grafana/grafana-app-platform-squad
+
 require (
 	buf.build/gen/go/parca-dev/parca/connectrpc/go v1.17.0-20240902100956-02fd72488966.1 // @grafana/observability-traces-and-profiling
 	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.34.2-20240902100956-02fd72488966.2 // @grafana/observability-traces-and-profiling
@@ -208,6 +210,7 @@ require (
 require (
 	github.com/grafana/grafana/apps/advisor v0.0.0-20250527064921-326081cdb7a1 // @grafana/plugins-platform-backend
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250527064921-326081cdb7a1 // @grafana/alerting-backend
+	github.com/grafana/grafana/apps/correlation v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
 	github.com/grafana/grafana/apps/folder v0.0.0-20250527064921-326081cdb7a1 // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/apps/investigations v0.0.0-20250527064921-326081cdb7a1 // @fcjack @matryer
@@ -566,6 +569,8 @@ require (
 	sigs.k8s.io/json v0.0.0-20241010143419-9aa6b5e7a4b3 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
+
+require github.com/grafana/authlib/claims v0.0.0-20250120084028-e3328c576437
 
 require github.com/hashicorp/go-msgpack/v2 v2.1.1 // indirect
 

@@ -1,0 +1,7 @@
+apiVersion: correlation.grafana.app/v0alpha1
+kind: Correlation
+metadata:
+  generateName: x # anything is ok here... except yes or true -- they become boolean!
+spec:
+  sourceUID: source
+  targetUID: target
