@@ -257,6 +257,13 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
+			Name:         "extraThemes",
+			Description:  "Enables extra themes",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+		},
+		{
 			Name:         "lokiPredefinedOperations",
 			Description:  "Adds predefined query operations to Loki query editor",
 			FrontendOnly: true,
@@ -945,6 +952,15 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:              "grafanaManagedRecordingRules",
+			Description:       "Enables Grafana-managed recording rules.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:           "queryLibrary",
 			Description:    "Enables Query Library feature in Explore",
 			Stage:          FeatureStageExperimental,
@@ -1148,13 +1164,6 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "homeSetupGuide",
-			Description:  "Used in Home for users who want to return to the onboarding flow or quickly find popular config pages",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        growthAndOnboarding,
-		},
-		{
 			Name:              "appPlatformGrpcClientAuth",
 			Description:       "Enables the gRPC client to authenticate with the App Platform by using ID & access tokens",
 			Stage:             FeatureStageExperimental,
@@ -1321,13 +1330,6 @@ var (
 			Owner:       grafanaOSSBigTent,
 		},
 		{
-			Name:        "reportingUseRawTimeRange",
-			Description: "Uses the original report or dashboard time range instead of making an absolute transformation",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:         "alertingUIOptimizeReducer",
 			Description:  "Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1422,12 +1424,11 @@ var (
 			Owner:          identityAccessTeam,
 		},
 		{
-			Name:         "ABTestFeatureToggleA",
-			Description:  "Test feature toggle to see how cohorts could be set up AB testing",
+			Name:         "teamHttpHeadersTempo",
+			Description:  "Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams",
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSharingSquad,
-			Expression:   "false",
-			HideFromDocs: true,
+			FrontendOnly: false,
+			Owner:        identityAccessTeam,
 		},
 		{
 			Name:         "templateVariablesUsesCombobox",
@@ -1435,14 +1436,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
-		},
-		{
-			Name:         "ABTestFeatureToggleB",
-			Description:  "Test feature toggle to see how cohorts could be set up AB testing",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSharingSquad,
-			Expression:   "false",
-			HideFromDocs: true,
 		},
 		{
 			Name:        "grafanaAdvisor",
@@ -1562,14 +1555,6 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:           "grafanaManagedRecordingRulesDatasources",
-			Description:    "Enables writing to data sources for Grafana-managed recording rules.",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaAlertingSquad,
-			AllowSelfServe: false,
-			Expression:     "false",
-		},
-		{
 			Name:         "infinityRunQueriesInParallel",
 			Description:  "Enables running Infinity queries in parallel",
 			Stage:        FeatureStagePrivatePreview,
@@ -1588,6 +1573,14 @@ var (
 		{
 			Name:         "alertingMigrationUI",
 			Description:  "Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules",
+			FrontendOnly: true,
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaAlertingSquad,
+			Expression:   "true",
+		},
+		{
+			Name:         "alertingImportYAMLUI",
+			Description:  "Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules",
 			FrontendOnly: true,
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
@@ -1742,6 +1735,23 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			FrontendOnly:      true,
+		},
+		{
+			Name:              "restoreDashboards",
+			Description:       "Enables restore deleted dashboards feature",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
+			HideFromAdminPage: true,
+			Expression:        "false",
+		},
+		{
+			Name:              "skipTokenRotationIfRecent",
+			Description:       "Skip token rotation if it was already rotated less than 5 seconds ago",
+			Stage:             FeatureStagePrivatePreview,
+			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
 		},
 		{
 			Name:        "pluginsApp",
