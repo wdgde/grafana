@@ -11,7 +11,9 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	claims "github.com/grafana/authlib/types"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -129,15 +131,15 @@ func mapToBindingObject(ns claims.NamespaceInfo, b legacy.TeamBinding) iamv0.Tea
 		}
 	}
 
-	return iamv0.TeamBinding{
+	return iamv0alpha1.TeamBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              b.TeamUID,
 			Namespace:         ns.Value,
 			ResourceVersion:   strconv.FormatInt(rv.UnixMilli(), 10),
 			CreationTimestamp: metav1.NewTime(ct),
 		},
-		Spec: iamv0.TeamBindingSpec{
-			Team: iamv0.TeamRef{
+		Spec: iamv0alpha1.TeamBindingSpec{
+			Team: iamv0alpha1.TeamRef{
 				Name: b.TeamUID,
 			},
 			Subjects: mapToSubjects(b.Members),
@@ -145,11 +147,11 @@ func mapToBindingObject(ns claims.NamespaceInfo, b legacy.TeamBinding) iamv0.Tea
 	}
 }
 
-func mapToSubjects(members []legacy.TeamMember) []iamv0.TeamSubject {
-	out := make([]iamv0.TeamSubject, 0, len(members))
+func mapToSubjects(members []legacy.TeamMember) []iamv0alpha1.TeamSubject {
+	out := make([]iamv0alpha1.TeamSubject, 0, len(members))
 	for _, m := range members {
-		out = append(out, iamv0.TeamSubject{
-			Identity: iamv0.IdentityRef{
+		out = append(out, iamv0alpha1.TeamSubject{
+			Identity: iamv0alpha1.IdentityRef{
 				Type: claims.TypeUser,
 				Name: m.UserUID,
 			},
@@ -159,10 +161,10 @@ func mapToSubjects(members []legacy.TeamMember) []iamv0.TeamSubject {
 	return out
 }
 
-func mapPermisson(p team.PermissionType) iamv0.TeamPermission {
+func mapPermisson(p team.PermissionType) iamv0alpha1.TeamPermission {
 	if p == team.PermissionTypeAdmin {
-		return iamv0.TeamPermissionAdmin
+		return iamv0alpha1.TeamPermissionAdmin
 	} else {
-		return iamv0.TeamPermissionMember
+		return iamv0alpha1.TeamPermissionMember
 	}
 }
