@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	correlation "github.com/grafana/grafana/apps/correlation/pkg/apis/correlation/v0alpha1"
+	correlationv0alpha1 "github.com/grafana/grafana/apps/correlation/pkg/apis/correlation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -18,6 +19,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
 )
 
@@ -79,7 +81,7 @@ func (i *it) Value() []byte {
 	}
 
 	if data.TargetUID != nil {
-		c.Spec.TargetUid = *data.TargetUID
+		c.Spec.SourceUid = *data.TargetUID
 	}
 
 	b, err := json.Marshal(c)
@@ -124,7 +126,7 @@ func (b *correlationBackend) GetResourceStats(ctx context.Context, namespace str
 	return []resource.ResourceStats{}, nil
 }
 
-func NewStore(cs *correlationService.CorrelationsService, ri utils.ResourceInfo, scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter) (grafanarest.Storage, error) {
+func NewStore(cs *correlationService.CorrelationsService, scheme *runtime.Scheme, defaultOptsGetter generic.RESTOptionsGetter) (grafanarest.Storage, error) {
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend: &correlationBackend{
 			cs: cs,
@@ -134,8 +136,12 @@ func NewStore(cs *correlationService.CorrelationsService, ri utils.ResourceInfo,
 	if err != nil {
 		return nil, err
 	}
+	gr := schema.GroupResource{
+		Group:    correlationv0alpha1.CorrelationKind().Group(),
+		Resource: correlationv0alpha1.CorrelationKind().Plural(),
+	}
 
-	defaultOpts, err := defaultOptsGetter.GetRESTOptions(ri.GroupResource(), nil)
+	defaultOpts, err := defaultOptsGetter.GetRESTOptions(gr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -143,10 +149,13 @@ func NewStore(cs *correlationService.CorrelationsService, ri utils.ResourceInfo,
 	optsGetter := apistore.NewRESTOptionsGetterForClient(client,
 		defaultOpts.StorageConfig.Config, nil,
 	)
-	optsGetter.RegisterOptions(ri.GroupResource(), apistore.StorageOptions{
+
+	optsGetter.RegisterOptions(gr, apistore.StorageOptions{
 		EnableFolderSupport:         true,
 		RequireDeprecatedInternalID: true,
 	})
+
+	ri := utils.ResourceInfo{}
 
 	return grafanaregistry.NewRegistryStore(scheme, ri, optsGetter)
 }

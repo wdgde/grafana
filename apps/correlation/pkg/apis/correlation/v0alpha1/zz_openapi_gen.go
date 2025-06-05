@@ -122,21 +122,49 @@ func schema_pkg_apis_correlation_v0alpha1_CorrelationSpec(ref common.ReferenceCa
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"uuid": {
+					"source_uid": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
 							Format:  "",
 						},
 					},
-					"sourceUID": {
+					"target_uid": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
 							Format:  "",
 						},
 					},
-					"targetUID": {
+					"label": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"config": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"provisioned": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"type": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
@@ -144,7 +172,7 @@ func schema_pkg_apis_correlation_v0alpha1_CorrelationSpec(ref common.ReferenceCa
 						},
 					},
 				},
-				Required: []string{"uuid", "sourceUID", "targetUID"},
+				Required: []string{"source_uid", "target_uid", "label", "description", "config", "provisioned", "type"},
 			},
 		},
 	}

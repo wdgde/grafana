@@ -1,14 +1,22 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
 export interface Spec {
-	uuid: string;
-	sourceUID: string;
-	targetUID: string;
+	source_uid: string;
+	target_uid: string;
+	label: string;
+	description: string;
+	config: string;
+	provisioned: number;
+	type: string;
 }
 
 export const defaultSpec = (): Spec => ({
-	uuid: "",
-	sourceUID: "",
-	targetUID: "",
+	source_uid: "",
+	target_uid: "",
+	label: "",
+	description: "",
+	config: "",
+	provisioned: 0,
+	type: "",
 });
 
