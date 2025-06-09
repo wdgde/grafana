@@ -6,6 +6,7 @@ import (
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
 var (
@@ -20,8 +21,14 @@ type DecryptStorage interface {
 }
 
 // DecryptAuthorizer is the interface for authorizing decryption requests.
+type DecryptRequest struct {
+	Namespace  xkube.Namespace
+	Name       string
+	Decrypters []string
+}
+
 type DecryptAuthorizer interface {
-	Authorize(ctx context.Context, secureValueName string, secureValueDecrypters []string) (identity string, allowed bool)
+	Authorize(ctx context.Context, req DecryptRequest) (identity string, decision authorizer.Decision, err error)
 }
 
 // TEMPORARY: Needed to pass it with wire.

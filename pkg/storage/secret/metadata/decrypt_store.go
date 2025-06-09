@@ -5,9 +5,10 @@ import (
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana-app-sdk/logging"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -71,8 +72,12 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		return "", contracts.ErrDecryptNotFound
 	}
 
-	decrypterIdentity, authorized := s.decryptAuthorizer.Authorize(ctx, name, sv.Decrypters)
-	if !authorized {
+	decrypterIdentity, decision, err := s.decryptAuthorizer.Authorize(ctx, contracts.DecryptRequest{
+		Namespace:  namespace,
+		Name:       name,
+		Decrypters: sv.Decrypters,
+	})
+	if decision != authorizer.DecisionAllow {
 		return "", contracts.ErrDecryptNotAuthorized
 	}
 

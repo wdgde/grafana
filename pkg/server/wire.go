@@ -425,7 +425,7 @@ var wireBasicSet = wire.NewSet(
 	secretmetadata.ProvideSecureValueMetadataStorage,
 	secretmetadata.ProvideKeeperMetadataStorage,
 	secretmetadata.ProvideDecryptStorage,
-	secretdecrypt.ProvideDecryptAuthorizer,
+	secretdecrypt.NewDecryptersAuthorizer,
 	secretdecrypt.ProvideDecryptAllowList,
 	secretencryption.ProvideDataKeyStorage,
 	secretencryption.ProvideEncryptedValueStorage,

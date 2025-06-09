@@ -7,143 +7,161 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
 func TestDecryptAuthorizer(t *testing.T) {
 	t.Run("when no auth info is present, it returns false", func(t *testing.T) {
 		ctx := context.Background()
-		authorizer := ProvideDecryptAuthorizer(nil)
+		authz := NewDecryptersAuthorizer(nil)
 
-		identity, allowed := authorizer.Authorize(ctx, "", nil)
+		identity, decision, err := authz.Authorize(ctx, contracts.DecryptRequest{})
 		require.Empty(t, identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 	})
 
 	t.Run("when token permissions are empty, it returns false", func(t *testing.T) {
 		ctx := createAuthContext(context.Background(), "identity", []string{})
-		authorizer := ProvideDecryptAuthorizer(nil)
+		authz := NewDecryptersAuthorizer(nil)
 
-		identity, allowed := authorizer.Authorize(ctx, "", nil)
+		identity, decision, err := authz.Authorize(ctx, contracts.DecryptRequest{})
 		require.NotEmpty(t, identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 	})
 
 	t.Run("when service identity is empty, it returns false", func(t *testing.T) {
 		ctx := createAuthContext(context.Background(), "", []string{})
-		authorizer := ProvideDecryptAuthorizer(nil)
+		authz := NewDecryptersAuthorizer(nil)
 
-		identity, allowed := authorizer.Authorize(ctx, "", nil)
+		identity, decision, err := authz.Authorize(ctx, contracts.DecryptRequest{})
 		require.Empty(t, identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 	})
 
 	t.Run("when permission format is malformed (missing verb), it returns false", func(t *testing.T) {
-		authorizer := ProvideDecryptAuthorizer(nil)
+		authz := NewDecryptersAuthorizer(nil)
 
 		// nameless
 		ctx := createAuthContext(context.Background(), "identity", []string{"secret.grafana.app/securevalues"})
-		identity, allowed := authorizer.Authorize(ctx, "", nil)
+		identity, decision, err := authz.Authorize(ctx, contracts.DecryptRequest{})
 		require.NotEmpty(t, identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 
 		// named
 		ctx = createAuthContext(context.Background(), "identity", []string{"secret.grafana.app/securevalues/name"})
-		identity, allowed = authorizer.Authorize(ctx, "", nil)
+		identity, decision, err = authz.Authorize(ctx, contracts.DecryptRequest{})
 		require.NotEmpty(t, identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 	})
 
 	t.Run("when permission verb is not exactly `decrypt`, it returns false", func(t *testing.T) {
-		authorizer := ProvideDecryptAuthorizer(nil)
+		authz := NewDecryptersAuthorizer(nil)
 
 		// nameless
 		ctx := createAuthContext(context.Background(), "identity", []string{"secret.grafana.app/securevalues:*"})
-		identity, allowed := authorizer.Authorize(ctx, "", nil)
+		identity, decision, err := authz.Authorize(ctx, contracts.DecryptRequest{})
 		require.NotEmpty(t, identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 
 		// named
 		ctx = createAuthContext(context.Background(), "identity", []string{"secret.grafana.app/securevalues/name:something"})
-		identity, allowed = authorizer.Authorize(ctx, "", nil)
+		identity, decision, err = authz.Authorize(ctx, contracts.DecryptRequest{})
 		require.NotEmpty(t, identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 	})
 
 	t.Run("when permission does not have 2 or 3 parts, it returns false", func(t *testing.T) {
 		ctx := createAuthContext(context.Background(), "identity", []string{"secret.grafana.app:decrypt"})
-		authorizer := ProvideDecryptAuthorizer(nil)
+		authz := NewDecryptersAuthorizer(nil)
 
-		identity, allowed := authorizer.Authorize(ctx, "", nil)
+		identity, decision, err := authz.Authorize(ctx, contracts.DecryptRequest{})
 		require.NotEmpty(t, identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 	})
 
 	t.Run("when permission has group that is not `secret.grafana.app`, it returns false", func(t *testing.T) {
 		ctx := createAuthContext(context.Background(), "identity", []string{"wrong.group/securevalues/invalid:decrypt"})
-		authorizer := ProvideDecryptAuthorizer(nil)
+		authz := NewDecryptersAuthorizer(nil)
 
-		identity, allowed := authorizer.Authorize(ctx, "", nil)
+		identity, decision, err := authz.Authorize(ctx, contracts.DecryptRequest{})
 		require.NotEmpty(t, identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 	})
 
 	t.Run("when permission has resource that is not `securevalues`, it returns false", func(t *testing.T) {
-		authorizer := ProvideDecryptAuthorizer(nil)
+		authz := NewDecryptersAuthorizer(nil)
 
 		// nameless
 		ctx := createAuthContext(context.Background(), "identity", []string{"secret.grafana.app/invalid-resource:decrypt"})
-		identity, allowed := authorizer.Authorize(ctx, "", nil)
+		identity, decision, err := authz.Authorize(ctx, contracts.DecryptRequest{})
 		require.NotEmpty(t, identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 
 		// named
 		ctx = createAuthContext(context.Background(), "identity", []string{"secret.grafana.app/invalid-resource/name:decrypt"})
-		identity, allowed = authorizer.Authorize(ctx, "", nil)
+		identity, decision, err = authz.Authorize(ctx, contracts.DecryptRequest{})
 		require.NotEmpty(t, identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 	})
 
 	t.Run("when the identity is not in the allow list, it returns false", func(t *testing.T) {
 		ctx := createAuthContext(context.Background(), "identity", []string{"secret.grafana.app/securevalues:decrypt"})
-		authorizer := ProvideDecryptAuthorizer(map[string]struct{}{"allowed1": {}})
+		authz := NewDecryptersAuthorizer(map[string]struct{}{"allowed1": {}})
 
-		identity, allowed := authorizer.Authorize(ctx, "", nil)
+		identity, decision, err := authz.Authorize(ctx, contracts.DecryptRequest{})
 		require.NotEmpty(t, identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 	})
 
 	t.Run("when the identity doesn't match any allowed decrypters, it returns false", func(t *testing.T) {
-		authorizer := ProvideDecryptAuthorizer(map[string]struct{}{"identity": {}})
+		authz := NewDecryptersAuthorizer(map[string]struct{}{"identity": {}})
 
 		// nameless
 		ctx := createAuthContext(context.Background(), "identity", []string{"secret.grafana.app/securevalues:decrypt"})
-		identity, allowed := authorizer.Authorize(ctx, "", []string{"group2"})
+		identity, decision, err := authz.Authorize(ctx, contracts.DecryptRequest{Decrypters: []string{"group2"}})
 		require.NotEmpty(t, identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 
 		// named
 		ctx = createAuthContext(context.Background(), "identity", []string{"secret.grafana.app/securevalues/name:decrypt"})
-		identity, allowed = authorizer.Authorize(ctx, "", []string{"group2"})
+		identity, decision, err = authz.Authorize(ctx, contracts.DecryptRequest{Decrypters: []string{"group2"}})
 		require.NotEmpty(t, identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 	})
 
 	t.Run("when the identity matches an allowed decrypter, it returns true", func(t *testing.T) {
-		authorizer := ProvideDecryptAuthorizer(map[string]struct{}{"identity": {}})
+		authz := NewDecryptersAuthorizer(map[string]struct{}{"identity": {}})
 
 		// nameless
 		ctx := createAuthContext(context.Background(), "identity", []string{"secret.grafana.app/securevalues:decrypt"})
-		identity, allowed := authorizer.Authorize(ctx, "", []string{"identity"})
-		require.True(t, allowed)
+		identity, decision, err := authz.Authorize(ctx, contracts.DecryptRequest{Decrypters: []string{"identity"}})
 		require.Equal(t, "identity", identity)
+		require.Equal(t, authorizer.DecisionAllow, decision)
+		require.NoError(t, err)
 
 		// named
 		ctx = createAuthContext(context.Background(), "identity", []string{"secret.grafana.app/securevalues/name:decrypt"})
-		identity, allowed = authorizer.Authorize(ctx, "name", []string{"identity"})
-		require.True(t, allowed)
+		identity, decision, err = authz.Authorize(ctx, contracts.DecryptRequest{Name: "name", Decrypters: []string{"identity"}})
 		require.Equal(t, "identity", identity)
+		require.Equal(t, authorizer.DecisionAllow, decision)
+		require.NoError(t, err)
 	})
 
 	t.Run("when there are multiple permissions, some invalid, only valid ones are considered", func(t *testing.T) {
@@ -154,70 +172,79 @@ func TestDecryptAuthorizer(t *testing.T) {
 			"wrong.group/securevalues/group2:decrypt",
 			"secret.grafana.app/securevalues/identity:decrypt", // old style of identity+permission
 		})
-		authorizer := ProvideDecryptAuthorizer(map[string]struct{}{"identity": {}})
+		authz := NewDecryptersAuthorizer(map[string]struct{}{"identity": {}})
 
-		identity, allowed := authorizer.Authorize(ctx, "name1", []string{"identity"})
-		require.True(t, allowed)
+		identity, decision, err := authz.Authorize(ctx, contracts.DecryptRequest{Name: "name1", Decrypters: []string{"identity"}})
 		require.Equal(t, "identity", identity)
+		require.Equal(t, authorizer.DecisionAllow, decision)
+		require.NoError(t, err)
 
-		identity, allowed = authorizer.Authorize(ctx, "name2", []string{"identity"})
-		require.True(t, allowed)
+		identity, decision, err = authz.Authorize(ctx, contracts.DecryptRequest{Name: "name2", Decrypters: []string{"identity"}})
 		require.Equal(t, "identity", identity)
+		require.Equal(t, authorizer.DecisionAllow, decision)
+		require.NoError(t, err)
 	})
 
 	t.Run("when empty secure value name with specific permission, it returns false", func(t *testing.T) {
 		ctx := createAuthContext(context.Background(), "identity", []string{"secret.grafana.app/securevalues/name:decrypt"})
-		authorizer := ProvideDecryptAuthorizer(map[string]struct{}{"identity": {}})
+		authz := NewDecryptersAuthorizer(map[string]struct{}{"identity": {}})
 
-		identity, allowed := authorizer.Authorize(ctx, "", []string{"identity"})
+		identity, decision, err := authz.Authorize(ctx, contracts.DecryptRequest{Decrypters: []string{"identity"}})
 		require.Equal(t, "identity", identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 	})
 
 	t.Run("when permission has an extra / but no name, it returns false", func(t *testing.T) {
 		ctx := createAuthContext(context.Background(), "identity", []string{"secret.grafana.app/securevalues/:decrypt"})
-		authorizer := ProvideDecryptAuthorizer(map[string]struct{}{"identity": {}})
+		authz := NewDecryptersAuthorizer(map[string]struct{}{"identity": {}})
 
-		identity, allowed := authorizer.Authorize(ctx, "", []string{"identity"})
+		identity, decision, err := authz.Authorize(ctx, contracts.DecryptRequest{Decrypters: []string{"identity"}})
 		require.Equal(t, "identity", identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 	})
 
 	t.Run("when the decrypters list is empty, meaning nothing can decrypt the secure value, it returns false", func(t *testing.T) {
 		ctx := createAuthContext(context.Background(), "identity", []string{"secret.grafana.app/securevalues:decrypt"})
-		authorizer := ProvideDecryptAuthorizer(map[string]struct{}{"identity": {}})
+		authz := NewDecryptersAuthorizer(map[string]struct{}{"identity": {}})
 
-		identity, allowed := authorizer.Authorize(ctx, "name", []string{})
+		identity, decision, err := authz.Authorize(ctx, contracts.DecryptRequest{Name: "name"})
 		require.Equal(t, "identity", identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 	})
 
 	t.Run("when one of decrypters matches the identity, it returns true", func(t *testing.T) {
 		ctx := createAuthContext(context.Background(), "identity1", []string{"secret.grafana.app/securevalues:decrypt"})
-		authorizer := ProvideDecryptAuthorizer(map[string]struct{}{"identity1": {}, "identity2": {}})
+		authz := NewDecryptersAuthorizer(map[string]struct{}{"identity1": {}, "identity2": {}})
 
-		identity, allowed := authorizer.Authorize(ctx, "", []string{"identity1", "identity2", "identity3"})
+		identity, decision, err := authz.Authorize(ctx, contracts.DecryptRequest{Decrypters: []string{"identity1", "identity2", "identity3"}})
 		require.Equal(t, "identity1", identity)
-		require.True(t, allowed)
+		require.Equal(t, authorizer.DecisionAllow, decision)
+		require.NoError(t, err)
 	})
 
 	t.Run("permissions must be case-sensitive and return false", func(t *testing.T) {
-		authorizer := ProvideDecryptAuthorizer(map[string]struct{}{"identity": {}})
+		authz := NewDecryptersAuthorizer(map[string]struct{}{"identity": {}})
 
 		ctx := createAuthContext(context.Background(), "identity", []string{"SECRET.grafana.app/securevalues:decrypt"})
-		identity, allowed := authorizer.Authorize(ctx, "", []string{"identity"})
+		identity, decision, err := authz.Authorize(ctx, contracts.DecryptRequest{Decrypters: []string{"identity"}})
 		require.Equal(t, "identity", identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 
 		ctx = createAuthContext(context.Background(), "identity", []string{"secret.grafana.app/SECUREVALUES:decrypt"})
-		identity, allowed = authorizer.Authorize(ctx, "", []string{"identity"})
+		identity, decision, err = authz.Authorize(ctx, contracts.DecryptRequest{Decrypters: []string{"identity"}})
 		require.Equal(t, "identity", identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 
 		ctx = createAuthContext(context.Background(), "identity", []string{"secret.grafana.app/securevalues:DECRYPT"})
-		identity, allowed = authorizer.Authorize(ctx, "", []string{"identity"})
+		identity, decision, err = authz.Authorize(ctx, contracts.DecryptRequest{Decrypters: []string{"identity"}})
 		require.Equal(t, "identity", identity)
-		require.False(t, allowed)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Error(t, err)
 	})
 }
 

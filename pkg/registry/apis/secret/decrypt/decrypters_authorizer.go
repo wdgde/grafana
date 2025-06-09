@@ -2,41 +2,40 @@ package decrypt
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
-
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
-// decryptAuthorizer is the authorizer implementation for decrypt operations.
-type decryptAuthorizer struct {
+type decryptersAuthorizer struct {
 	allowList contracts.DecryptAllowList
 }
 
-func ProvideDecryptAuthorizer(allowList contracts.DecryptAllowList) contracts.DecryptAuthorizer {
-	return &decryptAuthorizer{
+func NewDecryptersAuthorizer(allowList contracts.DecryptAllowList) contracts.DecryptAuthorizer {
+	return &decryptersAuthorizer{
 		allowList: allowList,
 	}
 }
 
-// authorize checks whether the auth info token has the right permissions to decrypt the secure value.
-func (a *decryptAuthorizer) Authorize(ctx context.Context, secureValueName string, secureValueDecrypters []string) (string, bool) {
+func (a *decryptersAuthorizer) Authorize(ctx context.Context, req contracts.DecryptRequest) (identity string, allowed authorizer.Decision, err error) {
 	authInfo, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
-		return "", false
+		return "", authorizer.DecisionDeny, errors.New("no auth info found")
 	}
 
 	serviceIdentityList, ok := authInfo.GetExtra()[authn.ServiceIdentityKey]
 	if !ok {
-		return "", false
+		return "", authorizer.DecisionDeny, errors.New("service identity not found in auth info extra claims")
 	}
 
 	// If there's more than one service identity, something is suspicious and we reject it.
 	if len(serviceIdentityList) != 1 {
-		return "", false
+		return "", authorizer.DecisionDeny, errors.New("multiple service identities found in auth info extra claims")
 	}
 
 	serviceIdentity := serviceIdentityList[0]
@@ -45,24 +44,22 @@ func (a *decryptAuthorizer) Authorize(ctx context.Context, secureValueName strin
 	// securevalues preemptively here before even reaching out to the database.
 	// This check can be removed once we open the gates for any service to use secrets.
 	if _, exists := a.allowList[serviceIdentity]; !exists || serviceIdentity == "" {
-		return serviceIdentity, false
+		return serviceIdentity, authorizer.DecisionDeny, errors.New("service identity not allowed to decrypt secure values")
 	}
 
 	// Checks whether the token has the permission to decrypt secure values.
-	if !hasPermissionInToken(authInfo.GetTokenPermissions(), secureValueName) {
-		return serviceIdentity, false
+	if !hasPermissionInToken(authInfo.GetTokenPermissions(), req.Name) {
+		return serviceIdentity, authorizer.DecisionDeny, errors.New("service identity does not have permission to decrypt secure value")
 	}
 
 	// Finally check whether the service identity is allowed to decrypt this secure value.
-	allowed := false
-	for _, decrypter := range secureValueDecrypters {
+	for _, decrypter := range req.Decrypters {
 		if decrypter == serviceIdentity {
-			allowed = true
-			break
+			return serviceIdentity, authorizer.DecisionAllow, nil
 		}
 	}
 
-	return serviceIdentity, allowed
+	return serviceIdentity, authorizer.DecisionDeny, errors.New("service identity does not have permission to decrypt secure value")
 }
 
 // Adapted from https://github.com/grafana/authlib/blob/1492b99410603ca15730a1805a9220ce48232bc3/authz/client.go#L138
