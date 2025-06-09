@@ -1,19 +1,12 @@
-// @ts-check
-/** @typedef {import('@typescript-eslint/utils').TSESTree.Node} Node */
-/** @typedef {import('@typescript-eslint/utils').TSESTree.JSXAttribute} JSXAttribute */
-/** @typedef {import('@typescript-eslint/utils').TSESTree.JSXElement} JSXElement */
-/** @typedef {import('@typescript-eslint/utils').TSESTree.JSXFragment} JSXFragment */
-/** @typedef {import('@typescript-eslint/utils').TSESTree.JSXText} JSXText */
-/** @typedef {import('@typescript-eslint/utils').TSESTree.JSXChild} JSXChild */
-/** @typedef {import('@typescript-eslint/utils').TSESTree.Property} Property */
-/** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleFixer} RuleFixer */
-/** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleContext<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT',  [{forceFix: string[]}]>} RuleContextWithOptions */
-const { AST_NODE_TYPES } = require('@typescript-eslint/utils');
+import { AST_NODE_TYPES, TSESTree } from '@typescript-eslint/utils';
+import { RuleContext, RuleFixer } from '@typescript-eslint/utils/dist/ts-eslint';
 
-/**
- * @param {Node} node
- */
-const elementIsTrans = (node) => {
+type TranslationRuleContext = RuleContext<
+  'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT',
+  [{ forceFix: string[] }]
+>;
+
+export const elementIsTrans = (node: TSESTree.Node) => {
   return (
     node.type === AST_NODE_TYPES.JSXElement &&
     node.openingElement.type === AST_NODE_TYPES.JSXOpeningElement &&
@@ -22,11 +15,7 @@ const elementIsTrans = (node) => {
   );
 };
 
-/**
- * @param {Node} node
- * @param {RuleContextWithOptions} context
- */
-const getParentMethod = (node, context) => {
+const getParentMethod = (node: TSESTree.Node, context: TranslationRuleContext) => {
   const ancestors = context.sourceCode.getAncestors(node);
   return ancestors.find((anc) => {
     return (
@@ -38,19 +27,14 @@ const getParentMethod = (node, context) => {
   });
 };
 
-/**
- * @param {Node} node
- */
-const isStringLiteral = (node) => {
+const isStringLiteral = (node: TSESTree.Node) => {
   return node.type === AST_NODE_TYPES.Literal && typeof node.value === 'string';
 };
 
 /**
  * Converts a string to kebab case
- * @param {string} str The string to convert
- * @returns {string} The kebab case string
  */
-function toKebabCase(str) {
+function toKebabCase(str: string) {
   return str
     .replace(/([a-z])([A-Z])/g, '$1-$2')
     .toLowerCase()
@@ -59,29 +43,25 @@ function toKebabCase(str) {
 
 /**
  * Checks if a string is non-alphanumeric
- * @param {string} str The string to check
- * @returns {boolean}
  */
-function isStringNonAlphanumeric(str) {
+export function isStringNonAlphanumeric(str: string) {
   return !/[a-zA-Z0-9]/.test(str);
 }
 /**
  * Checks if we _should_ fix an error automatically
- * @param {RuleContextWithOptions} context
- * @returns {boolean} Whether the node should be fixed
  */
-function shouldBeFixed(context) {
+export function shouldBeFixed(context: TranslationRuleContext) {
   const pathsThatAreFixable = context.options[0]?.forceFix || [];
   return pathsThatAreFixable.some((path) => context.filename.includes(path));
 }
 
 /**
  * Checks if a node can be fixed automatically
- * @param {JSXAttribute|JSXElement|JSXFragment|Property} node The node to check
- * @param {RuleContextWithOptions} context
- * @returns {boolean} Whether the node can be fixed
  */
-function canBeFixed(node, context) {
+export function canBeFixed(
+  node: TSESTree.JSXAttribute | TSESTree.JSXElement | TSESTree.JSXFragment | TSESTree.Property,
+  context: TranslationRuleContext
+) {
   if (!getTranslationPrefix(context)) {
     return false;
   }
@@ -137,10 +117,8 @@ function canBeFixed(node, context) {
 
 /**
  * Gets the translation prefix from the filename
- * @param {RuleContextWithOptions} context
- * @returns {string|null} The translation prefix or null
  */
-function getTranslationPrefix(context) {
+export function getTranslationPrefix(context: TranslationRuleContext) {
   const filename = context.filename;
   const match = filename.match(/public\/app\/features\/(.+?)\//);
   if (match) {
@@ -151,11 +129,11 @@ function getTranslationPrefix(context) {
 
 /**
  * Gets the i18n key for a node
- * @param {JSXAttribute|JSXText|Property} node The node
- * @param {RuleContextWithOptions} context
- * @returns {string} The i18n key
  */
-const getI18nKey = (node, context) => {
+const getI18nKey = (
+  node: TSESTree.JSXAttribute | TSESTree.JSXText | TSESTree.Property,
+  context: TranslationRuleContext
+) => {
   const prefixFromFilePath = getTranslationPrefix(context);
   const stringValue = getNodeValue(node);
 
@@ -208,11 +186,11 @@ const getI18nKey = (node, context) => {
 
 /**
  * Gets component names from ancestors
- * @param {JSXAttribute|JSXText|Property} node The node
- * @param {RuleContextWithOptions} context
- * @returns {string[]} The component names
  */
-function getComponentNames(node, context) {
+function getComponentNames(
+  node: TSESTree.JSXAttribute | TSESTree.JSXText | TSESTree.Property,
+  context: TranslationRuleContext
+) {
   const names = [];
   const ancestors = context.sourceCode.getAncestors(node);
 
@@ -235,20 +213,16 @@ function getComponentNames(node, context) {
 
 /**
  * For a given node, check the scope and find a variable declaration of `t`
- * @param {Node} node
- * @param {RuleContextWithOptions} context
  */
-function getTDeclaration(node, context) {
+function getTDeclaration(node: TSESTree.Node, context: TranslationRuleContext) {
   return context.sourceCode.getScope(node).variables.find((v) => v.name === 't');
 }
 
 /**
  * Checks if a node has a variable declaration of `t`
  * that came from a `useTranslate` call
- * @param {Node} node The node
- * @param {RuleContextWithOptions} context
  */
-function methodHasUseTranslate(node, context) {
+function methodHasUseTranslate(node: TSESTree.Node, context: TranslationRuleContext) {
   const tDeclaration = getTDeclaration(node, context);
   return (
     tDeclaration &&
@@ -268,13 +242,13 @@ function methodHasUseTranslate(node, context) {
 
 /**
  * Gets the import fixer for a node
- * @param {JSXElement|JSXFragment|JSXAttribute|Property} node
- * @param {RuleFixer} fixer The fixer
- * @param {'Trans'|'t'|'useTranslate'} importName The member to import from either `@grafana/i18n` or `@grafana/i18n/internal`
- * @param {RuleContextWithOptions} context
- * @returns {import('@typescript-eslint/utils/ts-eslint').RuleFix|undefined} The fix
  */
-function getImportsFixer(node, fixer, importName, context) {
+function getImportsFixer(
+  node: TSESTree.JSXElement | TSESTree.JSXFragment | TSESTree.JSXAttribute | TSESTree.Property,
+  fixer: RuleFixer,
+  importName: 'Trans' | 't' | 'useTranslate',
+  context: TranslationRuleContext
+) {
   const body = context.sourceCode.ast.body;
 
   /** Map of where we expect to import each translation util from */
@@ -326,48 +300,38 @@ function getImportsFixer(node, fixer, importName, context) {
     return;
   }
   const lastSpecifier = existingAppCoreI18n.specifiers[existingAppCoreI18n.specifiers.length - 1];
-  /** @type {[number, number]} */
-  const range = [lastSpecifier.range[1], lastSpecifier.range[1]];
+  const range = [lastSpecifier.range[1], lastSpecifier.range[1]] as const;
   return fixer.insertTextAfterRange(range, `, ${importName}`);
 }
 
-/**
- * @param {JSXElement|JSXFragment} node
- * @param {RuleContextWithOptions} context
- * @returns {(fixer: RuleFixer) => import('@typescript-eslint/utils/ts-eslint').RuleFix[]}
- */
-const getTransFixers = (node, context) => (fixer) => {
-  const fixes = [];
-  const children = node.children;
-  children.forEach((child) => {
-    if (child.type === AST_NODE_TYPES.JSXText) {
-      const i18nKey = getI18nKey(child, context);
-      const value = getNodeValue(child);
-      fixes.push(fixer.replaceText(child, `<Trans i18nKey="${i18nKey}">${value}</Trans>`));
+export const getTransFixers =
+  (node: TSESTree.JSXElement | TSESTree.JSXFragment, context: TranslationRuleContext) => (fixer: RuleFixer) => {
+    const fixes = [];
+    const children = node.children;
+    children.forEach((child) => {
+      if (child.type === AST_NODE_TYPES.JSXText) {
+        const i18nKey = getI18nKey(child, context);
+        const value = getNodeValue(child);
+        fixes.push(fixer.replaceText(child, `<Trans i18nKey="${i18nKey}">${value}</Trans>`));
+      }
+    });
+
+    const importsFixer = getImportsFixer(node, fixer, 'Trans', context);
+    if (importsFixer) {
+      fixes.push(importsFixer);
     }
-  });
+    return fixes;
+  };
 
-  const importsFixer = getImportsFixer(node, fixer, 'Trans', context);
-  if (importsFixer) {
-    fixes.push(importsFixer);
-  }
-  return fixes;
-};
-
-/**
- * @param {string} str
- */
-const firstCharIsUpper = (str) => {
+const firstCharIsUpper = (str: string) => {
   return str.charAt(0) === str.charAt(0).toUpperCase();
 };
 
-/**
- * @param {JSXAttribute|Property} node
- * @param {RuleFixer} fixer
- * @param {RuleContextWithOptions} context
- * @returns {import('@typescript-eslint/utils/ts-eslint').RuleFix|undefined} The fix
- */
-const getUseTranslateFixer = (node, fixer, context) => {
+const getUseTranslateFixer = (
+  node: TSESTree.JSXAttribute | TSESTree.Property,
+  fixer: RuleFixer,
+  context: TranslationRuleContext
+) => {
   const parentMethod = getParentMethod(node, context);
 
   const functionIsNotUpperCase =
@@ -421,47 +385,49 @@ const getUseTranslateFixer = (node, fixer, context) => {
   return fixer.insertTextBefore(parentMethod.body.body[0], 'const { t } = useTranslate();\n');
 };
 
-/**
- * @param {JSXAttribute|Property} node
- * @param {RuleContextWithOptions} context
- * @returns {(fixer: RuleFixer) => import('@typescript-eslint/utils/ts-eslint').RuleFix[]}
- */
-const getTFixers = (node, context) => (fixer) => {
-  const fixes = [];
-  const i18nKey = getI18nKey(node, context);
-  const value = getNodeValue(node);
-  const wrappingQuotes = value.includes('"') ? "'" : '"';
+export const getTFixers =
+  (node: TSESTree.JSXAttribute | TSESTree.Property, context: TranslationRuleContext) => (fixer: RuleFixer) => {
+    const fixes = [];
+    const i18nKey = getI18nKey(node, context);
+    const value = getNodeValue(node);
+    const wrappingQuotes = value.includes('"') ? "'" : '"';
 
-  if (node.type === AST_NODE_TYPES.Property) {
-    fixes.push(fixer.replaceText(node.value, `t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})`));
-  } else {
-    fixes.push(
-      fixer.replaceText(node, `${node.name.name}={t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})}`)
-    );
-  }
+    if (node.type === AST_NODE_TYPES.Property) {
+      fixes.push(fixer.replaceText(node.value, `t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})`));
+    } else {
+      fixes.push(
+        fixer.replaceText(node, `${node.name.name}={t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})}`)
+      );
+    }
 
-  // Check if we need to add `useTranslate` to the node
-  const useTranslateFixer = getUseTranslateFixer(node, fixer, context);
-  if (useTranslateFixer) {
-    fixes.push(useTranslateFixer);
-  }
+    // Check if we need to add `useTranslate` to the node
+    const useTranslateFixer = getUseTranslateFixer(node, fixer, context);
+    if (useTranslateFixer) {
+      fixes.push(useTranslateFixer);
+    }
 
-  // Check if we need to add `t` or `useTranslate` to the imports
-  const importToAdd = useTranslateFixer ? 'useTranslate' : 't';
-  const importsFixer = getImportsFixer(node, fixer, importToAdd, context);
-  if (importsFixer) {
-    fixes.push(importsFixer);
-  }
+    // Check if we need to add `t` or `useTranslate` to the imports
+    const importToAdd = useTranslateFixer ? 'useTranslate' : 't';
+    const importsFixer = getImportsFixer(node, fixer, importToAdd, context);
+    if (importsFixer) {
+      fixes.push(importsFixer);
+    }
 
-  return fixes;
-};
+    return fixes;
+  };
 
 /**
  * Gets the value of a node
- * @param {JSXAttribute|JSXText|JSXElement|JSXFragment|JSXChild|Property} node The node
- * @returns {string} The node value
  */
-function getNodeValue(node) {
+export function getNodeValue(
+  node:
+    | TSESTree.JSXAttribute
+    | TSESTree.JSXText
+    | TSESTree.JSXElement
+    | TSESTree.JSXFragment
+    | TSESTree.JSXChild
+    | TSESTree.Property
+) {
   if (
     (node.type === AST_NODE_TYPES.JSXAttribute || node.type === AST_NODE_TYPES.Property) &&
     node.value?.type === AST_NODE_TYPES.Literal
@@ -486,14 +452,3 @@ function getNodeValue(node) {
   }
   return '';
 }
-
-module.exports = {
-  getNodeValue,
-  getTFixers,
-  getTransFixers,
-  getTranslationPrefix,
-  canBeFixed,
-  shouldBeFixed,
-  elementIsTrans,
-  isStringNonAlphanumeric,
-};

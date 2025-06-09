@@ -1,21 +1,10 @@
-// @ts-check
-const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
-
-/**
- * @typedef {import('@typescript-eslint/utils').TSESTree.Node} Node
- * @typedef {import('@typescript-eslint/utils').TSESLint.RuleContext<string, unknown[]>} RuleContext
- */
+import { ESLintUtils, AST_NODE_TYPES, TSESTree, TSESLint } from '@typescript-eslint/utils';
 
 const createRule = ESLintUtils.RuleCreator(
   (name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-i18n/src/eslint/README.md#${name}`
 );
 
-/**
- * @param {RuleContext} context
- * @param {Node} node
- * @returns {boolean}
- */
-const isInFunction = (context, node) => {
+const isInFunction = (context: TSESLint.RuleContext<string, unknown[]>, node: TSESTree.Node) => {
   const ancestors = context.sourceCode.getAncestors(node);
   return ancestors.some((anc) => {
     return [
@@ -56,4 +45,4 @@ const noTranslationTopLevel = createRule({
   defaultOptions: [],
 });
 
-module.exports = noTranslationTopLevel;
+export default noTranslationTopLevel;

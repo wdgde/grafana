@@ -1,6 +1,6 @@
 import { RuleTester } from 'eslint';
 
-import noUntranslatedStrings from './no-untranslated-strings.cjs';
+import noUntranslatedStrings from './no-untranslated-strings';
 
 const filename = 'public/app/features/some-feature/nested/SomeFile.tsx';
 

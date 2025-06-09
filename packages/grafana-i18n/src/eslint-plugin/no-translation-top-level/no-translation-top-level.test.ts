@@ -1,6 +1,6 @@
 import { RuleTester } from 'eslint';
 
-import noTranslationTopLevel from './no-translation-top-level.cjs';
+import noTranslationTopLevel from './no-translation-top-level';
 
 const ruleTester = new RuleTester({
   languageOptions: {
@@ -14,6 +14,7 @@ const ruleTester = new RuleTester({
   },
 });
 
+// TODO check this
 // @ts-ignore
 ruleTester.run('eslint no-translation-top-level', noTranslationTopLevel, {
   valid: [

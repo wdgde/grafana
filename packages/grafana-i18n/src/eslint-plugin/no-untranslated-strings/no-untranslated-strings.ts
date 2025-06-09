@@ -1,11 +1,6 @@
-// @ts-check
-/** @typedef {import('@typescript-eslint/utils').TSESTree.Node} Node */
-/** @typedef {import('@typescript-eslint/utils').TSESTree.JSXElement} JSXElement */
-/** @typedef {import('@typescript-eslint/utils').TSESTree.JSXFragment} JSXFragment */
-/** @typedef {import('@typescript-eslint/utils').TSESLint.RuleModule<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT' | 'noUntranslatedStringsProperties', [{ forceFix: string[] , calleesToIgnore: string[] }]>} RuleDefinition */
-/** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleContext<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT' | 'noUntranslatedStringsProperties',  [{forceFix: string[], calleesToIgnore: string[]}]>} RuleContextWithOptions */
+import { ESLintUtils, AST_NODE_TYPES, TSESTree } from '@typescript-eslint/utils';
 
-const {
+import {
   getNodeValue,
   getTFixers,
   getTransFixers,
@@ -13,9 +8,7 @@ const {
   elementIsTrans,
   shouldBeFixed,
   isStringNonAlphanumeric,
-} = require('./translation-utils.cjs');
-
-const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
+} from './translation-utils';
 
 const createRule = ESLintUtils.RuleCreator(
   (name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-i18n/src/eslint/README.md#${name}`
@@ -41,11 +34,7 @@ const propertiesToCheck = [
   'message',
 ];
 
-/** @type {RuleDefinition} */
 const noUntranslatedStrings = createRule({
-  /**
-   * @param {RuleContextWithOptions} context
-   */
   create(context) {
     const calleesToIgnore = context.options[0]?.calleesToIgnore || [];
     const propertiesRegexes = calleesToIgnore.map((pattern) => {
@@ -167,10 +156,7 @@ const noUntranslatedStrings = createRule({
 
         const { expression } = node;
 
-        /**
-         * @param {Node} expr
-         */
-        const isExpressionUntranslated = (expr) => {
+        const isExpressionUntranslated = (expr: TSESTree.Node) => {
           return expr.type === AST_NODE_TYPES.Literal && typeof expr.value === 'string' && Boolean(expr.value);
         };
 
@@ -195,10 +181,7 @@ const noUntranslatedStrings = createRule({
           }
         }
       },
-      /**
-       * @param {JSXElement|JSXFragment} node
-       */
-      'JSXElement, JSXFragment'(node) {
+      'JSXElement, JSXFragment'(node: TSESTree.JSXElement | TSESTree.JSXFragment) {
         const parent = node.parent;
         const children = node.children;
         const untranslatedTextNodes = children.filter((child) => {
@@ -291,4 +274,4 @@ const noUntranslatedStrings = createRule({
   defaultOptions: [{ forceFix: [], calleesToIgnore: [] }],
 });
 
-module.exports = noUntranslatedStrings;
+export default noUntranslatedStrings;
