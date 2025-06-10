@@ -1046,10 +1046,11 @@ var (
 		{
 			Name:            "ssoSettingsLDAP",
 			Description:     "Use the new SSO Settings API to configure LDAP",
-			Stage:           FeatureStagePublicPreview,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           identityAccessTeam,
 			AllowSelfServe:  true,
 			RequiresRestart: true,
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:        "failWrongDSUID",
@@ -1749,6 +1750,24 @@ var (
 			Description:       "Skip token rotation if it was already rotated less than 5 seconds ago",
 			Stage:             FeatureStagePrivatePreview,
 			Owner:             identityAccessTeam,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertEnrichment",
+			Description:       "Enable configuration of alert enrichments in Grafana Cloud.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "false",
+		},
+		{
+			Name:              "alertingImportAlertmanagerAPI",
+			Description:       "Enables the API to import Alertmanager configuration",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			Expression:        "false",

@@ -611,6 +611,7 @@ export interface FeatureToggles {
   authZGRPCServer?: boolean;
   /**
   * Use the new SSO Settings API to configure LDAP
+  * @default true
   */
   ssoSettingsLDAP?: boolean;
   /**
@@ -1018,6 +1019,16 @@ export interface FeatureToggles {
   * @default false
   */
   skipTokenRotationIfRecent?: boolean;
+  /**
+  * Enable configuration of alert enrichments in Grafana Cloud.
+  * @default false
+  */
+  alertEnrichment?: boolean;
+  /**
+  * Enables the API to import Alertmanager configuration
+  * @default false
+  */
+  alertingImportAlertmanagerAPI?: boolean;
   /**
   * Enables the plugins app
   */

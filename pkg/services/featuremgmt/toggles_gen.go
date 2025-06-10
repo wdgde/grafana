@@ -927,6 +927,14 @@ const (
 	// Skip token rotation if it was already rotated less than 5 seconds ago
 	FlagSkipTokenRotationIfRecent = "skipTokenRotationIfRecent"
 
+	// FlagAlertEnrichment
+	// Enable configuration of alert enrichments in Grafana Cloud.
+	FlagAlertEnrichment = "alertEnrichment"
+
+	// FlagAlertingImportAlertmanagerAPI
+	// Enables the API to import Alertmanager configuration
+	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
+
 	// FlagPluginsApp
 	// Enables the plugins app
 	FlagPluginsApp = "pluginsApp"
