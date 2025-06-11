@@ -19,13 +19,13 @@ interface Rudderstack {
   track: typeof track;
 }
 
-declare global {
-  interface Window {
-    // We say all methods are undefined because we can't be sure they're there
-    // and we should be extra cautious
-    rudderanalytics?: Partial<Rudderstack>;
-  }
-}
+// declare global {
+//   interface Window {
+//     // We say all methods are undefined because we can't be sure they're there
+//     // and we should be extra cautious
+//     rudderanalytics?: Partial<Rudderstack>;
+//   }
+// }
 
 export interface RudderstackBackendOptions {
   writeKey: string;
