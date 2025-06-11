@@ -311,3 +311,156 @@ func (s *legacyDataSourceRetriever) GetDataSourceFromDeprecatedFields(ctx contex
 	}
 	return nil, fmt.Errorf("missing parameter")
 }
+
+func TestExpressionBeforeHiddenDependency(t *testing.T) {
+	t.Run("A should be unhidden when a dependency of expression (Expression Last, two ds queries of same type/uid)", func(t *testing.T) {
+		parser := newQueryParser(
+			expr.NewExpressionQueryReader(featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)),
+			nil,
+			tracing.InitializeTracerForTest(),
+			log.NewNopLogger(),
+		)
+
+		req := &query.QueryDataRequest{
+			QueryDataRequest: data.QueryDataRequest{
+				Queries: []data.DataQuery{
+					// Dependency comes after expression and is hidden
+					data.NewDataQuery(map[string]any{
+						"refId": "A",
+						"hide":  true,
+						"datasource": &data.DataSourceRef{
+							Type: "testdata",
+							UID:  "local-test",
+						},
+					}),
+					data.NewDataQuery(map[string]any{
+						"refId": "B",
+						"hide":  true,
+						"datasource": &data.DataSourceRef{
+							Type: "testdata",
+							UID:  "local-test",
+						},
+					}),
+					// Expression query that depends on A
+					data.NewDataQuery(map[string]any{
+						"refId": "C",
+						"datasource": &data.DataSourceRef{
+							Type: "__expr__",
+							UID:  "__expr__",
+						},
+						"type":       "sql",
+						"expression": "SELECT * FROM A",
+					}),
+				},
+			},
+		}
+
+		parsed, err := parser.parseRequest(context.Background(), req)
+		require.NoError(t, err)
+
+		a := parsed.Requests[0].Request.Queries[0]
+		require.Equal(t, "A", a.RefID)
+		require.False(t, a.Hide, "Expected A to be unhidden due to dependency from C")
+	})
+
+	t.Run("A should be unhidden when a dependency of expression (Expression Last, two ds queries of different uid)", func(t *testing.T) {
+		parser := newQueryParser(
+			expr.NewExpressionQueryReader(featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)),
+			nil,
+			tracing.InitializeTracerForTest(),
+			log.NewNopLogger(),
+		)
+
+		req := &query.QueryDataRequest{
+			QueryDataRequest: data.QueryDataRequest{
+				Queries: []data.DataQuery{
+					// Dependency comes after expression and is hidden
+					data.NewDataQuery(map[string]any{
+						"refId": "A",
+						"hide":  true,
+						"datasource": &data.DataSourceRef{
+							Type: "testdata",
+							UID:  "local-test",
+						},
+					}),
+					data.NewDataQuery(map[string]any{
+						"refId": "B",
+						"hide":  true,
+						"datasource": &data.DataSourceRef{
+							Type: "testdata",
+							UID:  "a-local-test",
+						},
+					}),
+					// Expression query that depends on A
+					data.NewDataQuery(map[string]any{
+						"refId": "C",
+						"datasource": &data.DataSourceRef{
+							Type: "__expr__",
+							UID:  "__expr__",
+						},
+						"type":       "sql",
+						"expression": "SELECT * FROM A",
+					}),
+				},
+			},
+		}
+
+		parsed, err := parser.parseRequest(context.Background(), req)
+		require.NoError(t, err)
+
+		a := parsed.Requests[0].Request.Queries[0]
+		require.Equal(t, "A", a.RefID)
+		require.False(t, a.Hide, "Expected A to be unhidden due to dependency from C")
+	})
+
+	t.Run("A should be unhidden when a dependency of expression (Expression First, two ds queries of same type/uid)", func(t *testing.T) {
+		parser := newQueryParser(
+			expr.NewExpressionQueryReader(featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)),
+			nil,
+			tracing.InitializeTracerForTest(),
+			log.NewNopLogger(),
+		)
+
+		req := &query.QueryDataRequest{
+			QueryDataRequest: data.QueryDataRequest{
+				Queries: []data.DataQuery{
+					// Dependency comes after expression and is hidden
+
+					// Expression query that depends on A
+					data.NewDataQuery(map[string]any{
+						"refId": "C",
+						"datasource": &data.DataSourceRef{
+							Type: "__expr__",
+							UID:  "__expr__",
+						},
+						"type":       "sql",
+						"expression": "SELECT * FROM A",
+					}),
+					data.NewDataQuery(map[string]any{
+						"refId": "B",
+						"hide":  true,
+						"datasource": &data.DataSourceRef{
+							Type: "testdata",
+							UID:  "local-test",
+						},
+					}),
+					data.NewDataQuery(map[string]any{
+						"refId": "A",
+						"hide":  true,
+						"datasource": &data.DataSourceRef{
+							Type: "testdata",
+							UID:  "local-test",
+						},
+					}),
+				},
+			},
+		}
+
+		parsed, err := parser.parseRequest(context.Background(), req)
+		require.NoError(t, err)
+
+		a := parsed.Requests[0].Request.Queries[1]
+		require.Equal(t, "A", a.RefID)
+		require.False(t, a.Hide, "Expected A to be unhidden due to dependency from C")
+	})
+}
