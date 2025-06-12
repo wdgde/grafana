@@ -7,7 +7,6 @@ package v0alpha1
 type PluginSpec struct {
 	Id      string `json:"id"`
 	Version string `json:"version"`
-	Type    string `json:"type"`
 }
 
 // NewPluginSpec creates a new PluginSpec object.

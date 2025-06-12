@@ -1,28 +1,30 @@
-package enhancedregistry
+package pluginresource
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"sync"
+	"time"
+
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	sdkresource "github.com/grafana/grafana-app-sdk/resource"
-	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	"strconv"
-	"sync"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// EnhancedRegistry is a registry that uses Kubernetes as the source of truth for plugins.
-type EnhancedRegistry struct {
+// Registry is a registry that wraps the Plugins API as the source of truth for plugins.
+type Registry struct {
 	pluginClient sdkresource.Client
 	restConfig   apiserver.RestConfigProvider
 	cfg          *setting.Cfg
@@ -34,14 +36,12 @@ type EnhancedRegistry struct {
 	initErr  error
 }
 
-// ProvideService returns a new enhanced registry service.
-func ProvideService(cfg *setting.Cfg, restCfgProvider apiserver.RestConfigProvider) (*EnhancedRegistry, error) {
-	return NewEnhancedRegistry(cfg, restCfgProvider), nil
+func ProvideService(cfg *setting.Cfg, restCfgProvider apiserver.RestConfigProvider) (*Registry, error) {
+	return newRegistry(cfg, restCfgProvider), nil
 }
 
-// NewEnhancedRegistry creates a new enhanced registry.
-func NewEnhancedRegistry(cfg *setting.Cfg, restConfig apiserver.RestConfigProvider) *EnhancedRegistry {
-	return &EnhancedRegistry{
+func newRegistry(cfg *setting.Cfg, restConfig apiserver.RestConfigProvider) *Registry {
+	return &Registry{
 		cfg:        cfg,
 		restConfig: restConfig,
 		mem:        registry.NewInMemory(),
@@ -49,27 +49,8 @@ func NewEnhancedRegistry(cfg *setting.Cfg, restConfig apiserver.RestConfigProvid
 	}
 }
 
-// ensureClient ensures the plugin client is initialized
-func (r *EnhancedRegistry) ensureClient(ctx context.Context) error {
-	r.initOnce.Do(func() {
-		kubeConfig, err := r.restConfig.GetRestConfig(ctx)
-		if err != nil {
-			r.initErr = err
-			return
-		}
-		clientGenerator := k8s.NewClientRegistry(*kubeConfig, k8s.ClientConfig{})
-		r.pluginClient, err = clientGenerator.ClientFor(pluginsv0alpha1.PluginKind())
-		if err != nil {
-			r.initErr = fmt.Errorf("failed to create plugin client: %w", err)
-			return
-		}
-		r.initErr = nil
-	})
-	return r.initErr
-}
-
 // Plugin returns a plugin by its ID.
-func (r *EnhancedRegistry) Plugin(ctx context.Context, pluginID string, version string) (*plugins.Plugin, bool) {
+func (r *Registry) Plugin(ctx context.Context, pluginID string, version string) (*plugins.Plugin, bool) {
 	if err := r.ensureClient(ctx); err != nil {
 		r.log.Error("Failed to initialize plugin client", "error", err)
 		return nil, false
@@ -105,7 +86,7 @@ func (r *EnhancedRegistry) Plugin(ctx context.Context, pluginID string, version 
 }
 
 // Plugins returns all plugins.
-func (r *EnhancedRegistry) Plugins(ctx context.Context) []*plugins.Plugin {
+func (r *Registry) Plugins(ctx context.Context) []*plugins.Plugin {
 	if err := r.ensureClient(ctx); err != nil {
 		r.log.Error("Failed to initialize plugin client", "error", err)
 		return nil
@@ -140,7 +121,7 @@ func (r *EnhancedRegistry) Plugins(ctx context.Context) []*plugins.Plugin {
 }
 
 // Add adds a plugin to the registry.
-func (r *EnhancedRegistry) Add(ctx context.Context, p *plugins.Plugin) error {
+func (r *Registry) Add(ctx context.Context, p *plugins.Plugin) error {
 	if err := r.ensureClient(ctx); err != nil {
 		return fmt.Errorf("failed to initialize plugin client: %w", err)
 	}
@@ -169,7 +150,6 @@ func (r *EnhancedRegistry) Add(ctx context.Context, p *plugins.Plugin) error {
 		Spec: pluginsv0alpha1.PluginSpec{
 			Id:      p.JSONData.ID,
 			Version: p.JSONData.Info.Version,
-			Type:    string(p.JSONData.Type),
 		},
 	}
 
@@ -204,7 +184,7 @@ func (r *EnhancedRegistry) Add(ctx context.Context, p *plugins.Plugin) error {
 }
 
 // Remove removes a plugin from the registry.
-func (r *EnhancedRegistry) Remove(ctx context.Context, pluginID string, version string) error {
+func (r *Registry) Remove(ctx context.Context, pluginID string, version string) error {
 	if err := r.ensureClient(ctx); err != nil {
 		return fmt.Errorf("failed to initialize plugin client: %w", err)
 	}
@@ -228,7 +208,77 @@ func (r *EnhancedRegistry) Remove(ctx context.Context, pluginID string, version 
 	return r.mem.Remove(ctx, pluginID, version)
 }
 
-func (r *EnhancedRegistry) getNamespace(ctx context.Context) (string, error) {
+// ensureClient ensures the plugin client is initialized
+func (r *Registry) ensureClient(ctx context.Context) error {
+	r.initOnce.Do(func() {
+		r.initErr = r.initializeClientWithRetry(ctx)
+	})
+	return r.initErr
+}
+
+// initializeClientWithRetry handles the client initialization with retry logic
+func (r *Registry) initializeClientWithRetry(ctx context.Context) error {
+	const maxAttempts = 5
+	const retryDelay = 2 * time.Second
+
+	var lastErr error
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		if err := r.createPluginClient(ctx); err != nil {
+			lastErr = err
+			r.log.Error("Failed to initialize plugin client", "attempt", attempt, "error", err)
+
+			if attempt == maxAttempts {
+				panic(fmt.Errorf("could not initialize plugin client after %d attempts: %w", maxAttempts, err))
+			}
+
+			time.Sleep(retryDelay)
+			continue
+		}
+
+		// Test the client by doing a simple list operation
+		if err := r.testPluginClient(ctx); err != nil {
+			lastErr = err
+			r.log.Error("Plugin client test failed", "attempt", attempt, "error", err, "status_code", errAsStatusCode(err))
+
+			if attempt == maxAttempts {
+				panic(fmt.Errorf("plugin client test failed after %d attempts: %w", maxAttempts, err))
+			}
+
+			time.Sleep(retryDelay)
+			continue
+		}
+
+		// Success
+		return nil
+	}
+
+	return lastErr
+}
+
+// createPluginClient creates and configures the plugin client
+func (r *Registry) createPluginClient(ctx context.Context) error {
+	kubeConfig, err := r.restConfig.GetRestConfig(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get REST config: %w", err)
+	}
+
+	clientGenerator := k8s.NewClientRegistry(*kubeConfig, k8s.ClientConfig{})
+	pluginClient, err := clientGenerator.ClientFor(pluginsv0alpha1.PluginKind())
+	if err != nil {
+		return fmt.Errorf("failed to create plugin client: %w", err)
+	}
+
+	r.pluginClient = pluginClient
+	return nil
+}
+
+// testPluginClient tests the plugin client with a simple list operation
+func (r *Registry) testPluginClient(ctx context.Context) error {
+	_, err := r.pluginClient.List(ctx, "", sdkresource.ListOptions{Limit: 1})
+	return err
+}
+
+func (r *Registry) getNamespace(ctx context.Context) (string, error) {
 	namespace, ok := request.NamespaceFrom(ctx)
 	if ok {
 		return namespace, nil
@@ -247,8 +297,7 @@ func (r *EnhancedRegistry) getNamespace(ctx context.Context) (string, error) {
 func specToPlugin(spec pluginsv0alpha1.PluginSpec) *plugins.Plugin {
 	p := &plugins.Plugin{
 		JSONData: plugins.JSONData{
-			ID:   spec.Id,
-			Type: plugins.Type(spec.Type),
+			ID: spec.Id,
 			Info: plugins.Info{
 				Description: "Plugin loaded from Kubernetes",
 				Version:     spec.Version,
@@ -257,4 +306,12 @@ func specToPlugin(spec pluginsv0alpha1.PluginSpec) *plugins.Plugin {
 	}
 	p.SetLogger(log.New(fmt.Sprintf("plugin.%s", spec.Id)))
 	return p
+}
+
+// errAsStatusCode extracts status code from kubernetes errors
+func errAsStatusCode(err error) int {
+	if status, ok := k8s.StatusFromError(err); ok {
+		return int(status.Status().Code)
+	}
+	return 0
 }
