@@ -101,7 +101,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 
 	ctx := context.Background()
 	verifyCorePluginCatalogue(t, ctx, testCtx.PluginStore)
-	verifyPluginStaticRoutes(t, ctx, testCtx.PluginStore, testCtx.PluginStore)
+	verifyPluginStaticRoutes(t, ctx, testCtx.PluginStaticRouteResolver, testCtx.PluginStore)
 	verifyBackendProcesses(t, testCtx.PluginRegistry.Plugins(ctx))
 	verifyPluginQuery(t, ctx, testCtx.PluginClient)
 }
@@ -131,7 +131,7 @@ func verifyPluginQuery(t *testing.T, ctx context.Context, c plugins.Client) {
 	require.JSONEq(t, `{"results":{"A":{"frames":[{"schema":{"refId":"A","fields":[{"name":"time","type":"time","typeInfo":{"frame":"time.Time"}},{"name":"A-series","type":"number","typeInfo":{"frame":"int64","nullable":true}}]},"data":{"values":[[1661420570000,1661420630000,1661420690000,1661420750000,1661420810000,1661420870000],[1,20,90,30,5,0]]}}],"status":200}}}`, string(payload))
 }
 
-func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstore.Service) {
+func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps pluginstore.Store) {
 	t.Helper()
 
 	expPanels := map[string]struct{}{
@@ -227,7 +227,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 	require.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(ps.Plugins(ctx)))
 }
 
-func verifyPluginStaticRoutes(t *testing.T, ctx context.Context, rr plugins.StaticRouteResolver, ps *pluginstore.Service) {
+func verifyPluginStaticRoutes(t *testing.T, ctx context.Context, rr plugins.StaticRouteResolver, ps pluginstore.Store) {
 	routes := make(map[string]*plugins.StaticRoute)
 	for _, route := range rr.Routes(ctx) {
 		routes[route.PluginID] = route

@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
@@ -27,45 +27,48 @@ type Store interface {
 type Service struct {
 	pluginRegistry registry.Service
 	pluginLoader   loader.Service
+	pluginSources  sources.Registry
+	logger         log.Logger
 }
 
 func ProvideService(pluginRegistry registry.Service, pluginSources sources.Registry,
 	pluginLoader loader.Service) (*Service, error) {
-	ctx := context.Background()
+	return New(pluginRegistry, pluginLoader, pluginSources), nil
+}
+
+func (s *Service) Run(ctx context.Context) error {
 	start := time.Now()
 	totalPlugins := 0
-	logger := log.New("plugin.store")
-	logger.Info("Loading plugins...")
+	s.logger.Info("[PLUGIN_STORE] Loading plugins...")
 
-	for _, ps := range pluginSources.List(ctx) {
-		loadedPlugins, err := pluginLoader.Load(ctx, ps)
+	for _, ps := range s.pluginSources.List(ctx) {
+		loadedPlugins, err := s.pluginLoader.Load(ctx, ps)
 		if err != nil {
-			logger.Error("Loading plugin source failed", "source", ps.PluginClass(ctx), "error", err)
-			return nil, err
+			s.logger.Error("Loading plugin source failed", "source", ps.PluginClass(ctx), "error", err)
+			return err
 		}
 
 		totalPlugins += len(loadedPlugins)
 	}
 
-	logger.Info("Plugins loaded", "count", totalPlugins, "duration", time.Since(start))
+	s.logger.Info("[PLUGIN_STORE] Plugins loaded", "count", totalPlugins, "duration", time.Since(start))
 
-	return New(pluginRegistry, pluginLoader), nil
-}
-
-func (s *Service) Run(ctx context.Context) error {
 	<-ctx.Done()
 	s.shutdown(ctx)
 	return ctx.Err()
 }
 
-func New(pluginRegistry registry.Service, pluginLoader loader.Service) *Service {
+func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginSources sources.Registry) *Service {
 	return &Service{
 		pluginRegistry: pluginRegistry,
 		pluginLoader:   pluginLoader,
+		pluginSources:  pluginSources,
+		logger:         log.New("plugin.store"),
 	}
 }
 
 func (s *Service) Plugin(ctx context.Context, pluginID string) (Plugin, bool) {
+	s.logger.Info("[PLUGIN_STORE] Fetching plugin", "pluginId", pluginID)
 	p, exists := s.plugin(ctx, pluginID)
 	if !exists {
 		return Plugin{}, false
@@ -75,6 +78,8 @@ func (s *Service) Plugin(ctx context.Context, pluginID string) (Plugin, bool) {
 }
 
 func (s *Service) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []Plugin {
+	s.logger.Info("[PLUGIN_STORE] Fetching plugins", "pluginTypes", pluginTypes)
+
 	// if no types passed, assume all
 	if len(pluginTypes) == 0 {
 		pluginTypes = plugins.PluginTypes
@@ -125,6 +130,8 @@ func (s *Service) availablePlugins(ctx context.Context) []*plugins.Plugin {
 }
 
 func (s *Service) Routes(ctx context.Context) []*plugins.StaticRoute {
+	s.logger.Info("[PLUGIN_STORE] Fetching plugin routes")
+
 	staticRoutes := make([]*plugins.StaticRoute, 0)
 
 	for _, p := range s.availablePlugins(ctx) {

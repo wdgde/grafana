@@ -37,9 +37,10 @@ import (
 )
 
 type IntegrationTestCtx struct {
-	PluginClient   plugins.Client
-	PluginStore    *pluginstore.Service
-	PluginRegistry registry.Service
+	PluginClient              plugins.Client
+	PluginStore               pluginstore.Store
+	PluginStaticRouteResolver plugins.StaticRouteResolver
+	PluginRegistry            registry.Service
 }
 
 func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *coreplugin.Registry) *IntegrationTestCtx {
@@ -70,9 +71,10 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 	require.NoError(t, err)
 
 	return &IntegrationTestCtx{
-		PluginClient:   client.ProvideService(reg),
-		PluginStore:    ps,
-		PluginRegistry: reg,
+		PluginClient:              client.ProvideService(reg),
+		PluginStore:               ps,
+		PluginRegistry:            reg,
+		PluginStaticRouteResolver: ps,
 	}
 }
 
