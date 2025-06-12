@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"strings"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -47,7 +49,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -177,7 +178,18 @@ func ProvideService(
 				req.URL.Path = "/"
 			}
 
-			if c.SignedInUser != nil {
+			if c.SignedInUser != nil { // << should always be true
+				if c.Namespace == "" {
+					idx := strings.Index(req.URL.Path, "/namespaces/")
+					if idx > 0 {
+						idx += len("/namespaces/")
+						before, _, found := strings.Cut(req.URL.Path[idx:], "/")
+						if found {
+							c.Namespace = before
+							c.OrgRole = identity.RoleNone
+						}
+					}
+				}
 				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
 				req = req.WithContext(ctx)
 			}
@@ -185,8 +197,14 @@ func ProvideService(
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 			s.handler.ServeHTTP(resp, req)
 		}
-		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
-		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
+
+		auth := middleware.Auth(&middleware.AuthOptions{
+			ReqGrafanaAdmin: false,
+			ReqNoAnonynmous: false,
+			ReqSignedIn:     false,
+		})
+		k8sRoute.Any("/", auth, handler)
+		k8sRoute.Any("/*", auth, handler)
 	}
 
 	s.rr.Group("/apis", proxyHandler)
