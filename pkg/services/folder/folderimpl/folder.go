@@ -26,9 +26,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -89,7 +89,7 @@ func ProvideService(
 	resourceClient resource.ResourceClient,
 	dual dualwrite.Service,
 	sorter sort.Service,
-	restConfig restconfig.RestConfigProvider,
+	restConfig apiserver.RestConfigProvider,
 ) *Service {
 	srv := &Service{
 		log:                    slog.Default().With("logger", "folder-service"),

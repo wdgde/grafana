@@ -13,8 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/routing"
 	internalplaylist "github.com/grafana/grafana/pkg/registry/apps/playlist"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -136,7 +136,7 @@ type CreatePlaylistResponse struct {
 type playlistK8sHandler struct {
 	namespacer           request.NamespaceMapper
 	gvr                  schema.GroupVersionResource
-	clientConfigProvider restconfig.DirectRestConfigProvider
+	clientConfigProvider apiserver.DirectRestConfigProvider
 }
 
 //-----------------------------------------------------------------------------------------

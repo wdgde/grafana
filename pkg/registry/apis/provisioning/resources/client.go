@@ -14,8 +14,8 @@ import (
 	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
-	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 )
 
 var (
@@ -39,7 +39,7 @@ type ClientFactory interface {
 }
 
 type clientFactory struct {
-	configProvider restconfig.RestConfigProvider
+	configProvider apiserver.RestConfigProvider
 }
 
 // TODO: Rename to NamespacedClients
@@ -54,7 +54,7 @@ type ResourceClients interface {
 	User() (dynamic.ResourceInterface, error)
 }
 
-func NewClientFactory(configProvider restconfig.RestConfigProvider) ClientFactory {
+func NewClientFactory(configProvider apiserver.RestConfigProvider) ClientFactory {
 	return &clientFactory{configProvider}
 }
 

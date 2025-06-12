@@ -16,9 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -44,7 +44,7 @@ type Service struct {
 }
 
 func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.DashboardService, dashboardStore dashboards.Store, features featuremgmt.FeatureToggles,
-	restConfigProvider restconfig.RestConfigProvider, userService user.Service, unified resource.ResourceClient, dual dualwrite.Service, sorter sort.Service) dashver.Service {
+	restConfigProvider apiserver.RestConfigProvider, userService user.Service, unified resource.ResourceClient, dual dualwrite.Service, sorter sort.Service) dashver.Service {
 	return &Service{
 		cfg: cfg,
 		store: &sqlStore{

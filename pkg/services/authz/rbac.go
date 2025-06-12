@@ -26,7 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -49,7 +49,7 @@ func ProvideAuthZClient(
 	db db.DB,
 	acService accesscontrol.Service,
 	zanzanaClient zanzana.Client,
-	restConfig restconfig.RestConfigProvider,
+	restConfig apiserver.RestConfigProvider,
 ) (authlib.AccessClient, error) {
 	authCfg, err := readAuthzClientSettings(cfg)
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/k8s"
 	sdkresource "github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -17,14 +18,13 @@ import (
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // EnhancedRegistry is a registry that uses Kubernetes as the source of truth for plugins.
 type EnhancedRegistry struct {
 	pluginClient sdkresource.Client
-	restConfig   restconfig.RestConfigProvider
+	restConfig   apiserver.RestConfigProvider
 	cfg          *setting.Cfg
 
 	mem *registry.InMemory
@@ -35,12 +35,12 @@ type EnhancedRegistry struct {
 }
 
 // ProvideService returns a new enhanced registry service.
-func ProvideService(cfg *setting.Cfg, restCfgProvider restconfig.RestConfigProvider) (*EnhancedRegistry, error) {
+func ProvideService(cfg *setting.Cfg, restCfgProvider apiserver.RestConfigProvider) (*EnhancedRegistry, error) {
 	return NewEnhancedRegistry(cfg, restCfgProvider), nil
 }
 
 // NewEnhancedRegistry creates a new enhanced registry.
-func NewEnhancedRegistry(cfg *setting.Cfg, restConfig restconfig.RestConfigProvider) *EnhancedRegistry {
+func NewEnhancedRegistry(cfg *setting.Cfg, restConfig apiserver.RestConfigProvider) *EnhancedRegistry {
 	return &EnhancedRegistry{
 		cfg:        cfg,
 		restConfig: restConfig,

@@ -26,6 +26,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -51,8 +52,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
@@ -108,7 +109,7 @@ func NewAPIBuilder(
 	features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
 	clonedir string, // where repo clones are managed
-	configProvider restconfig.RestConfigProvider,
+	configProvider apiserver.RestConfigProvider,
 	ghFactory *github.Factory,
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
@@ -153,7 +154,7 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
 	client resource.ResourceClient, // implements resource.RepositoryClient
-	configProvider restconfig.RestConfigProvider,
+	configProvider apiserver.RestConfigProvider,
 	ghFactory *github.Factory,
 	access authlib.AccessClient,
 	legacyMigrator legacy.LegacyMigrator,

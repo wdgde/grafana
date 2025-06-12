@@ -39,9 +39,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	dashboardclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
@@ -380,7 +380,7 @@ func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore folder.FolderStore,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	ac accesscontrol.AccessControl, acService accesscontrol.Service, folderSvc folder.Service, r prometheus.Registerer,
-	restConfigProvider restconfig.RestConfigProvider, userService user.Service,
+	restConfigProvider apiserver.RestConfigProvider, userService user.Service,
 	quotaService quota.Service, orgService org.Service, publicDashboardService publicdashboards.ServiceWrapper,
 	resourceClient resource.ResourceClient, dual dualwrite.Service, sorter sort.Service,
 	serverLockService *serverlock.ServerLockService,

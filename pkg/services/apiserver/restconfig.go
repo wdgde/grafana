@@ -1,4 +1,4 @@
-package restconfig
+package apiserver
 
 import (
 	"context"

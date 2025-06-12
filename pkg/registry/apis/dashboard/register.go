@@ -34,9 +34,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -110,7 +110,7 @@ func RegisterAPIService(
 	sorter sort.Service,
 	quotaService quota.Service,
 	folderStore folder.FolderStore,
-	restConfigProvider restconfig.RestConfigProvider,
+	restConfigProvider apiserver.RestConfigProvider,
 	userService user.Service,
 ) *DashboardsAPIBuilder {
 	dbp := legacysql.NewDatabaseProvider(sql)

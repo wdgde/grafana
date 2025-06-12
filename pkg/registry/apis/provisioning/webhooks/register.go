@@ -6,6 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/kube-openapi/pkg/spec3"
+
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -15,14 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
-	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/kube-openapi/pkg/spec3"
 )
 
 // WebhookExtraBuilder is a function that returns an ExtraBuilder.
@@ -39,7 +40,7 @@ func ProvideWebhooks(
 	ghFactory *github.Factory,
 	renderer rendering.Service,
 	blobstore resource.ResourceClient,
-	configProvider restconfig.RestConfigProvider,
+	configProvider apiserver.RestConfigProvider,
 ) WebhookExtraBuilder {
 	return WebhookExtraBuilder{
 		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {

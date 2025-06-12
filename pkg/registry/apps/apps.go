@@ -14,9 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
-	"github.com/grafana/grafana/pkg/services/apiserver/restconfig"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -33,7 +33,7 @@ type Service struct {
 // ProvideRegistryServiceSink is an entry point for each service that will force initialization
 func ProvideRegistryServiceSink(
 	registrar builder.APIRegistrar,
-	restConfigProvider restconfig.RestConfigProvider,
+	restConfigProvider apiserver.RestConfigProvider,
 	features featuremgmt.FeatureToggles,
 	playlistAppProvider *playlist.PlaylistAppProvider,
 	investigationAppProvider *investigations.InvestigationsAppProvider,
