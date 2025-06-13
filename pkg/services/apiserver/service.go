@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"path"
-	"strings"
+	"regexp"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -18,6 +18,7 @@ import (
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	dataplaneaggregator "github.com/grafana/grafana/pkg/aggregator/apiserver"
@@ -180,14 +181,18 @@ func ProvideService(
 
 			if c.SignedInUser != nil { // << should always be true
 				if c.Namespace == "" {
-					idx := strings.Index(req.URL.Path, "/namespaces/")
-					if idx > 0 {
-						idx += len("/namespaces/")
-						before, _, found := strings.Cut(req.URL.Path[idx:], "/")
-						if found {
-							c.Namespace = before
+					re := regexp.MustCompile("apis/[a-zA-Z0-9_.]+/[a-zA-Z0-9_.]+/namespaces/([a-zA-Z0-9_.]+)")
+					matches := re.FindStringSubmatch(req.URL.Path)
+					if len(matches) > 1 {
+						ns, err := types.ParseNamespace(matches[1])
+						if err == nil {
+							c.Namespace = ns.Value
+							c.OrgID = ns.OrgID
 							c.OrgRole = identity.RoleNone
+							c.Name = "Unauthenticated"
+							c.Login = "Unauthenticated"
 						}
+						fmt.Printf("%s\n", matches[1])
 					}
 				}
 				ctx := identity.WithRequester(req.Context(), c.SignedInUser)

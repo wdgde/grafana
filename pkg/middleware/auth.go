@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -9,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -208,6 +210,20 @@ func Auth(options *AuthOptions) web.Handler {
 				orgID, err := strconv.ParseInt(orgIDValue, 10, 64)
 				if err == nil && orgID > 0 && orgID != c.GetOrgID() {
 					forceLogin = true
+				} else {
+					// For API endpoint, use the namespace
+					re := regexp.MustCompile("apis/[a-zA-Z0-9_.]+/[a-zA-Z0-9_.]+/namespaces/([a-zA-Z0-9_.]+)")
+					matches := re.FindStringSubmatch(c.Req.URL.Path)
+					if len(matches) > 1 {
+						ns, err := types.ParseNamespace(matches[1])
+						if err == nil {
+							c.Namespace = ns.Value
+							c.OrgID = ns.OrgID
+							c.Name = "Unauthenticated"
+							c.Login = "Unauthenticated"
+						}
+						fmt.Printf("%s\n", matches[1])
+					}
 				}
 			}
 		}
