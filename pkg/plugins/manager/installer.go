@@ -203,6 +203,11 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID, version string) 
 		return err
 	}
 
+	err = m.pluginRegistry.Remove(ctx, pluginID, version)
+	if err != nil {
+		return err
+	}
+
 	if remover, ok := p.FS.(plugins.FSRemover); ok {
 		if err = remover.Remove(); err != nil {
 			return err

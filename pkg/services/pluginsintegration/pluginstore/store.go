@@ -151,7 +151,7 @@ func (s *Service) availablePlugins(ctx context.Context) []*plugins.Plugin {
 
 func (s *Service) shutdown(ctx context.Context) {
 	var wg sync.WaitGroup
-	for _, plugin := range s.pluginRegistry.Plugins(ctx) {
+	for _, plugin := range s.pluginRegistry.Plugins(context.WithoutCancel(ctx)) {
 		wg.Add(1)
 		go func(ctx context.Context, p *plugins.Plugin) {
 			defer wg.Done()
