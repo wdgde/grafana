@@ -213,7 +213,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 					SimplifiedNotificationsSection:       false,
 				},
 			},
-			MissingSeriesEvalsToResolve: util.Pointer(2),
+			MissingSeriesEvalsToResolve: util.Pointer[int64](2),
 		}
 		r2 := &models.AlertRule{
 			ID:        2,
@@ -259,7 +259,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 					SimplifiedQueryAndExpressionsSection: true,
 				},
 			},
-			MissingSeriesEvalsToResolve: util.Pointer(1),
+			MissingSeriesEvalsToResolve: util.Pointer[int64](1),
 		}
 
 		excludedFields := map[string]struct{}{
