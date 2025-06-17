@@ -120,7 +120,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		apiprometheus.NewPrometheusSrv(logger, api.StateManager, api.Scheduler, api.RuleStore, ruleAuthzService, api.ProvenanceStore),
+		apiprometheus.NewPrometheusSrv(logger, api.StateManager, api.Scheduler, api.RuleStore, ruleAuthzService),
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkingRuler(

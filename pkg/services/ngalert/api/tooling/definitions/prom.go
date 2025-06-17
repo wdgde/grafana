@@ -185,7 +185,6 @@ type Rule struct {
 	EvaluationTime       float64                        `json:"evaluationTime"`
 	IsPaused             bool                           `json:"isPaused"`
 	NotificationSettings *AlertRuleNotificationSettings `json:"notificationSettings,omitempty"`
-	Provenance           Provenance                     `json:"provenance,omitempty"`
 }
 
 // Alert has info for an alert.
