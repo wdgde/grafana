@@ -34,7 +34,7 @@ type RuleStoreReader interface {
 }
 
 type RuleGroupAccessControlService interface {
-	HasAccessToRuleGroup(ctx context.Context, user identity.Requester, rules ngmodels.RulesGroup) (bool, error)
+	HasAccessInFolder(ctx context.Context, user identity.Requester, folder ngmodels.Namespaced) (bool, error)
 }
 
 type StatusReader interface {
@@ -189,24 +189,23 @@ func getMatchersFromQuery(v url.Values) (labels.Matchers, error) {
 	return matchers, nil
 }
 
-func getStatesFromQuery(v url.Values) ([]eval.State, error) {
-	var states []eval.State
+func getStatesFromQuery(v url.Values) (map[eval.State]struct{}, error) {
+	states := make(map[eval.State]struct{})
 	for _, s := range v["state"] {
 		s = strings.ToLower(s)
 		switch s {
 		case "normal", "inactive":
-			states = append(states, eval.Normal)
+			states[eval.Normal] = struct{}{}
 		case "alerting", "firing":
-			states = append(states, eval.Alerting)
+			states[eval.Alerting] = struct{}{}
 		case "pending":
-			states = append(states, eval.Pending)
+			states[eval.Pending] = struct{}{}
 		case "nodata":
-			states = append(states, eval.NoData)
-		// nolint:goconst
+			states[eval.NoData] = struct{}{}
 		case "error":
-			states = append(states, eval.Error)
+			states[eval.Error] = struct{}{}
 		case "recovering":
-			states = append(states, eval.Recovering)
+			states[eval.Recovering] = struct{}{}
 		default:
 			return states, fmt.Errorf("unknown state '%s'", s)
 		}
@@ -214,12 +213,25 @@ func getStatesFromQuery(v url.Values) ([]eval.State, error) {
 	return states, nil
 }
 
+func getHealthFromQuery(v url.Values) (map[string]struct{}, error) {
+	health := make(map[string]struct{})
+	for _, s := range v["health"] {
+		s = strings.ToLower(s)
+		switch s {
+		case "ok", "error", "nodata", "unknown":
+			health[s] = struct{}{}
+		default:
+			return nil, fmt.Errorf("unknown health '%s'", s)
+		}
+	}
+	return health, nil
+}
+
 type RuleGroupStatusesOptions struct {
-	Ctx                context.Context
-	OrgID              int64
-	Query              url.Values
-	Namespaces         map[string]string
-	AuthorizeRuleGroup func(rules []*ngmodels.AlertRule) (bool, error)
+	Ctx               context.Context
+	OrgID             int64
+	Query             url.Values
+	AllowedNamespaces map[string]string
 }
 
 type ListAlertRulesStore interface {
@@ -247,19 +259,26 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 	}
 
-	namespaces := map[string]string{}
+	allowedNamespaces := map[string]string{}
 	for namespaceUID, folder := range namespaceMap {
-		namespaces[namespaceUID] = folder.Fullpath
+		// only add namespaces that the user has access to rules in
+		hasAccess, err := srv.authz.HasAccessInFolder(c.Req.Context(), c.SignedInUser, ngmodels.Namespace(*folder.ToFolderReference()))
+		if err != nil {
+			ruleResponse.Status = "error"
+			ruleResponse.Error = fmt.Sprintf("failed to get namespaces visible to the user: %s", err.Error())
+			ruleResponse.ErrorType = apiv1.ErrServer
+			return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+		}
+		if hasAccess {
+			allowedNamespaces[namespaceUID] = folder.Fullpath
+		}
 	}
 
 	ruleResponse = PrepareRuleGroupStatuses(srv.log, srv.store, RuleGroupStatusesOptions{
-		Ctx:        c.Req.Context(),
-		OrgID:      c.OrgID,
-		Query:      c.Req.Form,
-		Namespaces: namespaces,
-		AuthorizeRuleGroup: func(rules []*ngmodels.AlertRule) (bool, error) {
-			return srv.authz.HasAccessToRuleGroup(c.Req.Context(), c.SignedInUser, rules)
-		},
+		Ctx:               c.Req.Context(),
+		OrgID:             c.OrgID,
+		Query:             c.Req.Form,
+		AllowedNamespaces: allowedNamespaces,
 	}, RuleStatusMutatorGenerator(srv.status), RuleAlertStateMutatorGenerator(srv.manager))
 
 	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
@@ -394,16 +413,20 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
 	}
-	stateFilter, err := getStatesFromQuery(opts.Query)
+	stateFilterSet, err := getStatesFromQuery(opts.Query)
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = err.Error()
 		ruleResponse.ErrorType = apiv1.ErrBadData
 		return ruleResponse
 	}
-	stateFilterSet := make(map[eval.State]struct{})
-	for _, state := range stateFilter {
-		stateFilterSet[state] = struct{}{}
+
+	healthFilterSet, err := getHealthFromQuery(opts.Query)
+	if err != nil {
+		ruleResponse.Status = "error"
+		ruleResponse.Error = err.Error()
+		ruleResponse.ErrorType = apiv1.ErrBadData
+		return ruleResponse
 	}
 
 	var labelOptions []ngmodels.LabelOption
@@ -411,24 +434,26 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
-	if len(opts.Namespaces) == 0 {
+	if len(opts.AllowedNamespaces) == 0 {
 		log.Debug("User does not have access to any namespaces")
 		return ruleResponse
 	}
 
-	namespaceUIDs := make([]string, 0, len(opts.Namespaces))
+	namespaceUIDs := make([]string, 0, len(opts.AllowedNamespaces))
 
 	folderUID := opts.Query.Get("folder_uid")
-	_, exists := opts.Namespaces[folderUID]
+	_, exists := opts.AllowedNamespaces[folderUID]
 	if folderUID != "" && exists {
 		namespaceUIDs = append(namespaceUIDs, folderUID)
 	} else {
-		for k := range opts.Namespaces {
+		for k := range opts.AllowedNamespaces {
 			namespaceUIDs = append(namespaceUIDs, k)
 		}
 	}
 
 	ruleGroups := opts.Query["rule_group"]
+
+	receiverName := opts.Query.Get("receiver_name")
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
 		OrgID:         opts.OrgID,
@@ -436,6 +461,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
 		RuleGroups:    ruleGroups,
+		ReceiverName:  receiverName,
 	}
 	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {
@@ -459,22 +485,11 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		}
 	}
 
-	groupedRules := getGroupedRules(log, ruleList, ruleNamesSet, opts.Namespaces)
+	groupedRules := getGroupedRules(log, ruleList, ruleNamesSet, opts.AllowedNamespaces)
 	rulesTotals := make(map[string]int64, len(groupedRules))
 	var newToken string
 	foundToken := false
 	for _, rg := range groupedRules {
-		ok, err := opts.AuthorizeRuleGroup(rg.Rules)
-		if err != nil {
-			ruleResponse.Status = "error"
-			ruleResponse.Error = fmt.Sprintf("cannot authorize access to rule group: %s", err.Error())
-			ruleResponse.ErrorType = apiv1.ErrServer
-			return ruleResponse
-		}
-		if !ok {
-			continue
-		}
-
 		if nextToken != "" && !foundToken {
 			if !tokenGreaterThanOrEqual(getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup), nextToken) {
 				continue
@@ -493,15 +508,21 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 			rulesTotals[k] += v
 		}
 
-		if len(stateFilter) > 0 {
-			filterRules(ruleGroup, stateFilterSet)
+		if len(stateFilterSet) > 0 {
+			filterRulesByState(ruleGroup, stateFilterSet)
+		}
+
+		if len(healthFilterSet) > 0 {
+			filterRulesByHealth(ruleGroup, healthFilterSet)
 		}
 
 		if limitRulesPerGroup > -1 && int64(len(ruleGroup.Rules)) > limitRulesPerGroup {
 			ruleGroup.Rules = ruleGroup.Rules[0:limitRulesPerGroup]
 		}
 
-		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, *ruleGroup)
+		if len(ruleGroup.Rules) > 0 {
+			ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, *ruleGroup)
+		}
 	}
 
 	ruleResponse.Data.NextToken = newToken
@@ -583,7 +604,7 @@ func getGroupedRules(log log.Logger, ruleList ngmodels.RulesGroup, ruleNamesSet 
 	return ruleGroups
 }
 
-func filterRules(ruleGroup *apimodels.RuleGroup, withStatesFast map[eval.State]struct{}) {
+func filterRulesByState(ruleGroup *apimodels.RuleGroup, withStatesFast map[eval.State]struct{}) {
 	// Filtering is weird but firing, pending, and normal filters also need to be
 	// applied to the rule. Others such as nodata and error should have no effect.
 	// This is to match the current behavior in the UI.
@@ -604,6 +625,19 @@ func filterRules(ruleGroup *apimodels.RuleGroup, withStatesFast map[eval.State]s
 			if _, ok := withStatesFast[*state]; ok {
 				filteredRules = append(filteredRules, rule)
 			}
+		}
+	}
+	ruleGroup.Rules = filteredRules
+}
+
+func filterRulesByHealth(ruleGroup *apimodels.RuleGroup, withHealthFast map[string]struct{}) {
+	// Filtering is weird but error and nodata filters also need to be
+	// applied to the rule. Others such as firing, pending, and normal should have no effect.
+	// This is to match the current behavior in the UI.
+	filteredRules := make([]apimodels.AlertingRule, 0, len(ruleGroup.Rules))
+	for _, rule := range ruleGroup.Rules {
+		if _, ok := withHealthFast[rule.Health]; ok {
+			filteredRules = append(filteredRules, rule)
 		}
 	}
 	ruleGroup.Rules = filteredRules
