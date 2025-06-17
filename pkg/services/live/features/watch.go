@@ -11,6 +11,8 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -18,7 +20,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/live/model"
 )

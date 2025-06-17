@@ -26,7 +26,6 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -148,7 +147,7 @@ func NewAPIBuilder(
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
 // This function happily uses services core to Grafana, and does not need to be multi-tenancy-compatible.
 func RegisterAPIService(
-	// It is OK to use setting.Cfg here -- this is only used when running single tenant with a full setup
+// It is OK to use setting.Cfg here -- this is only used when running single tenant with a full setup
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
@@ -160,7 +159,7 @@ func RegisterAPIService(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStatsService usagestats.Service,
-	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
+// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
 	secretsSvc grafanasecrets.Service,
 	extraBuilders []ExtraBuilder,
 ) (*APIBuilder, error) {

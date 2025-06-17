@@ -6,10 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/kube-openapi/pkg/spec3"
-
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -24,6 +20,9 @@ import (
 	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/kube-openapi/pkg/spec3"
 )
 
 // WebhookExtraBuilder is a function that returns an ExtraBuilder.
@@ -35,7 +34,7 @@ type WebhookExtraBuilder struct {
 
 func ProvideWebhooks(
 	cfg *setting.Cfg,
-	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
+// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
 	secretsSvc grafanasecrets.Service,
 	ghFactory *github.Factory,
 	renderer rendering.Service,
