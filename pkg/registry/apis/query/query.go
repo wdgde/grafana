@@ -454,6 +454,8 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 			}
 		}
 
+		b.metrics.SqlCommandInputCount.Add(float64(len(vars)))
+
 		refId := expression.RefID
 		results, err := expression.Command.Execute(ctx, now, vars, b.tracer, b.metrics)
 		if err != nil {

@@ -12,6 +12,7 @@ type ExprMetrics struct {
 	SqlCommandDuration      *prometheus.HistogramVec
 	SqlCommandCount         *prometheus.CounterVec
 	SqlCommandCellCount     *prometheus.HistogramVec
+	SqlCommandInputCount    *prometheus.HistogramVec
 }
 
 func newExprMetrics(subsystem string) *ExprMetrics {
@@ -58,6 +59,17 @@ func newExprMetrics(subsystem string) *ExprMetrics {
 				Buckets:   prometheus.ExponentialBuckets(100, 2, 10),
 			},
 			[]string{"status"},
+		),
+
+		SqlCommandInputCount: prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Namespace: "grafana",
+				Subsystem: subsystem,
+				Name:      "sql_command_input_count",
+				Help:      "Number of queries selected as input for a SQL command execution",
+				Buckets:   prometheus.LinearBuckets(0, 1, 11),
+			},
+			[]string{},
 		),
 	}
 }
