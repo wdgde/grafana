@@ -1,39 +1,21 @@
 import { textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Alert, Icon, Stack } from '@grafana/ui';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { DashboardPageRouteSearchParams } from 'app/features/dashboard/containers/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
-import { DashboardRoutes } from 'app/types';
 
-interface CommonBannerProps {
-  queryParams: DashboardPageRouteSearchParams;
-  path?: string;
-  slug?: string;
-}
+import { commonAlertProps, DashboardBannerProps, DashboardBannersProps } from './utils';
 
-interface DashboardPreviewBannerProps extends CommonBannerProps {
-  route?: string;
-}
-
-interface DashboardPreviewBannerContentProps extends Required<Omit<CommonBannerProps, 'route'>> {}
-
-const commonAlertProps = {
-  severity: 'info' as const,
-  style: { flex: 0 } as const,
-};
-
-function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPreviewBannerContentProps) {
+function DashboardPreviewBannerContent({ queryParams, slug, path }: Required<Omit<DashboardBannersProps, 'route'>>) {
   const prParam = usePullRequestParam();
   const file = useGetRepositoryFilesWithPathQuery({ name: slug, path, ref: queryParams.ref });
 
   if (file.data?.errors) {
     return (
       <Alert
+        {...commonAlertProps}
         title={t('dashboard-scene.dashboard-preview-banner.title-error-loading-dashboard', 'Error loading dashboard')}
         severity="error"
-        style={{ flex: 0 }}
       >
         {file.data.errors.map((error, index) => (
           <div key={index}>{error}</div>
@@ -110,11 +92,6 @@ function DashboardPreviewBannerContent({ queryParams, slug, path }: DashboardPre
   );
 }
 
-export function DashboardPreviewBanner({ queryParams, route, slug, path }: DashboardPreviewBannerProps) {
-  const provisioningEnabled = config.featureToggles.provisioning;
-  if (!provisioningEnabled || 'kiosk' in queryParams || !path || route !== DashboardRoutes.Provisioning || !slug) {
-    return null;
-  }
-
-  return <DashboardPreviewBannerContent queryParams={queryParams} slug={slug} path={path} />;
+export function DashboardPreviewBanner({ queryParams, slug, path }: DashboardBannerProps) {
+  return <DashboardPreviewBannerContent queryParams={queryParams} slug={slug!} path={path!} />;
 }
