@@ -2,6 +2,7 @@ package correlations
 
 import (
 	"context"
+	"slices"
 
 	"github.com/grafana/grafana/pkg/util/xorm/core"
 
@@ -71,14 +72,6 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 
 func (s CorrelationsService) deleteCorrelation(ctx context.Context, cmd DeleteCorrelationCommand) error {
 	return s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
-		query := &datasources.GetDataSourceQuery{
-			OrgID: cmd.OrgId,
-			UID:   cmd.SourceUID,
-		}
-		_, err := s.DataSourceService.GetDataSource(ctx, query)
-		if err != nil {
-			return ErrSourceDataSourceDoesNotExists
-		}
 
 		correlation, err := s.GetCorrelation(ctx, GetCorrelationQuery(cmd))
 
@@ -86,11 +79,20 @@ func (s CorrelationsService) deleteCorrelation(ctx context.Context, cmd DeleteCo
 			return err
 		}
 
+		query := &datasources.GetDataSourceQuery{
+			OrgID: cmd.OrgId,
+			UID:   correlation.SourceUID,
+		}
+		_, err = s.DataSourceService.GetDataSource(ctx, query)
+		if err != nil {
+			return ErrSourceDataSourceDoesNotExists
+		}
+
 		if correlation.Provisioned {
 			return ErrCorrelationReadOnly
 		}
 
-		deletedCount, err := session.Delete(&Correlation{UID: cmd.UID, SourceUID: cmd.SourceUID})
+		deletedCount, err := session.Delete(&Correlation{UID: cmd.UID, SourceUID: correlation.SourceUID})
 
 		if err != nil {
 			return err
@@ -156,7 +158,7 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			}
 		}
 
-		updateCount, err := session.Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).Limit(1).Update(correlation)
+		updateCount, err := session.Where("uid = ? AND org_id = ?", correlation.UID, correlation.OrgID).Limit(1).Update(correlation)
 
 		if err != nil {
 			return err
@@ -178,21 +180,13 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 
 func (s CorrelationsService) getCorrelation(ctx context.Context, cmd GetCorrelationQuery) (Correlation, error) {
 	correlation := Correlation{
-		UID:       cmd.UID,
-		SourceUID: cmd.SourceUID,
+		UID:   cmd.UID,
+		OrgID: cmd.OrgId,
 	}
 
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
-		query := &datasources.GetDataSourceQuery{
-			OrgID: cmd.OrgId,
-			UID:   cmd.SourceUID,
-		}
-		if _, err := s.DataSourceService.GetDataSource(ctx, query); err != nil {
-			return ErrSourceDataSourceDoesNotExists
-		}
-
 		// Correlations created before the fix #72498 may have org_id = 0, but it's deprecated and will be removed in #72325
-		found, err := session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and (correlation.org_id = 0 or dss.org_id = correlation.org_id) and dss.org_id = ?", cmd.OrgId).Join("LEFT OUTER", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId).Where("correlation.uid = ?", correlation.UID).And("correlation.source_uid = ?", correlation.SourceUID).And(VALID_TYPE_FILTER).Get(&correlation)
+		found, err := session.Select("correlation.*").Where("correlation.uid = ?", correlation.UID).And("correlation.org_id = ?", correlation.OrgID).Get(&correlation)
 		if !found {
 			return ErrCorrelationNotFound
 		}
@@ -201,6 +195,29 @@ func (s CorrelationsService) getCorrelation(ctx context.Context, cmd GetCorrelat
 
 	if err != nil {
 		return Correlation{}, err
+	}
+
+	if correlation.Type == "external" {
+		return correlation, nil
+	}
+
+	// NOTE: This is just to show how we can get the same functionality. Should be combined to a single query.
+	query := &datasources.GetDataSourceQuery{
+		OrgID: cmd.OrgId,
+		UID:   correlation.SourceUID,
+	}
+	if _, err := s.DataSourceService.GetDataSource(ctx, query); err != nil {
+		return Correlation{}, ErrSourceDataSourceDoesNotExists
+	}
+
+	if correlation.TargetUID != nil {
+		query := &datasources.GetDataSourceQuery{
+			OrgID: cmd.OrgId,
+			UID:   *correlation.TargetUID,
+		}
+		if _, err := s.DataSourceService.GetDataSource(ctx, query); err != nil {
+			return Correlation{}, ErrTargetDataSourceDoesNotExists
+		}
 	}
 
 	return correlation, nil
@@ -264,18 +281,55 @@ func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrela
 		offset := cmd.Limit * (cmd.Page - 1)
 
 		// Correlations created before the fix #72498 may have org_id = 0, but it's deprecated and will be removed in #72325
-		q := session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and (correlation.org_id = 0 or dss.org_id = correlation.org_id) and dss.org_id = ? ", cmd.OrgId).Join("LEFT OUTER", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId)
-
-		if len(cmd.SourceUIDs) > 0 {
-			q.In("dss.uid", cmd.SourceUIDs)
-		}
-
-		q.Where(VALID_TYPE_FILTER)
+		q := session.Select("correlation.*").Where("correlation.org_id = ?", cmd.OrgId)
 
 		return q.Limit(int(cmd.Limit), int(offset)).Find(&result.Correlations)
 	})
 	if err != nil {
 		return GetCorrelationsResponseBody{}, err
+	}
+
+	// NOTE: this is just to demonstrate that joins need to be removed, but this should be scoped down to just
+	// the source UIDs & target UIDs, and likely returned as a map. should not be merged as this.
+	datasources, err := s.DataSourceService.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
+		OrgID: cmd.OrgId,
+	})
+	if err != nil {
+		return GetCorrelationsResponseBody{}, err
+	}
+
+	for i, correlation := range result.Correlations {
+		// NOTE: in the future, if we need to be able to filter by SourceUIDs efficiently, we would want to index this
+		// and search on it.
+		if len(cmd.SourceUIDs) != 0 {
+			if !slices.Contains(cmd.SourceUIDs, correlation.SourceUID) {
+				result.Correlations = append(result.Correlations[:i], result.Correlations[i+1:]...)
+				continue
+			}
+		}
+
+		if correlation.Type == "external" {
+			continue
+		}
+
+		foundSourceUID := false
+		foundTargetUID := (correlation.TargetUID == nil)
+		for _, ds := range datasources {
+			if ds.UID == correlation.SourceUID {
+				foundSourceUID = true
+			}
+			if !foundTargetUID && ds.UID == *correlation.TargetUID {
+				foundTargetUID = true
+			}
+
+			if foundSourceUID && foundTargetUID {
+				break
+			}
+		}
+
+		if !foundSourceUID || !foundTargetUID || correlation.Type != "query" {
+			result.Correlations = append(result.Correlations[:i], result.Correlations[i+1:]...)
+		}
 	}
 
 	count, err := s.CountCorrelations(ctx)

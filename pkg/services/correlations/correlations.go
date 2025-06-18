@@ -9,7 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -19,6 +21,7 @@ var (
 )
 
 func ProvideService(sqlStore db.DB, routeRegister routing.RouteRegister, ds datasources.DataSourceService, ac accesscontrol.AccessControl, bus bus.Bus, qs quota.Service, cfg *setting.Cfg,
+	clientConfigProvider grafanaapiserver.DirectRestConfigProvider, featuremgmt featuremgmt.FeatureToggles,
 ) (*CorrelationsService, error) {
 	s := &CorrelationsService{
 		SQLStore:          sqlStore,
@@ -27,6 +30,8 @@ func ProvideService(sqlStore db.DB, routeRegister routing.RouteRegister, ds data
 		DataSourceService: ds,
 		AccessControl:     ac,
 		QuotaService:      qs,
+		featuremgmt:       featuremgmt,
+		k8sHandler:        newCorrelationK8sHandler(cfg, clientConfigProvider),
 	}
 
 	s.registerAPIEndpoints()
@@ -52,6 +57,9 @@ func ProvideService(sqlStore db.DB, routeRegister routing.RouteRegister, ds data
 type Service interface {
 	CreateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (Correlation, error)
 	CreateOrUpdateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) error
+	GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error)
+	GetCorrelation(ctx context.Context, cmd GetCorrelationQuery) (Correlation, error)
+	UpdateCorrelation(ctx context.Context, cmd UpdateCorrelationCommand) (Correlation, error)
 	DeleteCorrelation(ctx context.Context, cmd DeleteCorrelationCommand) error
 	DeleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error
 	DeleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error
@@ -64,6 +72,8 @@ type CorrelationsService struct {
 	DataSourceService datasources.DataSourceService
 	AccessControl     accesscontrol.AccessControl
 	QuotaService      quota.Service
+	featuremgmt       featuremgmt.FeatureToggles
+	k8sHandler        *correlationK8sHandler
 }
 
 func (s CorrelationsService) CreateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (Correlation, error) {
