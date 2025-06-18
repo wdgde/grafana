@@ -158,7 +158,7 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			}
 		}
 
-		updateCount, err := session.Where("uid = ? AND org_id = ?", correlation.UID, correlation.OrgID).Limit(1).Update(correlation)
+		updateCount, err := session.Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).Limit(1).Update(correlation)
 
 		if err != nil {
 			return err
