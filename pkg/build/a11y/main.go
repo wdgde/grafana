@@ -78,7 +78,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	nodeVersion := string(nvmrcContents)
 
 	grafana := d.Host().Directory(grafanaDir, dagger.HostDirectoryOpts{
-		Exclude: []string{"node_modules", "*.tar.gz"},
+		Exclude: []string{"node_modules", "*.tar.gz", "public/build", ".nx", ".bin"},
 	})
 	targz := d.Host().File(targzPath)
 
