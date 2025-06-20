@@ -78,7 +78,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	nodeVersion := string(nvmrcContents)
 
 	grafana := d.Host().Directory(grafanaDir, dagger.HostDirectoryOpts{
-		Exclude: []string{"node_modules", "*.tar.gz", "public/build", ".nx", ".bin"},
+		Exclude: []string{"node_modules", "*.tar.gz", "public/build", ".nx", ".bin", "screenshots"},
 	})
 	targz := d.Host().File(targzPath)
 
@@ -99,6 +99,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	c := RunTest(d, svc, grafana, yarnCache, nodeVersion, runnerFlags)
+	ExportScreenshots(ctx, c, "screenshots")
 	c, err = c.Sync(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to run a11y test suite: %w", err)

@@ -157,6 +157,10 @@ function myPa11yCiConfiguration(urls, defaults) {
     urls[idx] = { ...urls[idx], url: urls[idx].url.replace('${HOST}', `${HOST_SERVER}:${PORT_SERVER}`) };
   }
 
+  urls.forEach((url, index) => {
+    url.screenCapture = `./screenshots/screenshot-${index}.png`;
+  });
+
   return {
     defaults: defaults,
     urls: urls,

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"dagger.io/dagger"
@@ -21,5 +22,12 @@ func RunTest(
 		WithExec([]string{"apt-get", "install", "-y", "./google-chrome-stable_current_amd64.deb"}).
 		WithWorkdir("/src").
 		WithServiceBinding("grafana", svc).
+		WithExec([]string{"mkdir", "-p", "/src/screenshots"}).
 		WithExec([]string{"/bin/bash", "-c", command}, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeAny})
+}
+
+// ExportScreenshots exports the screenshots folder from the container to the host
+func ExportScreenshots(ctx context.Context, container *dagger.Container, hostPath string) error {
+	_, err := container.Directory("/src/screenshots").Export(ctx, hostPath)
+	return err
 }
