@@ -13,6 +13,5 @@ func ProvideCiphers() map[string]cipher.Encrypter {
 func ProvideDeciphers() map[string]cipher.Decrypter {
 	return map[string]cipher.Decrypter{
 		cipher.AesGcm: newAesGcmCipher(),
-		cipher.AesCfb: aesCfbDecipher{},
 	}
 }

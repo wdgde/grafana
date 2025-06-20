@@ -19,6 +19,8 @@ import (
 
 const (
 	encryptionAlgorithmDelimiter = '*'
+	// AES-GCM is the default encryption algorithm used by Secrets Management.
+	encryptionAlgorithm = cipher.AesGcm
 )
 
 // Service must not be used for cipher.
@@ -43,10 +45,6 @@ func NewEncryptionService(
 		return nil, fmt.Errorf("`[secrets_manager]secret_key` is not set")
 	}
 
-	if cfg.SecretsManagement.Encryption.Algorithm == "" {
-		return nil, fmt.Errorf("`[secrets_manager.encryption]algorithm` is not set")
-	}
-
 	s := &Service{
 		tracer: tracer,
 		log:    log.New("encryption"),
@@ -58,9 +56,7 @@ func NewEncryptionService(
 		cfg:          cfg,
 	}
 
-	algorithm := s.cfg.SecretsManagement.Encryption.Algorithm
-
-	if err := s.checkEncryptionAlgorithm(algorithm); err != nil {
+	if err := s.checkEncryptionAlgorithm(encryptionAlgorithm); err != nil {
 		return nil, err
 	}
 
@@ -92,10 +88,8 @@ func (s *Service) checkEncryptionAlgorithm(algorithm string) error {
 
 func (s *Service) registerUsageMetrics() {
 	s.usageMetrics.RegisterMetricsFunc(func(context.Context) (map[string]any, error) {
-		algorithm := s.cfg.SecretsManagement.Encryption.Algorithm
-
 		return map[string]any{
-			fmt.Sprintf("stats.%s.encryption.cipher.%s.count", encryption.UsageInsightsPrefix, algorithm): 1,
+			fmt.Sprintf("stats.%s.encryption.cipher.%s.count", encryption.UsageInsightsPrefix, encryptionAlgorithm): 1,
 		}, nil
 	})
 }
@@ -173,21 +167,19 @@ func (s *Service) Encrypt(ctx context.Context, payload []byte, secret string) ([
 		}
 	}()
 
-	algorithm := s.cfg.SecretsManagement.Encryption.Algorithm
-
-	cipher, ok := s.ciphers[algorithm]
+	cipher, ok := s.ciphers[encryptionAlgorithm]
 	if !ok {
-		err = fmt.Errorf("no cipher available for algorithm '%s'", algorithm)
+		err = fmt.Errorf("no cipher available for algorithm '%s'", encryptionAlgorithm)
 		return nil, err
 	}
 
-	span.SetAttributes(attribute.String("cipher.algorithm", algorithm))
+	span.SetAttributes(attribute.String("cipher.algorithm", encryptionAlgorithm))
 
 	var encrypted []byte
 	encrypted, err = cipher.Encrypt(ctx, payload, secret)
 
-	prefix := make([]byte, base64.RawStdEncoding.EncodedLen(len([]byte(algorithm)))+2)
-	base64.RawStdEncoding.Encode(prefix[1:], []byte(algorithm))
+	prefix := make([]byte, base64.RawStdEncoding.EncodedLen(len([]byte(encryptionAlgorithm)))+2)
+	base64.RawStdEncoding.Encode(prefix[1:], []byte(encryptionAlgorithm))
 	prefix[0] = encryptionAlgorithmDelimiter
 	prefix[len(prefix)-1] = encryptionAlgorithmDelimiter
 
