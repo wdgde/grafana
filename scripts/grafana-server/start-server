@@ -68,6 +68,8 @@ $RUNDIR/bin/"$ARCH"grafana-server \
   --homepath=$HOME_PATH \
   --pidfile=$RUNDIR/pid \
   cfg:server.http_port=$PORT \
+  cfg:log.level=error \
+  cfg:log.filters=http.server:info \
   cfg:server.router_logging=1 \
   cfg:app_mode=development \
   cfg:enterprise.license_path=$1

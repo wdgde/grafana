@@ -5,43 +5,43 @@ var dashboardSettings = [
     rootElement: '.main-view',
     threshold: 0,
   },
-  // {
-  //   url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=annotations',
-  //   wait: 500,
-  //   rootElement: '.main-view',
-  //   threshold: 0,
-  // },
-  // {
-  //   url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=variables',
-  //   wait: 500,
-  //   rootElement: '.main-view',
-  //   threshold: 0,
-  // },
-  // {
-  //   url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=links',
-  //   wait: 500,
-  //   rootElement: '.main-view',
-  //   threshold: 0,
-  // },
-  // {
-  //   url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=versions',
-  //   wait: 500,
-  //   rootElement: '.main-view',
-  //   threshold: 0,
-  // },
-  // {
-  //   url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=permissions',
-  //   wait: 500,
-  //   rootElement: '.main-view',
-  //   // TODO: improve the accessibility of the permission tab https://github.com/grafana/grafana/issues/77203
-  //   threshold: 5,
-  // },
-  // {
-  //   url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=dashboard_json',
-  //   wait: 500,
-  //   rootElement: '.main-view',
-  //   threshold: 2,
-  // },
+  {
+    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=annotations',
+    wait: 500,
+    rootElement: '.main-view',
+    threshold: 0,
+  },
+  {
+    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=variables',
+    wait: 500,
+    rootElement: '.main-view',
+    threshold: 0,
+  },
+  {
+    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=links',
+    wait: 500,
+    rootElement: '.main-view',
+    threshold: 0,
+  },
+  {
+    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=versions',
+    wait: 500,
+    rootElement: '.main-view',
+    threshold: 0,
+  },
+  {
+    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=permissions',
+    wait: 500,
+    rootElement: '.main-view',
+    // TODO: improve the accessibility of the permission tab https://github.com/grafana/grafana/issues/77203
+    threshold: 5,
+  },
+  {
+    url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge?orgId=1&editview=dashboard_json',
+    wait: 500,
+    rootElement: '.main-view',
+    threshold: 2,
+  },
 ];
 
 var config = {
@@ -61,12 +61,12 @@ var config = {
   },
 
   urls: [
-    // {
-    //   url: '${HOST}/login',
-    //   wait: 500,
-    //   rootElement: '.main-view',
-    //   threshold: 0,
-    // },
+    {
+      url: '${HOST}/login',
+      wait: 500,
+      rootElement: '.main-view',
+      threshold: 0,
+    },
     {
       url: '${HOST}/login',
       wait: 500,
@@ -81,75 +81,75 @@ var config = {
       rootElement: '.main-view',
       screenCapture: './screenshots/login.png',
     },
-    // {
-    //   url: '${HOST}/?orgId=1',
-    //   wait: 500,
-    //   threshold: 0,
-    // },
-    // {
-    //   url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge',
-    //   wait: 500,
-    //   rootElement: '.main-view',
-    //   threshold: 0,
-    // },
+    {
+      url: '${HOST}/?orgId=1',
+      wait: 500,
+      threshold: 0,
+    },
+    {
+      url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge',
+      wait: 500,
+      rootElement: '.main-view',
+      threshold: 0,
+    },
     ...dashboardSettings,
-    // {
-    //   url: '${HOST}/?orgId=1&search=open',
-    //   wait: 500,
-    //   rootElement: '.main-view',
-    //   threshold: 0,
-    // },
-    // {
-    //   url: '${HOST}/alerting/list',
-    //   wait: 500,
-    //   rootElement: '.main-view',
-    //   // the unified alerting promotion alert's content contrast is too low
-    //   // see https://github.com/grafana/grafana/pull/41829
-    //   threshold: 7,
-    // },
-    // {
-    //   url: '${HOST}/datasources',
-    //   wait: 500,
-    //   rootElement: '.main-view',
-    //   threshold: 0,
-    // },
-    // {
-    //   url: '${HOST}/org/users',
-    //   wait: 500,
-    //   rootElement: '.main-view',
-    //   threshold: 2,
-    // },
-    // {
-    //   url: '${HOST}/org/teams',
-    //   wait: 500,
-    //   rootElement: '.main-view',
-    //   threshold: 0,
-    // },
-    // {
-    //   url: '${HOST}/plugins',
-    //   wait: 500,
-    //   rootElement: '.main-view',
-    //   threshold: 0,
-    // },
-    // {
-    //   url: '${HOST}/org',
-    //   wait: 500,
-    //   rootElement: '.main-view',
-    //   threshold: 2,
-    //   screenCapture: './screenshots/org.png',
-    // },
-    // {
-    //   url: '${HOST}/org/apikeys',
-    //   wait: 500,
-    //   rootElement: '.main-view',
-    //   threshold: 4,
-    // },
-    // {
-    //   url: '${HOST}/dashboards',
-    //   wait: 500,
-    //   rootElement: '.main-view',
-    //   threshold: 2,
-    // },
+    {
+      url: '${HOST}/?orgId=1&search=open',
+      wait: 500,
+      rootElement: '.main-view',
+      threshold: 0,
+    },
+    {
+      url: '${HOST}/alerting/list',
+      wait: 500,
+      rootElement: '.main-view',
+      // the unified alerting promotion alert's content contrast is too low
+      // see https://github.com/grafana/grafana/pull/41829
+      threshold: 7,
+    },
+    {
+      url: '${HOST}/datasources',
+      wait: 500,
+      rootElement: '.main-view',
+      threshold: 0,
+    },
+    {
+      url: '${HOST}/org/users',
+      wait: 500,
+      rootElement: '.main-view',
+      threshold: 2,
+    },
+    {
+      url: '${HOST}/org/teams',
+      wait: 500,
+      rootElement: '.main-view',
+      threshold: 0,
+    },
+    {
+      url: '${HOST}/plugins',
+      wait: 500,
+      rootElement: '.main-view',
+      threshold: 0,
+    },
+    {
+      url: '${HOST}/org',
+      wait: 500,
+      rootElement: '.main-view',
+      threshold: 2,
+      screenCapture: './screenshots/org.png',
+    },
+    {
+      url: '${HOST}/org/apikeys',
+      wait: 500,
+      rootElement: '.main-view',
+      threshold: 4,
+    },
+    {
+      url: '${HOST}/dashboards',
+      wait: 500,
+      rootElement: '.main-view',
+      threshold: 2,
+    },
   ],
 };
 
@@ -162,13 +162,13 @@ function myPa11yCiConfiguration(urls, defaults) {
 
   urls.forEach((url, index) => {
     url.screenCapture = url.screenCapture || `./screenshots/screenshot-${index}.png`;
-    url.log = {
-      ...(url.log ?? {}),
-      debug: (...args) => console.log('  [DEBUG]', ...args),
-      info: (...args) => console.log('   [INFO]', ...args),
-      warn: (...args) => console.log('   [WARN]', ...args),
-      error: (...args) => console.log('  [ERROR]', ...args),
-    };
+    // url.log = {
+    //   ...(url.log ?? {}),
+    //   debug: (...args) => console.log('  [DEBUG]', ...args),
+    //   info: (...args) => console.log('   [INFO]', ...args),
+    //   warn: (...args) => console.log('   [WARN]', ...args),
+    //   error: (...args) => console.log('  [ERROR]', ...args),
+    // };
     // url.wait = 1000;
   });
 

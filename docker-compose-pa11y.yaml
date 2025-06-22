@@ -1,0 +1,41 @@
+name: grafana-pa11y-runner
+
+services:
+  grafana:
+    container_name: grafana
+    build:
+      dockerfile: Dockerfile.pa11y-grafana
+    ports:
+      - '3001:3001'
+    volumes:
+      - .:/grafana
+    working_dir: /grafana
+    command: >
+      sh -c "
+        ./scripts/grafana-server/start-server
+      "
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3001/api/health']
+      interval: 1s
+      timeout: 1s
+      retries: 30
+      start_period: 1s
+
+  pa11y:
+    container_name: pa11y
+    image: grafana/docker-puppeteer:1.1.0
+    restart: 'no'
+    depends_on:
+      grafana:
+        condition: service_healthy
+    environment:
+      - HOST=grafana
+      - PORT=3001
+      - NODE_OPTIONS=--max_old_space_size=4096
+    volumes:
+      - .:/grafana
+    working_dir: /grafana
+    command: >
+      sh -c "
+        pa11y-ci --config .pa11yci-pr.conf.js
+      "
