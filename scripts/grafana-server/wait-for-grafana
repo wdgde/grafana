@@ -8,4 +8,6 @@ PORT=${PORT:-$DEFAULT_PORT}
 
 echo -e "Waiting for grafana-server to finish starting, host=$HOST, port=$PORT"
 
-timeout 60 bash -c 'until nc -z $0 $1; do sleep 1; done' $HOST $PORT
+timeout 60 bash -c 'until curl -s -f http://$0:$1/api/health > /dev/null 2>&1; do sleep 1; done' $HOST $PORT
+
+curl http://$HOST:$PORT/api/health

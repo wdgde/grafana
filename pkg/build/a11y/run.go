@@ -13,8 +13,7 @@ func RunTest(
 	src *dagger.Directory, cache *dagger.CacheVolume,
 	nodeVersion, runnerFlags string) *dagger.Container {
 	command := fmt.Sprintf(
-		"./e2e-runner a11y --start-grafana=false"+
-			" --grafana-host grafana --grafana-port 3001 %s", runnerFlags)
+		"yarn pa11y-ci %s > /src/pa11y-ci-results.json", runnerFlags)
 
 	return GrafanaFrontend(d, cache, nodeVersion, src).
 		WithExec([]string{"/bin/sh", "-c", "apt-get update && apt-get install -y git curl"}).
@@ -23,11 +22,19 @@ func RunTest(
 		WithWorkdir("/src").
 		WithServiceBinding("grafana", svc).
 		WithExec([]string{"mkdir", "-p", "/src/screenshots"}).
+		WithExec([]string{"yarn", "pa11y-ci", "--version"}).
+		WithExec([]string{"yarn", "why", "pa11y-ci", "-R"}).
+		WithEnvVariable("HOST", "grafana").
+		WithEnvVariable("PORT", "3001").
 		WithExec([]string{"/bin/bash", "-c", command}, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeAny})
 }
 
-// ExportScreenshots exports the screenshots folder from the container to the host
 func ExportScreenshots(ctx context.Context, container *dagger.Container, hostPath string) error {
 	_, err := container.Directory("/src/screenshots").Export(ctx, hostPath)
+	return err
+}
+
+func ExportReport(ctx context.Context, container *dagger.Container, hostPath string) error {
+	_, err := container.File("/src/pa11y-ci-results.json").Export(ctx, hostPath)
 	return err
 }

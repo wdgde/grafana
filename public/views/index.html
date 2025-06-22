@@ -298,10 +298,16 @@
         document.head.appendChild(cssLink);
       }
 
-      window.__grafana_load_failed = function() {
+      window.__grafana_load_failed = function(err) {
         var preloader = document.getElementsByClassName("preloader");
         if (preloader.length) {
           preloader[0].className = "preloader preloader--done";
+        }
+
+        var errorDiv = document.querySelector(".preloader__text--fail");
+        if (errorDiv) {
+          const errorMessage = err.message ?? "unknown error";
+          errorDiv.textContent = errorMessage;
         }
       }
 
@@ -310,7 +316,7 @@
         if (window.__grafana_app_bundle_loaded) {
           return;
         }
-        window.__grafana_load_failed();
+        window.__grafana_load_failed(new Error("Bundle not loaded when onload called"));
       };
 
       [[if .Assets.ContentDeliveryURL]]
