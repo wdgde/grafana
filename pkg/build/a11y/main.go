@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"path/filepath"
 
 	"dagger.io/dagger"
 	"github.com/urfave/cli/v3"
@@ -61,25 +60,30 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	grafanaDir := cmd.String("grafana-dir")
 	targzPath := cmd.String("package")
 	licensePath := cmd.String("license")
-	runnerFlags := cmd.String("flags")
 
 	d, err := dagger.Connect(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to connect to Dagger: %w", err)
 	}
 
-	yarnCache := d.CacheVolume("yarn")
+	// Explicitly include all files used by both the server and pa11y checks
+	hostSrc := d.Host().Directory(grafanaDir, dagger.HostDirectoryOpts{
+		Include: []string{
+			// Used by the server
+			"./devenv",
+			"./e2e",
+			"./scripts",
+			"./tools",
 
-	//nolint:gosec
-	nvmrcContents, err := os.ReadFile(filepath.Join(grafanaDir, ".nvmrc"))
-	if err != nil {
-		return fmt.Errorf("failed to read .nvmrc file: %w", err)
-	}
-	nodeVersion := string(nvmrcContents)
-
-	grafana := d.Host().Directory(grafanaDir, dagger.HostDirectoryOpts{
-		Exclude: []string{"node_modules", "*.tar.gz", "public/build", ".nx", ".bin", "screenshots", "pa11y-ci-results.json"},
+			// Used by pa11y
+			".pa11yci-pr.conf.js",
+			".pa11yci.conf.js",
+		},
+		Exclude: []string{
+			"./scripts/tmp/*",
+		},
 	})
+
 	targz := d.Host().File(targzPath)
 
 	var license *dagger.File
@@ -88,19 +92,15 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	svc, err := GrafanaService(ctx, d, GrafanaServiceOpts{
-		GrafanaDir:   grafana,
+		HostSrc:      hostSrc,
 		GrafanaTarGz: targz,
 		License:      license,
-		YarnCache:    yarnCache,
-		NodeVersion:  nodeVersion,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create Grafana service: %w", err)
 	}
 
-	c := RunTest(d, svc, grafana, yarnCache, nodeVersion, runnerFlags)
-	ExportScreenshots(ctx, c, "screenshots")
-	ExportReport(ctx, c, "pa11y-ci-results.json")
+	c := RunTest(d, svc, hostSrc)
 	c, err = c.Sync(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to run a11y test suite: %w", err)

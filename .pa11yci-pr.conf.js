@@ -79,7 +79,6 @@ var config = {
       ],
       threshold: 2,
       rootElement: '.main-view',
-      screenCapture: './screenshots/login.png',
     },
     {
       url: '${HOST}/?orgId=1',
@@ -136,7 +135,6 @@ var config = {
       wait: 500,
       rootElement: '.main-view',
       threshold: 2,
-      screenCapture: './screenshots/org.png',
     },
     {
       url: '${HOST}/org/apikeys',
@@ -156,20 +154,13 @@ var config = {
 function myPa11yCiConfiguration(urls, defaults) {
   const HOST_SERVER = process.env.HOST || 'localhost';
   const PORT_SERVER = process.env.PORT || '3001';
-  for (var idx = 0; idx < urls.length; idx++) {
-    urls[idx] = { ...urls[idx], url: urls[idx].url.replace('${HOST}', `${HOST_SERVER}:${PORT_SERVER}`) };
-  }
 
-  urls.forEach((url, index) => {
-    url.screenCapture = url.screenCapture || `./screenshots/screenshot-${index}.png`;
-    // url.log = {
-    //   ...(url.log ?? {}),
-    //   debug: (...args) => console.log('  [DEBUG]', ...args),
-    //   info: (...args) => console.log('   [INFO]', ...args),
-    //   warn: (...args) => console.log('   [WARN]', ...args),
-    //   error: (...args) => console.log('  [ERROR]', ...args),
-    // };
-    // url.wait = 1000;
+  urls = urls.map((test, index) => {
+    return {
+      ...test,
+      url: test.url.replace('${HOST}', `${HOST_SERVER}:${PORT_SERVER}`),
+      screenCapture: `./screenshots/screenshot-${index}.png`,
+    };
   });
 
   return {
