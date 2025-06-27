@@ -199,6 +199,10 @@ const (
 	// Start an additional https handler and write kubectl options
 	FlagGrafanaAPIServerEnsureKubectlAccess = "grafanaAPIServerEnsureKubectlAccess"
 
+	// FlagApiServerGraphQL
+	// Enable GraphQL API endpoint that aggregates app schemas
+	FlagApiServerGraphQL = "apiServerGraphQL"
+
 	// FlagFeatureToggleAdminPage
 	// Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.
 	FlagFeatureToggleAdminPage = "featureToggleAdminPage"

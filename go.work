@@ -5,6 +5,8 @@ go 1.24.4
 
 use (
 	. // skip:golangci-lint
+	../grafana-app-sdk // Local grafana-app-sdk for testing GraphQL
+	../grafana-app-sdk/plugin // Local grafana-app-sdk/plugin submodule
 	./apps/advisor
 	./apps/alerting/notifications
 	./apps/dashboard

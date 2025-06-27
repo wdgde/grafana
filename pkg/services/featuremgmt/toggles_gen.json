@@ -416,6 +416,19 @@
     },
     {
       "metadata": {
+        "name": "apiServerGraphQL",
+        "resourceVersion": "1750976971481",
+        "creationTimestamp": "2025-06-26T22:29:31Z"
+      },
+      "spec": {
+        "description": "Enable GraphQL API endpoint that aggregates app schemas",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "appPlatformGrpcClientAuth",
         "resourceVersion": "1750434297879",
         "creationTimestamp": "2024-10-14T10:47:18Z"

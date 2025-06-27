@@ -226,6 +226,10 @@ export interface FeatureToggles {
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
   /**
+  * Enable GraphQL API endpoint that aggregates app schemas
+  */
+  apiServerGraphQL?: boolean;
+  /**
   * Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.
   */
   featureToggleAdminPage?: boolean;

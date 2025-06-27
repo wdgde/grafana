@@ -47,6 +47,7 @@ grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-
 provisioning,experimental,@grafana/grafana-app-platform-squad,false,true,false
 nanoGit,experimental,@grafana/grafana-app-platform-squad,false,true,false
 grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,true,true,false
+apiServerGraphQL,experimental,@grafana/grafana-app-platform-squad,false,true,false
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 awsAsyncQueryCaching,GA,@grafana/aws-datasources,false,false,false
 permissionsFilterRemoveSubquery,experimental,@grafana/search-and-storage,false,false,false

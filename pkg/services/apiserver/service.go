@@ -102,6 +102,9 @@ type service struct {
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 	aggregatorRunner                  aggregatorrunner.AggregatorRunner
+	
+	// GraphQL support
+	graphqlService *GraphQLService
 }
 
 func ProvideService(
@@ -123,6 +126,7 @@ func ProvideService(
 	eventualRestConfigProvider *eventualRestConfigProvider,
 	reg prometheus.Registerer,
 	aggregatorRunner aggregatorrunner.AggregatorRunner,
+	graphqlService *GraphQLService,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -150,6 +154,7 @@ func ProvideService(
 		restConfigProvider:                restConfigProvider,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 		aggregatorRunner:                  aggregatorRunner,
+		graphqlService:                    graphqlService,
 	}
 	// This will be used when running as a dskit service
 	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -195,6 +200,11 @@ func ProvideService(
 	s.rr.Group("/healthz", proxyHandler)
 	s.rr.Group("/openapi", proxyHandler)
 	s.rr.Group("/version", proxyHandler)
+
+	// Initialize GraphQL support
+	if err := s.initGraphQL(); err != nil {
+		return nil, fmt.Errorf("failed to initialize GraphQL: %w", err)
+	}
 
 	eventualRestConfigProvider.cfg = s
 	close(eventualRestConfigProvider.ready)

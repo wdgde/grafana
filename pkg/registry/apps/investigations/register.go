@@ -29,5 +29,6 @@ func RegisterApp(
 		AllowedV0Alpha1Resources: []string{builder.AllResourcesAllowed},
 	}
 	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, investigationapp.New)
+	
 	return provider
 }

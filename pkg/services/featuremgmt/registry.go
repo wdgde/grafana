@@ -367,6 +367,13 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 		},
 		{
+			Name:            "apiServerGraphQL",
+			Description:     "Enable GraphQL API endpoint that aggregates app schemas",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true, // changes the API routing
+			Owner:           grafanaAppPlatformSquad,
+		},
+		{
 			Name:            "featureToggleAdminPage",
 			Description:     "Enable admin page for managing feature toggles from the Grafana front-end. Grafana Cloud only.",
 			Stage:           FeatureStageExperimental,
