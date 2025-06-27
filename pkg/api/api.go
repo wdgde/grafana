@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/frontend"
+	"github.com/grafana/grafana/pkg/services/graphql"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -329,6 +330,9 @@ func (hs *HTTPServer) registerRoutes() {
 		if hs.Features.IsEnabledGlobally(featuremgmt.FlagPanelTitleSearch) {
 			apiRoute.Group("/search-v2", hs.SearchV2HTTPService.RegisterHTTPRoutes)
 		}
+
+		// GraphQL API endpoints
+		graphql.RegisterRoutes(apiRoute, hs.GraphQLService)
 
 		// current org
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {

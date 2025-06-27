@@ -64,6 +64,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/graphql"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -221,6 +222,7 @@ type HTTPServer struct {
 	namespacer           request.NamespaceMapper
 	anonService          anonymous.Service
 	userVerifier         user.Verifier
+	GraphQLService       *graphql.Service
 	tlsCerts             TLSCerts
 }
 
@@ -275,6 +277,12 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
+
+	// Initialize GraphQL service
+	graphqlService, err := graphql.NewService()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create GraphQL service: %w", err)
+	}
 
 	hs := &HTTPServer{
 		Cfg:                          cfg,
@@ -376,6 +384,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
 		userVerifier:                 userVerifier,
+		GraphQLService:               graphqlService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
