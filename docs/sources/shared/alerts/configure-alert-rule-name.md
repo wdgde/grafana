@@ -5,6 +5,8 @@ labels:
 title: 'Set alert rule name'
 ---
 
+## Set alert rule name
+
 1. Click **Alerts & IRM** -> **Alert rules** -> **+ New alert rule**.
 1. Enter a name to identify your alert rule.
 

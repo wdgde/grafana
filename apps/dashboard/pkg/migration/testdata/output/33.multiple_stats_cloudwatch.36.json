@@ -44,8 +44,7 @@
       },
       {
         "datasource": {
-          "type": "prometheus",
-          "uid": "default-ds-uid"
+          "uid": "non-existing-ds"
         },
         "enable": true,
         "name": "Test Non-existing Annotation",
@@ -247,8 +246,7 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "default-ds-uid"
+        "uid": "non-existing-ds"
       },
       "gridPos": {
         "h": 8,
@@ -260,8 +258,7 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "uid": "non-existing-ds"
           }
         }
       ],
@@ -369,8 +366,7 @@
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "default-ds-uid"
+            "uid": "prometheus"
           },
           "expr": "up",
           "refId": "B"
@@ -499,8 +495,7 @@
       },
       {
         "datasource": {
-          "type": "prometheus",
-          "uid": "default-ds-uid"
+          "uid": "non-existing-ds"
         },
         "name": "non_existing_var",
         "type": "query"

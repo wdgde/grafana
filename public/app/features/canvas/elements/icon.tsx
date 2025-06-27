@@ -3,7 +3,6 @@ import { isString } from 'lodash';
 import { CSSProperties } from 'react';
 
 import { LinkModel } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { ColorDimensionConfig, ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
@@ -113,13 +112,13 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
 
   // Heatmap overlay options
   registerOptionsUI: (builder) => {
-    const category = [t('canvas.icon-item.category-icon', 'Icon')];
+    const category = ['Icon'];
     builder
       .addCustomEditor({
         category,
         id: 'iconSelector',
         path: 'config.path',
-        name: t('canvas.icon-item.name-svg-path', 'SVG Path'),
+        name: 'SVG Path',
         editor: ResourceDimensionEditor,
         settings: {
           resourceType: 'icon',
@@ -130,7 +129,7 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
         category,
         id: 'config.fill',
         path: 'config.fill',
-        name: t('canvas.icon-item.name-fill-color', 'Fill color'),
+        name: 'Fill color',
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {

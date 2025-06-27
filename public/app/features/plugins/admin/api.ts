@@ -40,7 +40,6 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     licenseUrl: remote?.licenseUrl,
     documentationUrl: remote?.documentationUrl,
     sponsorshipUrl: remote?.sponsorshipUrl,
-    repositoryUrl: remote?.repositoryUrl,
     raiseAnIssueUrl: remote?.raiseAnIssueUrl,
     signatureType: local?.signatureType || (remote?.signatureType !== '' ? remote?.signatureType : undefined),
     signature: local?.signature,

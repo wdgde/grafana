@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -68,7 +67,6 @@ func TestImportDashboardService(t *testing.T) {
 			dashboardService:       dashboardService,
 			libraryPanelService:    libraryPanelService,
 			folderService:          folderService,
-			features:               featuremgmt.WithFeatures(),
 		}
 
 		req := &dashboardimport.ImportDashboardRequest{
@@ -129,7 +127,6 @@ func TestImportDashboardService(t *testing.T) {
 			dashboardService:    dashboardService,
 			libraryPanelService: libraryPanelService,
 			folderService:       folderService,
-			features:            featuremgmt.WithFeatures(),
 		}
 
 		loadResp, err := loadTestDashboard(context.Background(), &plugindashboards.LoadPluginDashboardRequest{

@@ -659,8 +659,7 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 	// nolint:gosec
 	indexFile, err := os.Open(indexFilePath)
 	if err != nil {
-		// TODO: Clean this notice once we've fixed the HA bug
-		return fmt.Errorf("opening index files: %w. If you are running Grafana in a highly-available setup, try scaling down to one replica to avoid a known bug: https://github.com/grafana/grafana/issues/107264", err)
+		return fmt.Errorf("opening index files: %w", err)
 	}
 	defer func() {
 		if closeErr := indexFile.Close(); closeErr != nil {

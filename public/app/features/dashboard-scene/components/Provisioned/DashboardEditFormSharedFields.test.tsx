@@ -65,7 +65,7 @@ function setup(options: SetupOptions = {}) {
     user,
     ...render(
       <FormWrapper>
-        <DashboardEditFormSharedFields {...componentProps} resourceType="dashboard" />
+        <DashboardEditFormSharedFields {...componentProps} />
       </FormWrapper>
     ),
   };
@@ -192,7 +192,6 @@ describe('DashboardEditFormSharedFields', () => {
                 { label: 'Create branch', value: 'branch' },
               ]}
               isNew={true}
-              resourceType="dashboard"
             />
           </FormProvider>
         );

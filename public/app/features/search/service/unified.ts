@@ -6,8 +6,9 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { getAPIBaseURL } from 'app/api/utils';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import kbn from 'app/core/utils/kbn';
+import { isResourceList } from 'app/features/apiserver/guards';
+import { DashboardDataDTO } from 'app/types';
 
-import { deletedDashboardsCache } from './deletedDashboardsCache';
 import {
   DashboardQueryResult,
   GrafanaSearcher,
@@ -16,7 +17,7 @@ import {
   SearchQuery,
   SearchResultMeta,
 } from './types';
-import { replaceCurrentFolderQuery, filterSearchResults } from './utils';
+import { replaceCurrentFolderQuery, resourceToSearchResult } from './utils';
 
 // The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
@@ -114,16 +115,8 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
   async doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
     const uri = await this.newRequest(query);
+    const rsp = await this.fetchResponse(uri);
 
-    let rsp: SearchAPIResponse;
-
-    if (query.deleted) {
-      const data = await deletedDashboardsCache.get();
-      const results = filterSearchResults(data, query);
-      rsp = { hits: results, totalHits: results.length };
-    } else {
-      rsp = await this.fetchResponse(uri);
-    }
     const first = toDashboardResults(rsp, query.sort ?? '');
     if (first.name === loadingFrameName) {
       return this.fallbackSearcher.search(query);
@@ -216,6 +209,11 @@ export class UnifiedSearcher implements GrafanaSearcher {
 
   async fetchResponse(uri: string) {
     const rsp = await getBackendSrv().get<SearchAPIResponse>(uri);
+    if (isResourceList<DashboardDataDTO>(rsp)) {
+      const hits = resourceToSearchResult(rsp);
+      const totalHits = rsp.items.length;
+      return { ...rsp, hits, totalHits };
+    }
     const isFolderCacheStale = await this.isFolderCacheStale(rsp.hits);
     if (!isFolderCacheStale) {
       return rsp;

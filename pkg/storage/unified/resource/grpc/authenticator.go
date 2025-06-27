@@ -11,9 +11,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/grafana/authlib/types"
-	"go.opentelemetry.io/otel/trace"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -140,16 +139,15 @@ func wrapContext(ctx context.Context) (context.Context, error) {
 	}
 
 	// set grpc metadata into the context to pass to the grpc server
-	ctx = metadata.AppendToOutgoingContext(ctx, encodeIdentityInMetadataPairs(user)...)
-	return ctx, nil
+	return metadata.NewOutgoingContext(ctx, encodeIdentityInMetadata(user)), nil
 }
 
-func encodeIdentityInMetadataPairs(user identity.Requester) []string {
+func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
 	id, _ := user.GetInternalID()
 
-	logger.Debug("encodeIdentityInMetadataPairs", "user.id", user.GetID(), "user.Login", user.GetLogin(), "user.Name", user.GetName())
+	logger.Debug("encodeIdentityInMetadata", "user.id", user.GetID(), "user.Login", user.GetLogin(), "user.Name", user.GetName())
 
-	return []string{
+	return metadata.Pairs(
 		// This should be everything needed to recreate the user
 		mdToken, user.GetIDToken(),
 
@@ -163,5 +161,5 @@ func encodeIdentityInMetadataPairs(user identity.Requester) []string {
 		// TODO, Remove after this is deployed to unified storage
 		"grafana-userid", strconv.FormatInt(id, 10),
 		"grafana-useruid", user.GetRawIdentifier(),
-	}
+	)
 }

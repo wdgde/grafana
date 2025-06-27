@@ -1,20 +1,19 @@
-import { filter, find, includes, startsWith } from 'lodash';
+import { startsWith, includes, find, filter } from 'lodash';
 
 import { ScopedVars } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, DataSourceWithBackend, TemplateSrv } from '@grafana/runtime';
 
 import { resourceTypes } from '../azureMetadata';
-import { ARGScope } from '../dataquery.gen';
 import {
-  AzureGetResourceNamesQuery,
-  AzureGraphResponse,
-  AzureMonitorDataSourceInstanceSettings,
-  AzureMonitorDataSourceJsonData,
   AzureMonitorQuery,
+  AzureMonitorDataSourceJsonData,
   AzureQueryType,
-  AzureResourceGraphOptions,
   RawAzureResourceGroupItem,
+  AzureGetResourceNamesQuery,
+  AzureMonitorDataSourceInstanceSettings,
   RawAzureResourceItem,
+  AzureGraphResponse,
+  AzureResourceGraphOptions,
   RawAzureSubscriptionItem,
 } from '../types';
 import { interpolateVariable, replaceTemplateVariables, routeNames } from '../utils/common';
@@ -34,10 +33,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {
-    return (
-      !!item.azureResourceGraph?.query &&
-      (item.azureResourceGraph.scope === ARGScope.Directory || (!!item.subscriptions && item.subscriptions.length > 0))
-    );
+    return !!item.azureResourceGraph?.query && !!item.subscriptions && item.subscriptions.length > 0;
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {
@@ -65,7 +61,6 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
       azureResourceGraph: {
         resultFormat: 'table',
         query,
-        scope: item.scope,
       },
     };
   }

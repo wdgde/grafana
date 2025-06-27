@@ -48,13 +48,12 @@ func NoopAutogenFn(_ context.Context, _ log.Logger, _ int64, _ *apimodels.Postab
 	return nil
 }
 
-type Crypto interface {
-	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
-}
+// DecryptFn is a function that takes in an encrypted value and returns it decrypted.
+type DecryptFn func(ctx context.Context, payload []byte) ([]byte, error)
 
 type Alertmanager struct {
 	autogenFn         AutogenFn
-	crypto            Crypto
+	decrypt           DecryptFn
 	defaultConfig     string
 	defaultConfigHash string
 	log               log.Logger
@@ -121,7 +120,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, crypto Crypto, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
+func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -205,7 +204,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 	return &Alertmanager{
 		amClient:          amc,
 		autogenFn:         autogenFn,
-		crypto:            crypto,
+		decrypt:           decryptFn,
 		defaultConfig:     string(rawCfg),
 		defaultConfigHash: fmt.Sprintf("%x", md5.Sum(rawCfg)),
 		log:               logger,
@@ -319,7 +318,7 @@ func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels
 	}
 
 	// Decrypt the receivers in the configuration.
-	decryptedReceivers, err := legacy_storage.DecryptedReceivers(cfgCopy.AlertmanagerConfig.Receivers, decrypter(ctx, am.crypto))
+	decryptedReceivers, err := legacy_storage.DecryptedReceivers(cfgCopy.AlertmanagerConfig.Receivers, decrypter(ctx, am.decrypt))
 	if err != nil {
 		return nil, fmt.Errorf("unable to decrypt receivers: %w", err)
 	}
@@ -328,13 +327,13 @@ func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels
 	return cfgCopy, nil
 }
 
-func decrypter(ctx context.Context, crypto Crypto) models.DecryptFn {
+func decrypter(ctx context.Context, decryptFn DecryptFn) models.DecryptFn {
 	return func(value string) (string, error) {
 		decoded, err := base64.StdEncoding.DecodeString(value)
 		if err != nil {
 			return "", err
 		}
-		decrypted, err := crypto.Decrypt(ctx, decoded)
+		decrypted, err := decryptFn(ctx, decoded)
 		if err != nil {
 			return "", err
 		}
@@ -574,7 +573,7 @@ func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver,
 }
 
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
-	decryptedReceivers, err := legacy_storage.DecryptedReceivers(c.Receivers, decrypter(ctx, am.crypto))
+	decryptedReceivers, err := legacy_storage.DecryptedReceivers(c.Receivers, decrypter(ctx, am.decrypt))
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to decrypt receivers: %w", err)
 	}

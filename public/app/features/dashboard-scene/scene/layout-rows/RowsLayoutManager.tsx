@@ -3,7 +3,6 @@ import {
   sceneGraph,
   SceneGridItemLike,
   SceneGridRow,
-  SceneObject,
   SceneObjectBase,
   SceneObjectState,
   VizPanel,
@@ -25,6 +24,7 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { RowItem } from './RowItem';
+import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
 import { RowLayoutManagerRenderer } from './RowsLayoutManagerRenderer';
 
 interface RowsLayoutManagerState extends SceneObjectState {
@@ -33,6 +33,7 @@ interface RowsLayoutManagerState extends SceneObjectState {
 
 export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> implements DashboardLayoutManager {
   public static Component = RowLayoutManagerRenderer;
+
   public readonly isDashboardLayoutManager = true;
 
   public static readonly descriptor: LayoutRegistryItem = {
@@ -119,24 +120,24 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     this.addNewRow(row);
   }
 
-  public shouldUngroup(): boolean {
-    return this.state.rows.length === 1;
+  public activateRepeaters() {
+    this.state.rows.forEach((row) => {
+      if (!row.isActive) {
+        row.activate();
+      }
+
+      const behavior = (row.state.$behaviors ?? []).find((b) => b instanceof RowItemRepeaterBehavior);
+
+      if (!behavior?.isActive) {
+        behavior?.activate();
+      }
+
+      row.getLayout().activateRepeaters?.();
+    });
   }
 
-  public getOutlineChildren() {
-    const outlineChildren: SceneObject[] = [];
-
-    for (const row of this.state.rows) {
-      outlineChildren.push(row);
-
-      if (row.state.repeatedRows) {
-        for (const clone of row.state.repeatedRows!) {
-          outlineChildren.push(clone);
-        }
-      }
-    }
-
-    return outlineChildren;
+  public shouldUngroup(): boolean {
+    return this.state.rows.length === 1;
   }
 
   public removeRow(row: RowItem) {
@@ -197,14 +198,12 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
         conditionalRendering?.clearParent();
 
         const behavior = tab.state.$behaviors?.find((b) => b instanceof TabItemRepeaterBehavior);
+        const $behaviors = !behavior
+          ? undefined
+          : [new RowItemRepeaterBehavior({ variableName: behavior.state.variableName })];
 
         rows.push(
-          new RowItem({
-            layout: tab.state.layout.clone(),
-            title: tab.state.title,
-            conditionalRendering,
-            repeatByVariable: behavior?.state.variableName,
-          })
+          new RowItem({ layout: tab.state.layout.clone(), title: tab.state.title, conditionalRendering, $behaviors })
         );
       }
     } else if (layout instanceof DefaultGridLayoutManager) {
@@ -254,12 +253,12 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
           new RowItem({
             title: rowConfig.title,
             collapse: !!rowConfig.isCollapsed,
-            repeatByVariable: rowConfig.repeat,
             layout: DefaultGridLayoutManager.fromGridItems(
               rowConfig.children,
               rowConfig.isDraggable ?? layout.state.grid.state.isDraggable,
               rowConfig.isResizable ?? layout.state.grid.state.isResizable
             ),
+            $behaviors: rowConfig.repeat ? [new RowItemRepeaterBehavior({ variableName: rowConfig.repeat })] : [],
           })
       );
     } else {

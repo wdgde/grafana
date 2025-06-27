@@ -278,6 +278,9 @@ describe('SaveProvisionedDashboardForm', () => {
 
     const pathInput = screen.getByRole('textbox', { name: /path/i });
     expect(pathInput).toHaveAttribute('readonly'); // can not edit the path value
+    pathInput.removeAttribute('readonly'); // save won't get called unless we have a value
+    await user.clear(pathInput);
+    await user.type(pathInput, 'path/to/file.json');
 
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
     await user.clear(commentInput);
@@ -288,7 +291,7 @@ describe('SaveProvisionedDashboardForm', () => {
       expect(mockAction).toHaveBeenCalledWith({
         ref: undefined,
         name: 'test-repo',
-        path: 'test-dashboard.json',
+        path: 'path/to/file.json',
         message: 'Update dashboard',
         body: updatedDashboard,
       });

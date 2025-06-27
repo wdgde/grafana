@@ -56,8 +56,7 @@ const (
 	mergeMatchersHeader = "X-Grafana-Alerting-Merge-Matchers"
 
 	// configIdentifierHeader is the header that specifies the identifier for imported Alertmanager config.
-	configIdentifierHeader  = "X-Grafana-Alerting-Config-Identifier"
-	defaultConfigIdentifier = "default"
+	configIdentifierHeader = "X-Grafana-Alerting-Config-Identifier"
 )
 
 var (
@@ -540,7 +539,11 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 
 	logger := srv.logger.FromContext(c.Req.Context())
 
-	identifier := parseConfigIdentifierHeader(c)
+	identifier, err := parseConfigIdentifierHeader(c)
+	if err != nil {
+		logger.Error("Failed to parse config identifier header", "error", err, "identifier", identifier)
+		return errorToResponse(err)
+	}
 
 	mergeMatchers, err := parseMergeMatchersHeader(c)
 	if err != nil {
@@ -578,7 +581,11 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 	logger := srv.logger.FromContext(c.Req.Context())
 	ctx := c.Req.Context()
 
-	identifier := parseConfigIdentifierHeader(c)
+	identifier, err := parseConfigIdentifierHeader(c)
+	if err != nil {
+		logger.Error("failed to parse config identifier header", "err", err)
+		return errorToResponse(err)
+	}
 
 	cfg, err := srv.am.GetAlertmanagerConfiguration(ctx, c.GetOrgID(), false)
 	if err != nil {
@@ -622,9 +629,13 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteAlertmanagerConfig(
 
 	logger := srv.logger.FromContext(c.Req.Context())
 
-	identifier := parseConfigIdentifierHeader(c)
+	identifier, err := parseConfigIdentifierHeader(c)
+	if err != nil {
+		logger.Error("Failed to parse config identifier header", "error", err)
+		return errorToResponse(err)
+	}
 
-	err := srv.am.DeleteExtraConfiguration(c.Req.Context(), c.GetOrgID(), identifier)
+	err = srv.am.DeleteExtraConfiguration(c.Req.Context(), c.GetOrgID(), identifier)
 	if err != nil {
 		logger.Error("Failed to delete alertmanager configuration", "error", err, "identifier", identifier)
 		return errorToResponse(fmt.Errorf("failed to delete alertmanager configuration: %w", err))
@@ -801,10 +812,10 @@ func formatMergeMatchers(matchers amconfig.Matchers) string {
 	return strings.Join(pairs, ",")
 }
 
-func parseConfigIdentifierHeader(c *contextmodel.ReqContext) string {
+func parseConfigIdentifierHeader(c *contextmodel.ReqContext) (string, error) {
 	identifier := strings.TrimSpace(c.Req.Header.Get(configIdentifierHeader))
 	if identifier == "" {
-		return defaultConfigIdentifier
+		return "", errInvalidHeaderValue(configIdentifierHeader, errors.New("identifier cannot be empty"))
 	}
-	return identifier
+	return identifier, nil
 }

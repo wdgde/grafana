@@ -5,7 +5,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
-import { getEscapedRegexValues, getEscapedValues } from '../datasource';
+import { getEscapedSpanNames } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { intrinsics } from '../traceql/traceql';
 import { Scope } from '../types';
@@ -32,16 +32,11 @@ export const interpolateFilters = (filters: TraceqlFilter[], scopedVars?: Scoped
 
 const isRegExpOperator = (operator: string) => operator === '=~' || operator === '!~';
 
+const escapeValues = (values: string[]) => getEscapedSpanNames(values);
+
 export const valueHelper = (f: TraceqlFilter) => {
-  let value = f.value;
-
-  if (Array.isArray(value) && !f.isCustomValue) {
-    value = getEscapedValues(value);
-
-    if (isRegExpOperator(f.operator!)) {
-      value = getEscapedRegexValues(value);
-    }
-  }
+  const value =
+    Array.isArray(f.value) && isRegExpOperator(f.operator!) && !f.isCustomValue ? escapeValues(f.value) : f.value;
 
   if (Array.isArray(value) && value.length > 1) {
     return `"${value.join('|')}"`;

@@ -1,6 +1,4 @@
 import { Preview } from '@storybook/react';
-import { initialize, mswLoader } from 'msw-storybook-addon';
-
 import 'jquery';
 import { getBuiltInThemes, getTimeZone, getTimeZones, GrafanaTheme2 } from '@grafana/data';
 
@@ -43,13 +41,6 @@ if (process.env.NODE_ENV === 'development') {
   allowedExtraThemes.push('sapphiredusk');
   allowedExtraThemes.push('tron');
 }
-
-/*
- * Initializes MSW
- * See https://github.com/mswjs/msw-storybook-addon#configuring-msw
- * to learn how to customize it
- */
-initialize();
 
 const preview: Preview = {
   decorators: [withTheme(handleThemeChange), withTimeZone()],
@@ -111,7 +102,6 @@ const preview: Preview = {
     },
   },
   tags: ['autodocs'],
-  loaders: [mswLoader],
 };
 
 export default preview;

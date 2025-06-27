@@ -55,8 +55,7 @@ func ProvideUnifiedStorageClient(opts *Options, storageMetrics *resource.Storage
 	client, err := newClient(options.StorageOptions{
 		StorageType:        options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
 		DataPath:           apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
-		Address:            apiserverCfg.Key("address").MustString(""),
-		IndexServerAddress: apiserverCfg.Key("index_server_address").MustString(""),
+		Address:            apiserverCfg.Key("address").MustString(""), // client address
 		BlobStoreURL:       apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes: apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 	}, opts.Cfg, opts.Features, opts.DB, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics)
@@ -118,29 +117,34 @@ func newClient(opts options.StorageOptions,
 		}
 
 		var (
-			conn      grpc.ClientConnInterface
-			indexConn grpc.ClientConnInterface
-			err       error
-			metrics   = newClientMetrics(reg)
+			conn    grpc.ClientConnInterface
+			err     error
+			metrics = newClientMetrics(reg)
 		)
-
-		conn, err = newGrpcConn(opts.Address, metrics, features)
-		if err != nil {
-			return nil, err
-		}
-
-		if opts.IndexServerAddress != "" {
-			indexConn, err = newGrpcConn(opts.IndexServerAddress, metrics, features)
-
+		// Create either a connection pool or a single connection.
+		// The connection pool __can__ be useful when connection to
+		// server side load balancers like kube-proxy.
+		if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageGrpcConnectionPool) {
+			conn, err = newPooledConn(&poolOpts{
+				initialCapacity: 3,
+				maxCapacity:     6,
+				idleTimeout:     time.Minute,
+				factory: func() (*grpc.ClientConn, error) {
+					return grpcConn(opts.Address, metrics)
+				},
+			})
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			indexConn = conn
+			conn, err = grpcConn(opts.Address, metrics)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		// Create a client instance
-		client, err := resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
+		client, err := resource.NewResourceClient(conn, cfg, features, tracer)
 		if err != nil {
 			return nil, err
 		}
@@ -158,34 +162,6 @@ func newClient(opts options.StorageOptions,
 		}
 		return resource.NewLocalResourceClient(server), nil
 	}
-}
-
-func newGrpcConn(address string, metrics *clientMetrics, features featuremgmt.FeatureToggles) (grpc.ClientConnInterface, error) {
-	// Create either a connection pool or a single connection.
-	// The connection pool __can__ be useful when connection to
-	// server side load balancers like kube-proxy.
-	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageGrpcConnectionPool) {
-		conn, err := newPooledConn(&poolOpts{
-			initialCapacity: 3,
-			maxCapacity:     6,
-			idleTimeout:     time.Minute,
-			factory: func() (*grpc.ClientConn, error) {
-				return grpcConn(address, metrics)
-			},
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		return conn, nil
-	}
-
-	conn, err := grpcConn(address, metrics)
-	if err != nil {
-		return nil, err
-	}
-
-	return conn, nil
 }
 
 // grpcConn creates a new gRPC connection to the provided address.

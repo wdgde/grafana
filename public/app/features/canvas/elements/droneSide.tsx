@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { ScalarDimensionConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions';
@@ -109,12 +108,12 @@ export const droneSideItem: CanvasElementItem = {
   },
 
   registerOptionsUI: (builder) => {
-    const category = [t('canvas.drone-side-item.category-drone-side', 'Drone Side')];
+    const category = ['Drone Side'];
     builder.addCustomEditor({
       category,
       id: 'pitchAngle',
       path: 'config.pitchAngle',
-      name: t('canvas.drone-side-item.name-pitch-angle', 'Pitch Angle'),
+      name: 'Pitch Angle',
       editor: ScalarDimensionEditor,
     });
   },

@@ -32,6 +32,7 @@ import { LayoutParent } from '../types/LayoutParent';
 
 import { useEditOptions } from './RowItemEditor';
 import { RowItemRenderer } from './RowItemRenderer';
+import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
 import { RowItems } from './RowItems';
 import { RowsLayoutManager } from './RowsLayoutManager';
 
@@ -43,8 +44,6 @@ export interface RowItemState extends SceneObjectState {
   fillScreen?: boolean;
   isDropTarget?: boolean;
   conditionalRendering?: ConditionalRendering;
-  repeatByVariable?: string;
-  repeatedRows?: RowItem[];
 }
 
 export class RowItem
@@ -87,11 +86,8 @@ export class RowItem
       typeName: t('dashboard.edit-pane.elements.row', 'Row'),
       instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
       icon: 'list-ul',
+      isContainer: true,
     };
-  }
-
-  public getOutlineChildren(): SceneObject[] {
-    return this.state.layout.getOutlineChildren();
   }
 
   public getLayout(): DashboardLayoutManager {
@@ -180,6 +176,10 @@ export class RowItem
     this.setIsDropTarget(false);
   }
 
+  public getRepeatVariable(): string | undefined {
+    return this._getRepeatBehavior()?.state.variableName;
+  }
+
   public onChangeTitle(title: string) {
     this.setState({ title });
   }
@@ -197,10 +197,19 @@ export class RowItem
   }
 
   public onChangeRepeat(repeat: string | undefined) {
+    let repeatBehavior = this._getRepeatBehavior();
+
     if (repeat) {
-      this.setState({ repeatByVariable: repeat });
+      // Remove repeat behavior if it exists to trigger repeat when adding new one
+      if (repeatBehavior) {
+        repeatBehavior.removeBehavior();
+      }
+
+      repeatBehavior = new RowItemRepeaterBehavior({ variableName: repeat });
+      this.setState({ $behaviors: [...(this.state.$behaviors ?? []), repeatBehavior] });
+      repeatBehavior.activate();
     } else {
-      this.setState({ repeatedRows: undefined, $variables: undefined, repeatByVariable: undefined });
+      repeatBehavior?.removeBehavior();
     }
   }
 
@@ -210,6 +219,10 @@ export class RowItem
 
   public getParentLayout(): RowsLayoutManager {
     return sceneGraph.getAncestor(this, RowsLayoutManager);
+  }
+
+  private _getRepeatBehavior(): RowItemRepeaterBehavior | undefined {
+    return this.state.$behaviors?.find((b) => b instanceof RowItemRepeaterBehavior);
   }
 
   public scrollIntoView() {

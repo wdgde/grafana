@@ -102,7 +102,6 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 		desc         string
 		id           int64
 		permissions  []accesscontrol.Permission
-		expectedErr  error
 		expectedCode int
 	}
 
@@ -119,21 +118,11 @@ func TestServiceAccountsAPI_DeleteServiceAccount(t *testing.T) {
 			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionDelete, Scope: "serviceaccounts:id:1"}},
 			expectedCode: http.StatusForbidden,
 		},
-		{
-			desc:         "should return a 404 error if the service account doesn't exist",
-			id:           1,
-			permissions:  []accesscontrol.Permission{{Action: serviceaccounts.ActionDelete, Scope: "serviceaccounts:id:1"}},
-			expectedErr:  serviceaccounts.ErrServiceAccountNotFound.Errorf("service account with id 1 not found"),
-			expectedCode: http.StatusNotFound,
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			server := setupTests(t, func(a *ServiceAccountsAPI) {
-				a.service = &satests.FakeServiceAccountService{ExpectedErr: tt.expectedErr}
-			})
-
+			server := setupTests(t)
 			req := server.NewRequest(http.MethodDelete, fmt.Sprintf("/api/serviceaccounts/%d", tt.id), nil)
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}})
 			res, err := server.Send(req)

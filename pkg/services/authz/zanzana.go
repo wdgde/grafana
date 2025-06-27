@@ -177,32 +177,19 @@ func (z *Zanzana) start(ctx context.Context) error {
 		return fmt.Errorf("failed to start zanzana: %w", err)
 	}
 
-	var authenticatorInterceptor interceptors.Authenticator
-	if z.cfg.ZanzanaServer.AllowInsecure && z.cfg.Env == setting.Dev {
-		z.logger.Info("Allowing insecure connections to OpenFGA HTTP server")
-		authenticatorInterceptor = noopAuthenticator{}
-	} else {
-		z.logger.Info("Requiring secure connections to OpenFGA HTTP server")
-		authenticator := authnlib.NewAccessTokenAuthenticator(
-			authnlib.NewAccessTokenVerifier(
-				authnlib.VerifierConfig{AllowedAudiences: []string{AuthzServiceAudience}},
-				authnlib.NewKeyRetriever(authnlib.KeyRetrieverConfig{
-					SigningKeysURL: z.cfg.ZanzanaServer.SigningKeysURL,
-				}),
-			),
-		)
-		authenticatorInterceptor = interceptors.AuthenticatorFunc(
-			grpcutils.NewAuthenticatorInterceptor(
-				authenticator,
-				tracer,
-			),
-		)
-	}
+	authenticator := authnlib.NewAccessTokenAuthenticator(
+		authnlib.NewAccessTokenVerifier(
+			authnlib.VerifierConfig{AllowedAudiences: []string{AuthzServiceAudience}},
+			authnlib.NewKeyRetriever(authnlib.KeyRetrieverConfig{
+				SigningKeysURL: z.cfg.ZanzanaServer.SigningKeysURL,
+			}),
+		),
+	)
 
 	z.handle, err = grpcserver.ProvideService(
 		z.cfg,
 		z.features,
-		authenticatorInterceptor,
+		interceptors.AuthenticatorFunc(grpcutils.NewAuthenticatorInterceptor(authenticator, tracer)),
 		tracer,
 		prometheus.DefaultRegisterer,
 	)
@@ -250,12 +237,4 @@ func (z *Zanzana) stopping(err error) error {
 		z.logger.Error("Stopping zanzana due to unexpected error", "err", err)
 	}
 	return nil
-}
-
-// TODO this impl might be more broadly useful in authlib
-type noopAuthenticator struct {
-}
-
-func (n noopAuthenticator) Authenticate(ctx context.Context) (context.Context, error) {
-	return ctx, nil
 }

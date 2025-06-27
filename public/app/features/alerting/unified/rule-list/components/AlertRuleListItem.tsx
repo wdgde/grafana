@@ -9,7 +9,6 @@ import { Rule, RuleGroupIdentifierV2, RuleHealth, RulesSourceIdentifier } from '
 import { Labels, PromAlertingRuleState, RulerRuleDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../Analytics';
-import { AlertLabels } from '../../components/AlertLabels';
 import { MetaText } from '../../components/MetaText';
 import { ProvisioningBadge } from '../../components/Provisioning';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
@@ -104,10 +103,12 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     }
   }
 
-  if (labels && labelsSize(labels) > 0) {
+  if (labelsSize(labels) > 0) {
     metadata.push(
       <MetaText icon="tag-alt">
-        <RuleLabels labels={labels} />
+        <TextLink href={href} variant="bodySmall" color="primary" inline={false}>
+          {pluralize('label', labelsSize(labels), true)}
+        </TextLink>
       </MetaText>
     );
   }
@@ -270,28 +271,6 @@ function Summary({ content, error }: SummaryProps) {
   return null;
 }
 
-function RuleLabels({ labels }: { labels: Labels }) {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <Tooltip
-      content={
-        <div className={styles.ruleLabels.tooltip}>
-          <AlertLabels labels={labels} size="sm" />
-        </div>
-      }
-      placement="right"
-      interactive
-    >
-      <div>
-        <Text variant="bodySmall" color="primary">
-          {pluralize('label', labelsSize(labels), true)}
-        </Text>
-      </div>
-    </Tooltip>
-  );
-}
-
 interface EvaluationMetadataProps {
   lastEvaluation?: string;
   evaluationInterval?: string;
@@ -412,14 +391,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   resetMargin: css({
     margin: 0,
   }),
-  ruleLabels: {
-    tooltip: css({
-      padding: theme.spacing(1),
-    }),
-    text: css({
-      cursor: 'pointer',
-    }),
-  },
 });
 
 export type RuleListItemCommonProps = Pick<

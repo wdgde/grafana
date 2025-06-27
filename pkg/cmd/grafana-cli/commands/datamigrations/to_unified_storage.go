@@ -77,20 +77,19 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		sort.ProvideService(),
 	)
 
-	client, err := newUnifiedClient(cfg, sqlStore)
-	if err != nil {
-		return err
-	}
-
 	if c.Bool("non-interactive") {
-		opts.Store = client
-		opts.BlobStore = client
-		opts.WithHistory = true // always include history in non-interactive mode
-		rsp, err := migrator.Migrate(ctx, opts)
-		if exitErr := handleMigrationError(err, rsp); exitErr != nil {
-			return exitErr
+		client, err := newUnifiedClient(cfg, sqlStore)
+		if err != nil {
+			return err
 		}
 
+		opts.Store = client
+		opts.BlobStore = client
+		rsp, err := migrator.Migrate(ctx, opts)
+		if err != nil {
+			msg := fmt.Sprintf("Failed to migrate legacy resources: %+v", err)
+			return cli.Exit(msg, 1)
+		}
 		logger.Info("Migrated legacy resources successfully in", time.Since(start))
 		if rsp != nil {
 			jj, _ := json.MarshalIndent(rsp, "", "  ")
@@ -155,6 +154,11 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 		return err
 	}
 	if yes {
+		client, err := newUnifiedClient(cfg, sqlStore)
+		if err != nil {
+			return err
+		}
+
 		// Check the stats (eventually compare)
 		req := &resourcepb.ResourceStatsRequest{
 			Namespace: opts.Namespace,
@@ -215,14 +219,9 @@ func promptYesNo(prompt string) (bool, error) {
 }
 
 func newUnifiedClient(cfg *setting.Cfg, sqlStore db.DB) (resource.ResourceClient, error) {
-	featureManager, err := featuremgmt.ProvideManagerService(cfg)
-	if err != nil {
-		return nil, err
-	}
-	featureToggles := featuremgmt.ProvideToggles(featureManager)
 	return unified.ProvideUnifiedStorageClient(&unified.Options{
 		Cfg:      cfg,
-		Features: featureToggles,
+		Features: featuremgmt.WithFeatures(), // none??
 		DB:       sqlStore,
 		Tracer:   tracing.NewNoopTracerService(),
 		Reg:      prometheus.NewPedanticRegistry(),
@@ -238,20 +237,4 @@ func newParquetClient(file *os.File) (resourcepb.BulkStoreClient, error) {
 	}
 	client := parquet.NewBulkResourceWriterClient(writer)
 	return client, nil
-}
-
-func handleMigrationError(err error, rsp *resourcepb.BulkResponse) error {
-	if err != nil {
-		return cli.Exit(fmt.Sprintf("Failed to migrate legacy resources: %+v", err), 1)
-	}
-
-	if rsp != nil && rsp.Error != nil {
-		msg := fmt.Sprintf("Failed to migrate legacy resources: %s", rsp.Error.Message)
-		if rsp.Error.Reason != "" {
-			msg += fmt.Sprintf(" (%s)", rsp.Error.Reason)
-		}
-		return cli.Exit(msg, 1)
-	}
-
-	return nil
 }

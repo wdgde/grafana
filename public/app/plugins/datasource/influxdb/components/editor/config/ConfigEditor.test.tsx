@@ -36,7 +36,6 @@ const setup = (optionOverrides?: object) => {
       jsonData: {
         httpMode: 'POST',
         timeInterval: '4',
-        showTagTime: '3h',
       },
       secureJsonFields: {},
       version: 1,

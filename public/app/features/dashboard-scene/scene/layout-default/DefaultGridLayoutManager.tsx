@@ -15,7 +15,6 @@ import {
   SceneGridItemLike,
   useSceneObjectState,
   SceneGridLayoutDragStartEvent,
-  SceneObject,
 } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { useStyles2 } from '@grafana/ui';
@@ -398,23 +397,6 @@ export class DefaultGridLayoutManager
         });
       }
     });
-  }
-
-  public getOutlineChildren(): SceneObject[] {
-    const children: SceneObject[] = [];
-
-    for (const child of this.state.grid.state.children) {
-      // Flatten repeated grid items
-      if (child instanceof DashboardGridItem) {
-        if (child.state.repeatedPanels) {
-          children.push(...child.state.repeatedPanels);
-        } else {
-          children.push(child.state.body);
-        }
-      }
-    }
-
-    return children;
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {

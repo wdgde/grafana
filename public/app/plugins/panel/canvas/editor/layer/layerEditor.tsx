@@ -1,7 +1,6 @@
 import { get as lodashGet } from 'lodash';
 
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/internal';
-import { t } from '@grafana/i18n';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene } from 'app/features/canvas/runtime/scene';
@@ -43,7 +42,7 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
   const options = scene.currentLayer.options || { elements: [] };
 
   return {
-    category: [t('canvas.layer-editor.category-layer', 'Layer')],
+    category: ['Layer'],
     path: '--', // not used!
 
     // Note that canvas editor writes things to the scene!
@@ -72,7 +71,7 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
       builder.addCustomEditor({
         id: 'content',
         path: 'root',
-        name: t('canvas.layer-editor.name-elements', 'Elements'),
+        name: 'Elements',
         editor: TreeNavigationEditor,
         settings: { scene, layer: scene.currentLayer, selected },
       });
@@ -85,10 +84,10 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
 
       if (currentLayer && !currentLayer.isRoot()) {
         builder.addCustomEditor({
-          category: [t('canvas.layer-editor.category-layout', 'Layout')],
+          category: ['Layout'],
           id: 'content',
           path: '__', // not used
-          name: t('canvas.layer-editor.name-constraints', 'Constraints'),
+          name: 'Constraints',
           editor: PlacementEditor,
           settings: {
             scene: opts.scene,

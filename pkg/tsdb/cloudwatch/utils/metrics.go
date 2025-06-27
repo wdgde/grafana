@@ -6,7 +6,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-const GetMetricDataLabel = "get_metric_data"
+const (
+	// Labels for the metric counter query types
+
+	ListMetricsLabel   = "list_metrics"
+	GetMetricDataLabel = "get_metric_data"
+)
 
 var QueriesTotalCounter = promauto.NewCounterVec(
 	prometheus.CounterOpts{

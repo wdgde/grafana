@@ -13,7 +13,7 @@ var GetHardCodedDimensionKeysByNamespace = func(namespace string) ([]resources.R
 	if response, exists = cloudWatchConsts.NamespaceDimensionKeysMap[namespace]; !exists {
 		return nil, fmt.Errorf("unable to find dimensions for namespace '%q'", namespace)
 	}
-	return valuesToListMetricResponse(response), nil
+	return valuesToListMetricRespone(response), nil
 }
 
 var GetHardCodedMetricsByNamespace = func(namespace string) ([]resources.ResourceResponse[resources.Metric], error) {
@@ -28,7 +28,7 @@ var GetHardCodedMetricsByNamespace = func(namespace string) ([]resources.Resourc
 		response = append(response, resources.Metric{Namespace: namespace, Name: metric})
 	}
 
-	return valuesToListMetricResponse(response), nil
+	return valuesToListMetricRespone(response), nil
 }
 
 var GetAllHardCodedMetrics = func() []resources.ResourceResponse[resources.Metric] {
@@ -39,7 +39,7 @@ var GetAllHardCodedMetrics = func() []resources.ResourceResponse[resources.Metri
 		}
 	}
 
-	return valuesToListMetricResponse(response)
+	return valuesToListMetricRespone(response)
 }
 
 var GetHardCodedNamespaces = func() []resources.ResourceResponse[string] {
@@ -48,5 +48,5 @@ var GetHardCodedNamespaces = func() []resources.ResourceResponse[string] {
 		response = append(response, key)
 	}
 
-	return valuesToListMetricResponse(response)
+	return valuesToListMetricRespone(response)
 }

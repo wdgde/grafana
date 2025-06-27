@@ -103,8 +103,8 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 			Backend: backend,
 			Search: resource.SearchOptions{
 				Backend: searchBackend,
-				Resources: &resource.TestDocumentBuilderSupplier{
-					GroupsResources: map[string]string{
+				Resources: &testDocumentBuilderSupplier{
+					groupsResources: map[string]string{
 						"test.grafana.app": "testresources",
 					},
 				},

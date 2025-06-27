@@ -14,7 +14,6 @@ import {
   ConditionalRenderingChangedEvent,
   DashboardEditActionEvent,
   DashboardEditActionEventPayload,
-  DashboardStateChangedEvent,
   NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
@@ -115,7 +114,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     }
 
     action.undo();
-    action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
     /**
      * Some edit actions also require clearing selection or selecting new objects
@@ -140,7 +138,6 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
    */
   private performAction(action: DashboardEditActionEventPayload) {
     action.perform();
-    action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
     if (action.addedObject) {
       this.newObjectAddedToCanvas(action.addedObject);

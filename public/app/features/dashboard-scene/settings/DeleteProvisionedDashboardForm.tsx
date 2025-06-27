@@ -122,7 +122,6 @@ export function DeleteProvisionedDashboardForm({
             )}
 
             <DashboardEditFormSharedFields
-              resourceType="dashboard"
               isNew={isNew}
               readOnly={readOnly}
               workflow={workflow}

@@ -18,12 +18,18 @@ type responseWrapper struct {
 	RefId        string
 }
 
-func (ds *DataSource) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	ds.logger.FromContext(ctx).Debug("Executing time series query")
+func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	e.logger.FromContext(ctx).Debug("Executing time series query")
 	resp := backend.NewQueryDataResponse()
 
 	if len(req.Queries) == 0 {
 		return nil, backend.DownstreamError(fmt.Errorf("request contains no queries"))
+	}
+
+	instance, err := e.getInstance(ctx, req.PluginContext)
+	if err != nil {
+		resp.Responses[req.Queries[0].RefID] = backend.ErrorResponseWithErrorSource(err)
+		return resp, nil
 	}
 
 	timeBatches := utils.BatchDataQueriesByTimeRange(req.Queries)
@@ -34,7 +40,7 @@ func (ds *DataSource) executeTimeSeriesQuery(ctx context.Context, req *backend.Q
 		if !startTime.Before(endTime) {
 			return nil, backend.DownstreamError(fmt.Errorf("invalid time range: start time must be before end time"))
 		}
-		requestQueries, err := models.ParseMetricDataQueries(timeBatch, startTime, endTime, ds.Settings.Region, ds.logger.FromContext(ctx),
+		requestQueries, err := models.ParseMetricDataQueries(timeBatch, startTime, endTime, instance.Settings.Region, e.logger.FromContext(ctx),
 			features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying))
 		if err != nil {
 			return nil, err
@@ -57,7 +63,7 @@ func (ds *DataSource) executeTimeSeriesQuery(ctx context.Context, req *backend.Q
 	for _, timeAndRegionQueries := range requestQueriesByTimeAndRegion {
 		batches := [][]*models.CloudWatchQuery{timeAndRegionQueries}
 		if features.IsEnabled(ctx, features.FlagCloudWatchBatchQueries) {
-			batches = getMetricQueryBatches(timeAndRegionQueries, ds.logger.FromContext(ctx))
+			batches = getMetricQueryBatches(timeAndRegionQueries, e.logger.FromContext(ctx))
 		}
 
 		// region, startTime, and endTime are the same for the set of queries
@@ -70,7 +76,7 @@ func (ds *DataSource) executeTimeSeriesQuery(ctx context.Context, req *backend.Q
 			eg.Go(func() error {
 				defer func() {
 					if err := recover(); err != nil {
-						ds.logger.FromContext(ctx).Error("Execute Get Metric Data Query Panic", "error", err, "stack", utils.Stack(1))
+						e.logger.FromContext(ctx).Error("Execute Get Metric Data Query Panic", "error", err, "stack", utils.Stack(1))
 						if theErr, ok := err.(error); ok {
 							resultChan <- &responseWrapper{
 								DataResponse: &backend.DataResponse{
@@ -81,27 +87,27 @@ func (ds *DataSource) executeTimeSeriesQuery(ctx context.Context, req *backend.Q
 					}
 				}()
 
-				client, err := ds.getCWClient(ctx, region)
+				client, err := e.getCWClient(ctx, req.PluginContext, region)
 				if err != nil {
 					return err
 				}
 
-				metricDataInput, err := ds.buildMetricDataInput(ctx, startTime, endTime, requestQueries)
+				metricDataInput, err := e.buildMetricDataInput(ctx, startTime, endTime, requestQueries)
 				if err != nil {
 					return err
 				}
 
-				mdo, err := ds.executeRequest(ectx, client, metricDataInput)
+				mdo, err := e.executeRequest(ectx, client, metricDataInput)
 				if err != nil {
 					return err
 				}
 
-				requestQueries, err = ds.getDimensionValuesForWildcards(ctx, region, client, requestQueries, ds.tagValueCache, ds.Settings.GrafanaSettings.ListMetricsPageLimit, shouldSkipFetchingWildcards)
+				requestQueries, err = e.getDimensionValuesForWildcards(ctx, region, client, requestQueries, instance.tagValueCache, instance.Settings.GrafanaSettings.ListMetricsPageLimit, shouldSkipFetchingWildcards)
 				if err != nil {
 					return err
 				}
 
-				res, err := ds.parseResponse(ctx, mdo, requestQueries)
+				res, err := e.parseResponse(ctx, mdo, requestQueries)
 				if err != nil {
 					return err
 				}

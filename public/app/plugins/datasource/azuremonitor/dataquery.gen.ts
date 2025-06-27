@@ -450,11 +450,6 @@ export interface BuilderQueryExpression {
   where?: BuilderQueryEditorWhereExpressionArray;
 }
 
-export enum ARGScope {
-  Directory = 'directory',
-  Subscription = 'subscription',
-}
-
 export interface AzureResourceGraphQuery {
   /**
    * Azure Resource Graph KQL query to be executed.
@@ -464,10 +459,6 @@ export interface AzureResourceGraphQuery {
    * Specifies the format results should be returned as. Defaults to table.
    */
   resultFormat?: string;
-  /**
-   * Specifies the scope of the query. Defaults to subscription.
-   */
-  scope?: ARGScope;
 }
 
 export interface AzureMonitorResource {

@@ -41,8 +41,7 @@ import {
   makeServiceGraphViewRequest,
   makeTempoLink,
   getFieldConfig,
-  getEscapedRegexValues,
-  getEscapedValues,
+  getEscapedSpanNames,
   makeHistogramLink,
   makePromServiceMapRequest,
 } from './datasource';
@@ -779,12 +778,12 @@ describe('Tempo service graph view', () => {
       'server.cluster.local:9090^/sample.test(.*)?',
       'test\\path',
     ];
-    let escaped = getEscapedRegexValues(getEscapedValues(spanNames));
+    let escaped = getEscapedSpanNames(spanNames);
     expect(escaped).toEqual([
       '/actuator/health/\\\\*\\\\*',
       '\\\\$type \\\\+ \\\\[test\\\\]\\\\|HTTP POST - post',
       'server\\\\.cluster\\\\.local:9090\\\\^/sample\\\\.test\\\\(\\\\.\\\\*\\\\)\\\\?',
-      'test\\\\path',
+      'test\\\\\\\\path',
     ]);
   });
 

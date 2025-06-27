@@ -81,11 +81,6 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
    * Paste a panel from the clipboard
    */
   pastePanel?(): void;
-
-  /**
-   * Get children for outline
-   */
-  getOutlineChildren(): SceneObject[];
 }
 
 export interface LayoutManagerSerializer {

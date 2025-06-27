@@ -792,16 +792,11 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 		service.unifiedStore = fakeFolderStore
 		fakeK8sClient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
-				Key: folderkey,
-				Fields: []*resourcepb.Requirement{
-					{
-						Key:      resource.SEARCH_FIELD_TITLE_PHRASE, // nolint:staticcheck
-						Operator: string(selection.Equals),
-						Values:   []string{"foo title"},
-					},
-				},
+				Key:    folderkey,
+				Fields: []*resourcepb.Requirement{},
 				Labels: []*resourcepb.Requirement{},
 			},
+			Query: "foo title",
 			Limit: folderSearchLimit}).
 			Return(&resourcepb.ResourceSearchResponse{
 				Results: &resourcepb.ResourceTable{

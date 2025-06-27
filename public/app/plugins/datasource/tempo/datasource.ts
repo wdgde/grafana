@@ -1081,7 +1081,7 @@ function errorAndDurationQuery(
       }
     });
   }
-  const spanNames = getEscapedRegexValues(getEscapedValues(labels));
+  const spanNames = getEscapedSpanNames(labels);
 
   if (spanNames.length > 0) {
     errorRateBySpanName = buildExpr(errorRateMetric, 'span_name=~"' + spanNames.join('|') + '"', request);
@@ -1151,12 +1151,8 @@ function makePromLink(title: string, expr: string, datasourceUid: string, instan
 
 // TODO: this is basically the same as prometheus/datasource.ts#prometheusSpecialRegexEscape which is used to escape
 //  template variable values. It would be best to move it to some common place.
-export function getEscapedRegexValues(values: string[]) {
-  return values.map((value: string) => value.replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&'));
-}
-
-export function getEscapedValues(values: string[]) {
-  return values.map((value: string) => value.replace(/["\\]/g, '\\$&'));
+export function getEscapedSpanNames(values: string[]) {
+  return values.map((value: string) => value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&'));
 }
 
 export function getFieldConfig(

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"strings"
 	"time"
@@ -11,7 +12,6 @@ import (
 	"github.com/grafana/dataplane/sdata/numeric"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	promValue "github.com/prometheus/prometheus/model/value"
-	"github.com/prometheus/prometheus/util/strutil"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -190,10 +190,7 @@ func (b *RemotePrometheusBackend) framesFor(ctx context.Context, rule history_mo
 
 	for i, sample := range samples {
 		labels := make(data.Labels, len(baseLabels)+2)
-		for k, v := range baseLabels {
-			sanitizedKey := strutil.SanitizeFullLabelName(k)
-			labels[sanitizedKey] = v
-		}
+		maps.Copy(labels, baseLabels)
 		labels[alertStateLabel] = sample.promState
 		labels[grafanaAlertStateLabel] = sample.grafanaState
 

@@ -187,14 +187,5 @@ export default defineConfig<PluginOptions>({
       },
       dependencies: ['authenticate'],
     },
-    {
-      name: 'loki',
-      testDir: path.join(testDirRoot, '/loki'),
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/admin.json',
-      },
-      dependencies: ['authenticate'],
-    },
   ],
 });

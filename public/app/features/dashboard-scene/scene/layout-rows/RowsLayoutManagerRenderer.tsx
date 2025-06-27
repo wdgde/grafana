@@ -4,14 +4,12 @@ import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
 
 import { useDashboardState } from '../../utils/utils';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 
-import { RowItem } from './RowItem';
-import { RowItemRepeater } from './RowItemRepeater';
 import { RowsLayoutManager } from './RowsLayoutManager';
 
 export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayoutManager>) {
@@ -39,7 +37,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
         {(dropProvided) => (
           <div className={styles.wrapper} ref={dropProvided.innerRef} {...dropProvided.droppableProps}>
             {rows.map((row) => (
-              <RowWrapper row={row} manager={model} key={row.state.key!} />
+              <row.Component model={row} key={row.state.key!} />
             ))}
             {dropProvided.placeholder}
             {isEditing && (
@@ -71,20 +69,6 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
       </Droppable>
     </DragDropContext>
   );
-}
-
-function RowWrapper({ row, manager }: { row: RowItem; manager: RowsLayoutManager }) {
-  const { repeatByVariable } = useSceneObjectState(row, { shouldActivateOrKeepAlive: true });
-
-  if (repeatByVariable) {
-    const variable = sceneGraph.lookupVariable(repeatByVariable, manager);
-
-    if (variable instanceof MultiValueVariable) {
-      return <RowItemRepeater row={row} key={row.state.key!} manager={manager} variable={variable} />;
-    }
-  }
-
-  return <row.Component model={row} key={row.state.key!} />;
 }
 
 function getStyles(theme: GrafanaTheme2) {

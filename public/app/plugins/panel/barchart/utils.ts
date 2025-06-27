@@ -14,7 +14,6 @@ import {
   outerJoinDataFrames,
 } from '@grafana/data';
 import { decoupleHideFromState } from '@grafana/data/internal';
-import { t } from '@grafana/i18n';
 import {
   AxisColorMode,
   AxisPlacement,
@@ -57,13 +56,8 @@ export function prepSeries(
   xFieldName?: string,
   colorFieldName?: string
 ): BarSeries {
-  // this allows PanelDataErrorView to show the default noValue message
   if (frames.length === 0 || frames.every((fr) => fr.length === 0)) {
-    return {
-      warn: '',
-      series: [],
-      _rest: [],
-    };
+    return { series: [], _rest: [], warn: 'No data in response' };
   }
 
   cacheFieldDisplayNames(frames);
@@ -126,7 +120,7 @@ export function prepSeries(
     let warn: string | null = null;
 
     if (fields.length === 1) {
-      warn = t('bar-chart.warn.missing-numeric', 'No numeric fields found');
+      warn = 'No numeric fields found';
     }
 
     frame.fields = fields;
@@ -147,7 +141,7 @@ export function prepSeries(
     series: [],
     _rest: [],
     color: null,
-    warn: t('bar-chart.warn.missing-series', 'Bar charts require a string or time field'),
+    warn: 'Bar charts requires a string or time field',
   };
 }
 

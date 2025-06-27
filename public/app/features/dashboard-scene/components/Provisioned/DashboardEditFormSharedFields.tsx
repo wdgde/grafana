@@ -8,7 +8,6 @@ import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
 
 interface DashboardEditFormSharedFieldsProps {
-  resourceType: 'dashboard' | 'folder';
   workflowOptions: Array<{ label: string; value: string }>;
   isNew?: boolean;
   readOnly?: boolean;
@@ -17,43 +16,35 @@ interface DashboardEditFormSharedFieldsProps {
 }
 
 export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsProps>(
-  ({ readOnly = false, workflow, workflowOptions, isGitHub, isNew, resourceType }) => {
+  ({ readOnly = false, workflow, workflowOptions, isGitHub, isNew }) => {
     const {
       control,
       register,
       formState: { errors },
     } = useFormContext();
 
-    const pathText =
-      resourceType === 'dashboard'
-        ? 'File path inside the repository (.json or .yaml)'
-        : 'Folder path inside the repository';
-
     return (
       <>
         {/* Path */}
         <Field
           noMargin
-          label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-path', 'Path')}
+          label={t('dashboard-scene.save-or-delete-provisioned-dashboard-form.label-path', 'Path')}
           description={t(
-            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-inside-repository',
-            pathText
+            'dashboard-scene.save-or-delete-provisioned-dashboard-form.description-inside-repository',
+            'File path inside the repository (.json or .yaml)'
           )}
         >
           <Input id="dashboard-path" type="text" {...register('path')} readOnly={!isNew} />
         </Field>
 
         {/* Comment */}
-        <Field
-          noMargin
-          label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-comment', 'Comment')}
-        >
+        <Field noMargin label={t('dashboard-scene.save-or-delete-provisioned-dashboard-form.label-comment', 'Comment')}>
           <TextArea
-            id="provisioned-resource-form-comment"
+            id="dashboard-comment"
             {...register('comment')}
             disabled={readOnly}
             placeholder={t(
-              'provisioned-resource-form.save-or-delete-resource-shared-fields.comment-placeholder-describe-changes-optional',
+              'dashboard-scene.save-or-delete-provisioned-dashboard-form.dashboard-comment-placeholder-describe-changes-optional',
               'Add a note to describe your changes (optional)'
             )}
             rows={5}
@@ -65,28 +56,28 @@ export const DashboardEditFormSharedFields = memo<DashboardEditFormSharedFieldsP
           <>
             <Field
               noMargin
-              label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-workflow', 'Workflow')}
+              label={t('dashboard-scene.save-or-delete-provisioned-dashboard-form.label-workflow', 'Workflow')}
             >
               <Controller
                 control={control}
                 name="workflow"
                 render={({ field: { ref: _, ...field } }) => (
-                  <RadioButtonGroup id="provisioned-resource-form-workflow" {...field} options={workflowOptions} />
+                  <RadioButtonGroup id="dashboard-workflow" {...field} options={workflowOptions} />
                 )}
               />
             </Field>
             {workflow === 'branch' && (
               <Field
                 noMargin
-                label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-branch', 'Branch')}
+                label={t('dashboard-scene.save-or-delete-provisioned-dashboard-form.label-branch', 'Branch')}
                 description={t(
-                  'provisioned-resource-form.save-or-delete-resource-shared-fields.description-branch-name-in-git-hub',
+                  'dashboard-scene.save-or-delete-provisioned-dashboard-form.description-branch-name-in-git-hub',
                   'Branch name in GitHub'
                 )}
                 invalid={!!errors.ref}
                 error={errors.ref && <BranchValidationError />}
               >
-                <Input id="provisioned-resource-form-branch" {...register('ref', { validate: validateBranchName })} />
+                <Input id="dashboard-branch" {...register('ref', { validate: validateBranchName })} />
               </Field>
             )}
           </>

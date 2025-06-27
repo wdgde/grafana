@@ -251,7 +251,7 @@ Content-Type: application/json
 {
     "result": [
         {
-            "id": 148, // Deprecated: will be removed in the future.
+            "id": 148,
             "kind": 1,
             "elementId": 25,
             "connectionId": 527,

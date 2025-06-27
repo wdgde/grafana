@@ -14,7 +14,6 @@ type MetadataQueryOptions = {
   tags?: InfluxQueryTag[];
   withKey?: string;
   withMeasurementFilter?: string;
-  withTimeFilter?: string;
 };
 
 const runExploreQuery = async (options: MetadataQueryOptions): Promise<Array<{ text: string }>> => {
@@ -27,7 +26,6 @@ const runExploreQuery = async (options: MetadataQueryOptions): Promise<Array<{ t
     tags,
     withKey,
     withMeasurementFilter,
-    withTimeFilter: datasource.showTagTime,
     templateService: datasource.templateSrv,
     database: datasource.database,
   });

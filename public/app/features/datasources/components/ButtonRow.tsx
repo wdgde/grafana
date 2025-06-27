@@ -31,7 +31,6 @@ export function ButtonRow({ canSave, canDelete, onDelete, onSubmit, onTest }: Pr
           disabled={!canSave}
           onClick={onSubmit}
           data-testid={selectors.pages.DataSource.saveAndTest}
-          id={selectors.pages.DataSource.saveAndTest}
         >
           <Trans i18nKey="datasources.button-row.save-and-test">Save &amp; test</Trans>
         </Button>

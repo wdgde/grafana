@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
-
 	"github.com/patrickmn/go-cache"
 )
 
@@ -27,10 +26,10 @@ func shouldSkipFetchingWildcards(ctx context.Context, q *models.CloudWatchQuery)
 }
 
 // getDimensionValues gets the actual dimension values for dimensions with a wildcard
-func (ds *DataSource) getDimensionValuesForWildcards(
+func (e *cloudWatchExecutor) getDimensionValuesForWildcards(
 	ctx context.Context,
 	region string,
-	client models.CWClient,
+	client models.CloudWatchMetricsAPIProvider,
 	origQueries []*models.CloudWatchQuery,
 	tagValueCache *cache.Cache,
 	listMetricsPageLimit int,
@@ -58,12 +57,12 @@ func (ds *DataSource) getDimensionValuesForWildcards(
 			cacheKey := fmt.Sprintf("%s-%s-%s-%s-%s", region, accountID, query.Namespace, query.MetricName, dimensionKey)
 			cachedDimensions, found := tagValueCache.Get(cacheKey)
 			if found {
-				ds.logger.FromContext(ctx).Debug("Fetching dimension values from cache")
+				e.logger.FromContext(ctx).Debug("Fetching dimension values from cache")
 				query.Dimensions[dimensionKey] = cachedDimensions.([]string)
 				continue
 			}
 
-			ds.logger.FromContext(ctx).Debug("Cache miss, fetching dimension values from AWS")
+			e.logger.FromContext(ctx).Debug("Cache miss, fetching dimension values from AWS")
 			request := resources.DimensionValuesRequest{
 				ResourceRequest: &resources.ResourceRequest{
 					Region:    region,

@@ -45,7 +45,6 @@ export const StateTimelineTooltip2 = ({
   mode = isPinned ? TooltipDisplayMode.Single : mode;
 
   const contentItems = getContentItems(series.fields, xField, dataIdxs, seriesIdx, mode, sortOrder);
-  let endTime = null;
 
   // append duration in single mode
   if (withDuration && mode === TooltipDisplayMode.Single) {
@@ -61,11 +60,9 @@ export const StateTimelineTooltip2 = ({
 
     if (nextStateTs) {
       duration = nextStateTs && fmtDuration(nextStateTs - stateTs);
-      endTime = nextStateTs;
     } else {
       const to = timeRange.to.valueOf();
       duration = fmtDuration(to - stateTs);
-      endTime = to;
     }
 
     contentItems.push({ label: 'Duration', value: duration });
@@ -87,7 +84,7 @@ export const StateTimelineTooltip2 = ({
 
   const headerItem: VizTooltipItem = {
     label: xField.type === FieldType.time ? '' : (xField.state?.displayName ?? xField.name),
-    value: endTime ? xVal + ' - \n' + xField.display!(endTime).text : xVal,
+    value: xVal,
   };
 
   return (

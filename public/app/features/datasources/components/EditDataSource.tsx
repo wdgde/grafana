@@ -117,21 +117,6 @@ export function EditDataSourceView({
   const { readOnly, hasWriteRights, hasDeleteRights } = dataSourceRights;
   const hasDataSource = dataSource.id > 0;
   const { components, isLoading } = useDataSourceConfigPluginExtensions();
-  // This is a workaround to avoid race-conditions between the `setSecureJsonData()` and `setJsonData()` calls instantiated by the extension components.
-  // Both those exposed functions are calling `onOptionsChange()` with the new jsonData and secureJsonData, and if they are called in the same tick, the Redux store
-  // (which provides the `datasource` object) won't be updated yet, and they override each others `jsonData` value.
-  let currentJsonData = dataSource.jsonData;
-  let currentSecureJsonData = dataSource.secureJsonData;
-
-  const isPDCInjected = components.some((component) => component.meta.pluginId === 'grafana-pdc-app');
-
-  const dataSourceWithIsPDCInjected = {
-    ...dataSource,
-    jsonData: {
-      ...dataSource.jsonData,
-      pdcInjected: isPDCInjected,
-    },
-  };
 
   const dsi = getDataSourceSrv()?.getInstanceSettings(dataSource.uid);
 
@@ -200,7 +185,7 @@ export function EditDataSourceView({
         <DataSourcePluginContextProvider instanceSettings={dsi}>
           <DataSourcePluginSettings
             plugin={plugin}
-            dataSource={dataSourceWithIsPDCInjected}
+            dataSource={dataSource}
             dataSourceMeta={dataSourceMeta}
             onModelChange={onOptionsChange}
           />
@@ -216,22 +201,16 @@ export function EditDataSourceView({
                 dataSource,
                 dataSourceMeta,
                 testingStatus,
-                setJsonData: (jsonData) => {
-                  currentJsonData = { ...currentJsonData, ...jsonData };
+                setJsonData: (jsonData) =>
                   onOptionsChange({
                     ...dataSource,
-                    secureJsonData: { ...currentSecureJsonData },
-                    jsonData: currentJsonData,
-                  });
-                },
-                setSecureJsonData: (secureJsonData) => {
-                  currentSecureJsonData = { ...currentSecureJsonData, ...secureJsonData };
+                    jsonData: { ...dataSource.jsonData, ...jsonData },
+                  }),
+                setSecureJsonData: (secureJsonData) =>
                   onOptionsChange({
                     ...dataSource,
-                    jsonData: { ...currentJsonData },
-                    secureJsonData: currentSecureJsonData,
-                  });
-                },
+                    secureJsonData: { ...dataSource.secureJsonData, ...secureJsonData },
+                  }),
               }}
             />
           </div>

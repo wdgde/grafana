@@ -8,7 +8,7 @@ import {
   VisualizationSuggestion,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { PanelDataErrorViewProps, locationService } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
@@ -132,22 +132,22 @@ function getMessageFor(
   }
 
   if (!data.series || data.series.length === 0 || data.series.every((frame) => frame.length === 0)) {
-    return fieldConfig?.defaults.noValue ?? t('panel.panel-data-error-view.no-value.default', 'No data');
+    return fieldConfig?.defaults.noValue ?? 'No data';
   }
 
   if (needsStringField && !dataSummary.hasStringField) {
-    return t('panel.panel-data-error-view.missing-value.string', 'Data is missing a string field');
+    return 'Data is missing a string field';
   }
 
   if (needsNumberField && !dataSummary.hasNumberField) {
-    return t('panel.panel-data-error-view.missing-value.number', 'Data is missing a number field');
+    return 'Data is missing a number field';
   }
 
   if (needsTimeField && !dataSummary.hasTimeField) {
-    return t('panel.panel-data-error-view.missing-value.time', 'Data is missing a time field');
+    return 'Data is missing a time field';
   }
 
-  return t('panel.panel-data-error-view.missing-value.unknown', 'Cannot visualize data');
+  return 'Cannot visualize data';
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

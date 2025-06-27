@@ -1,5 +1,4 @@
 import { FieldConfigProperty, PanelOptionsEditorBuilder, PanelPlugin } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 
@@ -12,28 +11,24 @@ import { canvasMigrationHandler } from './migrations';
 import { Options } from './panelcfg.gen';
 
 export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilder<Options>) => {
-  const category = [t('canvas.category-canvas', 'Canvas')];
   builder.addBooleanSwitch({
     path: 'inlineEditing',
-    name: t('canvas.name-inline-editing', 'Inline editing'),
-    category,
-    description: t('canvas.description-inline-editing', 'Enable editing the panel directly'),
+    name: 'Inline editing',
+    description: 'Enable editing the panel directly',
     defaultValue: true,
   });
 
   builder.addBooleanSwitch({
     path: 'showAdvancedTypes',
-    name: t('canvas.name-experimental-types', 'Experimental element types'),
-    category,
-    description: t('canvas.description-experimental-types', 'Enable selection of experimental element types'),
+    name: 'Experimental element types',
+    description: 'Enable selection of experimental element types',
     defaultValue: true,
   });
 
   builder.addBooleanSwitch({
     path: 'panZoom',
-    name: t('canvas.name-pan-zoom', 'Pan and zoom'),
-    category,
-    description: t('canvas.description-pan-zoom', 'Enable pan and zoom'),
+    name: 'Pan and zoom',
+    description: 'Enable pan and zoom',
     defaultValue: false,
     showIf: (opts) => config.featureToggles.canvasPanelPanZoom,
   });
@@ -41,18 +36,14 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
     id: 'panZoomHelp',
     path: 'panZoomHelp',
     name: '',
-    category,
     editor: PanZoomHelp,
     showIf: (opts) => config.featureToggles.canvasPanelPanZoom && opts.panZoom,
   });
   builder.addBooleanSwitch({
     path: 'infinitePan',
-    name: t('canvas.name-infinite-panning', 'Infinite panning'),
-    category,
-    description: t(
-      'canvas.description-infinite-panning',
-      'Enable infinite panning - useful for expansive canvases. Warning: this is an experimental feature and currently only works well with elements that are top / left constrained'
-    ),
+    name: 'Infinite panning',
+    description:
+      'Enable infinite panning - useful for expansive canvases. Warning: this is an experimental feature and currently only works well with elements that are top / left constrained',
     defaultValue: false,
     showIf: (opts) => config.featureToggles.canvasPanelPanZoom && opts.panZoom,
   });
@@ -96,11 +87,7 @@ export const plugin = new PanelPlugin<Options>(CanvasPanel)
         if (!(element instanceof FrameState)) {
           builder.addNestedOptions(
             getElementEditor({
-              category: [
-                t('canvas.category-selected-element', 'Selected element ({{element}})', {
-                  element: element.options.name,
-                }),
-              ],
+              category: [`Selected element (${element.options.name})`],
               element,
               scene: state.scene,
             })
@@ -111,7 +98,7 @@ export const plugin = new PanelPlugin<Options>(CanvasPanel)
       if (connectionSelection) {
         builder.addNestedOptions(
           getConnectionEditor({
-            category: [t('canvas.category-selected-connection', 'Selected connection')],
+            category: ['Selected connection'],
             connection: connectionSelection,
             scene: state.scene,
           })

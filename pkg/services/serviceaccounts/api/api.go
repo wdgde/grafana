@@ -223,7 +223,6 @@ func (api *ServiceAccountsAPI) validateRole(r *org.RoleType, orgRole org.RoleTyp
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
-// 404: notFoundError
 // 500: internalServerError
 func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *contextmodel.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
@@ -232,7 +231,7 @@ func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *contextmodel.ReqContext
 	}
 	err = api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.GetOrgID(), saID)
 	if err != nil {
-		return response.ErrOrFallback(http.StatusInternalServerError, "Service account deletion error", err)
+		return response.Error(http.StatusInternalServerError, "Service account deletion error", err)
 	}
 	return response.Success("Service account deleted")
 }

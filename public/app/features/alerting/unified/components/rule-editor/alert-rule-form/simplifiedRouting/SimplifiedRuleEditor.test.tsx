@@ -2,7 +2,7 @@ import { UserEvent } from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { screen, waitFor, within } from 'test/test-utils';
+import { screen, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
@@ -25,7 +25,7 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: ReactNode }) => <div>{actions}</div>,
 }));
 
-jest.setTimeout(90 * 1000);
+jest.setTimeout(60 * 1000);
 
 const dataSources = {
   default: mockDataSource(
@@ -44,16 +44,10 @@ const dataSources = {
 };
 
 const selectFolderAndGroup = async (user: UserEvent) => {
-  const folderPicker = ui.inputs.folder.get();
-  const folderButton = await within(folderPicker).findByRole('button', { name: /select folder/i });
-  await user.click(folderButton);
-
-  const folderOption = await within(folderPicker).findByLabelText(FOLDER_TITLE_HAPPY_PATH);
-  await user.click(folderOption);
-
+  await user.click(await screen.findByRole('button', { name: /select folder/i }));
+  await user.click(await screen.findByLabelText(FOLDER_TITLE_HAPPY_PATH));
   const groupInput = await ui.inputs.group.find();
-  const groupCombobox = await byRole('combobox').find(groupInput);
-  await user.click(groupCombobox);
+  await user.click(await byRole('combobox').find(groupInput));
   await clickSelectOption(groupInput, grafanaRulerGroup.name);
 };
 
@@ -79,11 +73,11 @@ beforeEach(() => {
 });
 
 setupMswServer();
-setupDataSources(dataSources.default, dataSources.am);
 
 describe('Can create a new grafana managed alert using simplified routing', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    setupDataSources(dataSources.default, dataSources.am);
     contextSrv.isEditor = true;
     contextSrv.hasEditPermissionInFolders = true;
     grantUserPermissions([
@@ -105,9 +99,11 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
   it('cannot create new grafana managed alert when using simplified routing and not selecting a contact point', async () => {
     const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
+
     const { user } = renderRuleEditor();
 
     await user.type(await ui.inputs.name.find(), 'my great new rule');
+
     await selectFolderAndGroup(user);
 
     //select contact point routing
@@ -116,9 +112,9 @@ describe('Can create a new grafana managed alert using simplified routing', () =
     // do not select a contact point
     // save and check that call to backend was not made
     await user.click(ui.buttons.save.get());
-
     expect(await screen.findByText('Contact point is required.')).toBeInTheDocument();
     const capturedRequests = await capture;
+
     expect(capturedRequests).toHaveLength(0);
   });
 

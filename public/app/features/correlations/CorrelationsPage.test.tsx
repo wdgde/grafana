@@ -4,21 +4,14 @@ import { merge, uniqueId } from 'lodash';
 import { openMenu } from 'react-select-event';
 import { Observable } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
-import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { SupportedTransformationType } from '@grafana/data';
+import { DataSourceInstanceSettings, SupportedTransformationType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  BackendSrv,
-  BackendSrvRequest,
-  DataSourceSrv,
-  reportInteraction,
-  setAppEvents,
-  setDataSourceSrv,
-} from '@grafana/runtime';
+import { BackendSrv, BackendSrvRequest, reportInteraction, setBackendSrv, setAppEvents } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
+import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { configureStore } from 'app/store/configureStore';
 
 import { mockDataSource } from '../alerting/unified/mocks';
@@ -30,7 +23,6 @@ import {
   createFetchCorrelationsResponse,
   createRemoveCorrelationResponse,
   createUpdateCorrelationResponse,
-  MockDataSourceSrv,
 } from './__mocks__/useCorrelations.mocks';
 import { Correlation, CreateCorrelationParams, OmitUnion } from './types';
 
@@ -38,7 +30,7 @@ import { Correlation, CreateCorrelationParams, OmitUnion } from './types';
 setAppEvents(appEvents);
 
 const renderWithContext = async (
-  datasources: ConstructorParameters<typeof MockDataSourceSrv>[0] = {},
+  datasources: Record<string, DataSourceInstanceSettings>,
   correlations: Correlation[] = []
 ) => {
   const backend = {
@@ -98,17 +90,8 @@ const renderWithContext = async (
     },
   } as unknown as BackendSrv;
   const grafanaContext = getGrafanaContextMock({ backend });
-  const dsServer = new MockDataSourceSrv(datasources) as unknown as DataSourceSrv;
-  dsServer.get = (name: string) => {
-    const dsApi = new MockDataSourceApi(name);
-    // Mock the QueryEditor component
-    dsApi.components = {
-      QueryEditor: () => <>{name} query editor</>,
-    };
-    return Promise.resolve(dsApi);
-  };
-
-  setDataSourceSrv(dsServer);
+  setBackendSrv(backend);
+  setupDataSources(...Object.values(datasources));
 
   const renderResult = render(
     <TestProvider store={configureStore({})} grafanaContext={grafanaContext}>
@@ -224,7 +207,7 @@ describe('CorrelationsPage', () => {
             jsonData: {},
             type: 'datasource',
           },
-          { logs: true }
+          { logs: true, module: 'core:plugin/loki' }
         ),
         prometheus: mockDataSource(
           {
@@ -333,6 +316,7 @@ describe('CorrelationsPage', () => {
             },
             {
               logs: true,
+              module: 'core:plugin/loki',
             }
           ),
           prometheus: mockDataSource(
@@ -598,6 +582,7 @@ describe('CorrelationsPage', () => {
             },
             {
               logs: true,
+              module: 'core:plugin/loki',
             }
           ),
         },
@@ -693,7 +678,7 @@ describe('CorrelationsPage', () => {
               access: 'direct',
               type: 'datasource',
             },
-            { logs: true }
+            { logs: true, module: 'core:plugin/loki' }
           ),
         },
         correlations

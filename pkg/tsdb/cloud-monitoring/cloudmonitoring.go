@@ -132,26 +132,22 @@ type Service struct {
 }
 
 type datasourceInfo struct {
-	id                          int64
-	updated                     time.Time
-	url                         string
-	authenticationType          string
-	defaultProject              string
-	clientEmail                 string
-	tokenUri                    string
-	services                    map[string]datasourceService
-	privateKey                  string
-	usingImpersonation          bool
-	serviceAccountToImpersonate string
+	id                 int64
+	updated            time.Time
+	url                string
+	authenticationType string
+	defaultProject     string
+	clientEmail        string
+	tokenUri           string
+	services           map[string]datasourceService
+	privateKey         string
 }
 
 type datasourceJSONData struct {
-	AuthenticationType          string `json:"authenticationType"`
-	DefaultProject              string `json:"defaultProject"`
-	ClientEmail                 string `json:"clientEmail"`
-	TokenURI                    string `json:"tokenUri"`
-	UsingImpersonation          bool   `json:"usingImpersonation"`
-	ServiceAccountToImpersonate string `json:"serviceAccountToImpersonate"`
+	AuthenticationType string `json:"authenticationType"`
+	DefaultProject     string `json:"defaultProject"`
+	ClientEmail        string `json:"clientEmail"`
+	TokenURI           string `json:"tokenUri"`
 }
 
 type datasourceService struct {
@@ -172,16 +168,14 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		dsInfo := &datasourceInfo{
-			id:                          settings.ID,
-			updated:                     settings.Updated,
-			url:                         settings.URL,
-			authenticationType:          jsonData.AuthenticationType,
-			defaultProject:              jsonData.DefaultProject,
-			clientEmail:                 jsonData.ClientEmail,
-			tokenUri:                    jsonData.TokenURI,
-			usingImpersonation:          jsonData.UsingImpersonation,
-			serviceAccountToImpersonate: jsonData.ServiceAccountToImpersonate,
-			services:                    map[string]datasourceService{},
+			id:                 settings.ID,
+			updated:            settings.Updated,
+			url:                settings.URL,
+			authenticationType: jsonData.AuthenticationType,
+			defaultProject:     jsonData.DefaultProject,
+			clientEmail:        jsonData.ClientEmail,
+			tokenUri:           jsonData.TokenURI,
+			services:           map[string]datasourceService{},
 		}
 
 		dsInfo.privateKey, err = utils.GetPrivateKey(&settings)

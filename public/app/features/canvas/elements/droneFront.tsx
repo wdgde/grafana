@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { ScalarDimensionConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions';
@@ -110,12 +109,12 @@ export const droneFrontItem: CanvasElementItem = {
   },
 
   registerOptionsUI: (builder) => {
-    const category = [t('canvas.drone-front-item.category-drone-front', 'Drone Front')];
+    const category = ['Drone Front'];
     builder.addCustomEditor({
       category,
       id: 'rollAngle',
       path: 'config.rollAngle',
-      name: t('canvas.drone-front-item.name-roll-angle', 'Roll Angle'),
+      name: 'Roll Angle',
       editor: ScalarDimensionEditor,
     });
   },

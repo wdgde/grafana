@@ -124,7 +124,10 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 			return nil, fmt.Errorf("failed to dial resource server %s %s: %s", inst.Id, inst.Addr, err)
 		}
 
-		client := resource.NewAuthlessResourceClient(conn)
+		client, err := resource.NewResourceClient(conn, cfg, features, tracer)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get resource client for server %s %s: %s", inst.Id, inst.Addr, err)
+		}
 
 		return &resource.RingClient{
 			Client:       client,

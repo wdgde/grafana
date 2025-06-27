@@ -16,7 +16,7 @@ labels:
     - enterprise
     - oss
 title: Create and link alert rules to panels
-weight: 200
+weight: 300
 refs:
   time-series-visualizations:
     - pattern: /docs/grafana/

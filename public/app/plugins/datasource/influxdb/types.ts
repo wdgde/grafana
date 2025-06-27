@@ -13,11 +13,8 @@ export interface InfluxOptions extends DataSourceJsonData {
 
   timeInterval?: string;
   httpMode?: string;
-  showTagTime?: string;
 
   dbName?: string;
-  product?: string;
-  pdcInjected?: boolean;
 
   // With Flux
   organization?: string;

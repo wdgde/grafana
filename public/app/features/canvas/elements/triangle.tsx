@@ -131,20 +131,20 @@ export const triangleItem: CanvasElementItem = {
   },
 
   registerOptionsUI: (builder) => {
-    const category = [t('canvas.triangle-item.category-triangle', 'Triangle')];
+    const category = ['Triangle'];
     builder
       .addCustomEditor({
         category,
         id: 'textSelector',
         path: 'config.text',
-        name: t('canvas.triangle-item.name-text', 'Text'),
+        name: 'Text',
         editor: TextDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'config.color',
         path: 'config.color',
-        name: t('canvas.triangle-item.name-text-color', 'Text color'),
+        name: 'Text color',
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {},
@@ -152,7 +152,7 @@ export const triangleItem: CanvasElementItem = {
       .addRadio({
         category,
         path: 'config.align',
-        name: t('canvas.triangle-item.name-align-text', 'Align text'),
+        name: 'Align text',
         settings: {
           options: [
             { value: Align.Left, label: t('canvas.triangle-item.label.left', 'Left') },
@@ -165,7 +165,7 @@ export const triangleItem: CanvasElementItem = {
       .addRadio({
         category,
         path: 'config.valign',
-        name: t('canvas.triangle-item.name-vertical-align', 'Vertical align'),
+        name: 'Vertical align',
         settings: {
           options: [
             { value: VAlign.Top, label: t('canvas.triangle-item.label.top', 'Top') },
@@ -178,7 +178,7 @@ export const triangleItem: CanvasElementItem = {
       .addNumberInput({
         category,
         path: 'config.size',
-        name: t('canvas.triangle-item.name-text-size', 'Text size'),
+        name: 'Text size',
         settings: {
           placeholder: t('canvas.triangle-item.placeholder.auto', 'Auto'),
         },

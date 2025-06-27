@@ -130,20 +130,20 @@ export const cloudItem: CanvasElementItem = {
   },
 
   registerOptionsUI: (builder) => {
-    const category = [t('canvas.cloud-item.category-cloud', 'Cloud')];
+    const category = ['Cloud'];
     builder
       .addCustomEditor({
         category,
         id: 'textSelector',
         path: 'config.text',
-        name: t('canvas.cloud-item.name-text', 'Text'),
+        name: 'Text',
         editor: TextDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'config.color',
         path: 'config.color',
-        name: t('canvas.cloud-item.name-text-color', 'Text color'),
+        name: 'Text color',
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {},
@@ -151,7 +151,7 @@ export const cloudItem: CanvasElementItem = {
       .addRadio({
         category,
         path: 'config.align',
-        name: t('canvas.cloud-item.name-align-text', 'Align text'),
+        name: 'Align text',
         settings: {
           options: [
             { value: Align.Left, label: t('canvas.cloud-item.label.left', 'Left') },
@@ -164,7 +164,7 @@ export const cloudItem: CanvasElementItem = {
       .addRadio({
         category,
         path: 'config.valign',
-        name: t('canvas.cloud-item.name-vertical-align', 'Vertical align'),
+        name: 'Vertical align',
         settings: {
           options: [
             { value: VAlign.Top, label: t('canvas.cloud-item.label.top', 'Top') },
@@ -177,7 +177,7 @@ export const cloudItem: CanvasElementItem = {
       .addNumberInput({
         category,
         path: 'config.size',
-        name: t('canvas.cloud-item.name-text-size', 'Text size'),
+        name: 'Text size',
         settings: {
           placeholder: t('canvas.cloud-item.placeholder.auto', 'Auto'),
         },

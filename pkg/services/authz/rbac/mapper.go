@@ -102,8 +102,7 @@ func NewMapperRegistry() MapperRegistry {
 			"folders": newResourceTranslation("folders", "uid", true),
 		},
 		"iam.grafana.app": {
-			"teams":     newResourceTranslation("teams", "id", false),
-			"coreroles": newResourceTranslation("roles", "uid", false),
+			"teams": newResourceTranslation("teams", "id", false),
 		},
 		"secret.grafana.app": {
 			"securevalues": newResourceTranslation("secret.securevalues", "uid", false),

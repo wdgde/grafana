@@ -164,27 +164,27 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
 
   // Heatmap overlay options
   registerOptionsUI: (builder) => {
-    const category = [t('canvas.button-item.category-button', 'Button')];
+    const category = ['Button'];
     builder
       .addCustomEditor({
         category,
         id: 'styleSelector',
         path: 'config.style',
-        name: t('canvas.button-item.name-style', 'Style'),
+        name: 'Style',
         editor: ButtonStyleEditor,
       })
       .addCustomEditor({
         category,
         id: 'textSelector',
         path: 'config.text',
-        name: t('canvas.button-item.name-text', 'Text'),
+        name: 'Text',
         editor: TextDimensionEditor,
       })
       .addCustomEditor({
         category,
         id: 'config.color',
         path: 'config.color',
-        name: t('canvas.button-item.name-text-color', 'Text color'),
+        name: 'Text color',
         editor: ColorDimensionEditor,
         settings: {},
         defaultValue: {},
@@ -192,7 +192,7 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
       .addRadio({
         category,
         path: 'config.align',
-        name: t('canvas.button-item.name-align-text', 'Align text'),
+        name: 'Align text',
         settings: {
           options: [
             { value: Align.Left, label: t('canvas.button-item.label.left', 'Left') },
@@ -205,7 +205,7 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
       .addNumberInput({
         category,
         path: 'config.size',
-        name: t('canvas.button-item.name-text-size', 'Text size'),
+        name: 'Text size',
         settings: {
           placeholder: t('canvas.button-item.placeholder.auto', 'Auto'),
         },
@@ -214,7 +214,7 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
         category,
         id: 'apiSelector',
         path: 'config.api',
-        name: t('canvas.button-item.name-api', 'API'),
+        name: 'API',
         editor: APIEditor,
       });
   },
