@@ -453,7 +453,36 @@ export function TableNG(props: TableNGProps) {
     });
 
     return result;
-  }, [availableWidth, commonDataGridProps, crossFilterOrder, crossFilterRows, data, defaultRowHeight, enableSharedCrosshair, expandedRows, filter, getActions, hasNestedFrames, onCellFilterAdded, panelContext, replaceVariables, rowHeight, rows, setFilter, showTypeIcons, sortColumns, sortedRows, styles.cellActions, styles.cellActionsEnd, styles.cellActionsStart, styles.cellNested, styles.grid, styles.gridNested, theme, visibleFields, widths, applyToRowBgFn, columnTypes, height, textWraps]);
+  }, [
+    applyToRowBgFn,
+    availableWidth,
+    columnTypes,
+    commonDataGridProps,
+    crossFilterOrder,
+    crossFilterRows,
+    data,
+    defaultRowHeight,
+    enableSharedCrosshair,
+    expandedRows,
+    filter,
+    getActions,
+    hasNestedFrames,
+    height,
+    onCellFilterAdded,
+    panelContext,
+    replaceVariables,
+    rowHeight,
+    rows,
+    setFilter,
+    showTypeIcons,
+    sortColumns,
+    sortedRows,
+    styles,
+    textWraps,
+    theme,
+    visibleFields,
+    widths
+  ]);
 
   // invalidate columns on every structureRev change. this supports width editing in the fieldConfig.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -615,7 +644,6 @@ const getGridStyles = (
         paddingInline: TABLE.CELL_PADDING,
         paddingBlock: TABLE.CELL_PADDING,
         height: footerHeight,
-        // borderRight: `1px solid ${theme.colors.border.strong}`,
       },
     },
   }),

@@ -239,7 +239,7 @@ export function getFooterItemNG(rows: TableRow[], field: Field): FooterItem | nu
     const results: Record<string, number | null> = reduceField({
       field: {
         ...field,
-        values: rows.map((row) => row[field.name]),
+        values: rows.map((row) => row[getDisplayName(field)]),
       },
       reducers,
     });
@@ -599,8 +599,9 @@ const getMaxReducerCount = (dataFrame: DataFrame, fieldConfig: TableNGProps['fie
     // Check for overrides if field config is available
     if (fieldConfig?.overrides) {
       // Find override that matches this field
+      console.log(fieldConfig.overrides);
       const override = fieldConfig.overrides.find(
-        ({ matcher: { id, options } }) => id === 'byName' && options === field.name
+        ({ matcher: { id, options } }) => id === 'byName' && options === getDisplayName(field)
       );
 
       // Check if there's a footer reducer property in the override
