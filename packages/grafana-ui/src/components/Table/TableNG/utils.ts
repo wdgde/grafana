@@ -12,6 +12,9 @@ import {
   LinkModel,
   DisplayValueAlignmentFactors,
   DataFrame,
+  fieldReducers,
+  FieldState,
+  reduceField,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
@@ -24,7 +27,15 @@ import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellOptions } from '../types';
 
 import { COLUMN, TABLE } from './constants';
-import { CellColors, TableRow, TableFieldOptionsType, ColumnTypes, FrameToRowsConverter, Comparator } from './types';
+import {
+  CellColors,
+  TableRow,
+  TableFieldOptionsType,
+  ColumnTypes,
+  FrameToRowsConverter,
+  Comparator,
+  TableNGProps,
+} from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
 export type CellHeightCalculator = (text: string, cellWidth: number) => number;
@@ -168,6 +179,94 @@ export function getAlignmentFactor(
 
     return alignmentFactor;
   }
+}
+
+export interface FooterItem {
+  [reducerId: string]: {
+    value: number | null;
+    formattedValue: string;
+    reducerName: string;
+  };
+}
+
+interface FooterFieldState extends FieldState {
+  lastProcessedRowCount: number;
+}
+
+const nonMathReducers = new Set([
+  'allValues',
+  'changeCount',
+  'count',
+  'countAll',
+  'distinctCount',
+  'first',
+  'firstNotNull',
+  'last',
+  'lastNotNull',
+  'uniqueValues',
+]);
+
+const isNonMathReducer = (reducer: string) => nonMathReducers.has(reducer);
+
+/* ------------------------------ Footer calculations ------------------------------ */
+export function getFooterItemNG(rows: TableRow[], field: Field): FooterItem | null {
+  const reducers: string[] = field.config.custom?.footer?.reducer ?? [];
+
+  if (reducers.length && (field.type === FieldType.number || reducers.some(isNonMathReducer))) {
+    // Create a new state object that matches the original behavior exactly
+    const newState: FooterFieldState = {
+      lastProcessedRowCount: 0,
+      ...(field.state || {}), // Preserve any existing state properties
+    };
+
+    // Assign back to field
+    field.state = newState;
+
+    const currentRowCount = rows.length;
+    const lastRowCount = newState.lastProcessedRowCount;
+
+    // Check if we need to invalidate the cache
+    if (lastRowCount !== currentRowCount) {
+      // Cache should be invalidated as row count has changed
+      if (newState.calcs) {
+        delete newState.calcs;
+      }
+      // Update the row count tracker
+      newState.lastProcessedRowCount = currentRowCount;
+    }
+
+    // Calculate all specified reducers
+    const results: Record<string, number | null> = reduceField({
+      field: {
+        ...field,
+        values: rows.map((row) => row[field.name]),
+      },
+      reducers,
+    });
+
+    // Create an object with reducer names as keys and their formatted values
+    const footerItem: FooterItem = {};
+
+    reducers.forEach((reducerId) => {
+      // For number fields, show all reducers
+      // For non-number fields, only show special count reducers
+      if (results[reducerId] !== undefined && (field.type === FieldType.number || isNonMathReducer(reducerId))) {
+        const value: number | null = results[reducerId];
+        const reducerName = fieldReducers.get(reducerId)?.name || reducerId;
+        const formattedValue = field.display ? formattedValueToString(field.display(value)) : String(value);
+
+        footerItem[reducerId] = {
+          value,
+          formattedValue,
+          reducerName,
+        };
+      }
+    });
+
+    return Object.keys(footerItem).length > 0 ? footerItem : null;
+  }
+
+  return null;
 }
 
 /* ------------------------- Cell color calculation ------------------------- */
@@ -329,7 +428,7 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
 
   // Creates a function that converts a DataFrame into an array of TableRows
   // Uses new Function() for performance as it's faster than creating rows using loops
-  const convert = new Function('frame', fnBody) as unknown as FrameToRowsConverter;
+  const convert = new Function('frame', fnBody) as FrameToRowsConverter;
   return convert(frame);
 };
 
@@ -476,6 +575,57 @@ export const processNestedTableRows = (
   });
 
   return result;
+};
+
+/**
+ * @internal
+ * Get the maximum number of reducers across all fields
+ */
+const getMaxReducerCount = (dataFrame: DataFrame, fieldConfig: TableNGProps['fieldConfig']): number => {
+  // Filter to only numeric fields that can have reducers
+  const numericFields = dataFrame.fields.filter(({ type }) => type === FieldType.number);
+
+  // If there are no numeric fields, return 0
+  if (numericFields.length === 0) {
+    return 0;
+  }
+
+  // Map each field to its reducer count (direct config or override)
+  const reducerCounts = numericFields.map((field) => {
+    // Get the direct reducer count from the field config
+    const directReducers = field.config?.custom?.footer?.reducer ?? [];
+    let reducerCount = directReducers.length;
+
+    // Check for overrides if field config is available
+    if (fieldConfig?.overrides) {
+      // Find override that matches this field
+      const override = fieldConfig.overrides.find(
+        ({ matcher: { id, options } }) => id === 'byName' && options === field.name
+      );
+
+      // Check if there's a footer reducer property in the override
+      const footerProperty = override?.properties?.find(({ id }) => id === 'custom.footer.reducer');
+      if (footerProperty?.value && Array.isArray(footerProperty.value)) {
+        // If override exists, it takes precedence over direct config
+        reducerCount = footerProperty.value.length;
+      }
+    }
+
+    return reducerCount;
+  });
+
+  // Return the maximum count or 0 if no reducers found
+  return reducerCounts.length > 0 ? Math.max(...reducerCounts) : 0;
+};
+
+/**
+ * @internal
+ * Calculate the footer height based on the maximum reducer count
+ */
+export const calculateFooterHeight = (dataFrame: DataFrame, fieldConfig: TableNGProps['fieldConfig']) => {
+  const maxReducerCount = getMaxReducerCount(dataFrame, fieldConfig);
+  // Base height (+ padding) + height per reducer
+  return maxReducerCount * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
 };
 
 /**

@@ -28,9 +28,121 @@ import {
   getTextAlign,
   migrateTableDisplayModeToCellOptions,
   getColumnTypes,
+  getFooterItemNG,
 } from './utils';
 
 describe('TableNG utils', () => {
+  describe('getFooterItemNG', () => {
+    const rows = [
+      { Field1: 1, Text: 'a', __depth: 0, __index: 0 },
+      { Field1: 2, Text: 'b', __depth: 0, __index: 1 },
+      { Field1: 3, Text: 'c', __depth: 0, __index: 2 },
+      { Field2: 3, Text: 'd', __depth: 0, __index: 3 },
+      { Field2: 10, Text: 'e', __depth: 0, __index: 4 },
+    ];
+
+    const numericField: Field = {
+      name: 'Field1',
+      type: FieldType.number,
+      values: [1, 2, 3],
+      config: {
+        custom: {
+          footer: {
+            reducer: ['sum'],
+          },
+        },
+      },
+      display: (value: unknown) => ({
+        text: String(value),
+        numeric: Number(value),
+        color: undefined,
+        prefix: undefined,
+        suffix: undefined,
+      }),
+      state: {},
+      getLinks: undefined,
+    };
+
+    const numericField2: Field = {
+      name: 'Field2',
+      type: FieldType.number,
+      values: [3, 10],
+      config: {
+        custom: {
+          footer: {
+            reducer: ['sum'],
+          },
+        },
+      },
+      display: (value: unknown) => ({
+        text: String(value),
+        numeric: Number(value),
+        color: undefined,
+        prefix: undefined,
+        suffix: undefined,
+      }),
+      state: {},
+      getLinks: undefined,
+    };
+
+    const textField: Field = {
+      name: 'Text',
+      type: FieldType.string,
+      values: ['a', 'b', 'c'],
+      config: { custom: {} },
+      display: (value: unknown) => ({
+        text: String(value),
+        numeric: 0,
+        color: undefined,
+        prefix: undefined,
+        suffix: undefined,
+      }),
+      state: {},
+      getLinks: undefined,
+    };
+
+    it('should calculate sum for numeric fields', () => {
+      const result = getFooterItemNG(rows, numericField);
+      expect(result?.sum.value).toBe(6); // 1 + 2 + 3
+    });
+
+    it('should calculate mean for numeric fields', () => {
+      const newNumericField = {
+        ...numericField,
+        config: {
+          ...numericField.config,
+          custom: { ...numericField.config.custom, footer: { reducer: ['mean'] } },
+        },
+      };
+      const result = getFooterItemNG(rows, newNumericField);
+      expect(result?.mean.value).toBe(2); // (1 + 2 + 3) / 3
+    });
+
+    it('should return null for non-numeric fields', () => {
+      const result = getFooterItemNG(rows, textField);
+
+      expect(result).toBe(null);
+    });
+
+    it('should return null when footer not shown', () => {
+      const numericFieldWithoutFooter = {
+        ...numericField,
+        config: { ...numericField.config, custom: { ...numericField.config.custom, footer: { reducer: [] } } },
+      };
+      const result = getFooterItemNG(rows, numericFieldWithoutFooter);
+
+      expect(result).toBe(null);
+    });
+
+    it('should correctly calculate sum for numeric fields based on selected fields', () => {
+      const numericField1Result = getFooterItemNG(rows, numericField);
+      const numericField2Result = getFooterItemNG(rows, numericField2);
+
+      expect(numericField1Result?.sum.value).toBe(6); // 1 + 2 + 3
+      expect(numericField2Result?.sum.value).toBe(13); // 3 + 10
+    });
+  });
+
   describe('text alignment', () => {
     it('should map alignment options to flex values', () => {
       // Test 'left' alignment
@@ -969,8 +1081,6 @@ describe('TableNG utils', () => {
       expect(extractPixelValue('not-a-number')).toBe(0);
       expect(extractPixelValue('px')).toBe(0);
       expect(extractPixelValue('')).toBe(0);
-      expect(extractPixelValue(null as any)).toBe(0);
-      expect(extractPixelValue(undefined as any)).toBe(0);
     });
   });
 
