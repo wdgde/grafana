@@ -12,9 +12,6 @@ import {
   LinkModel,
   DisplayValueAlignmentFactors,
   DataFrame,
-  fieldReducers,
-  FieldState,
-  reduceField,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
@@ -179,94 +176,6 @@ export function getAlignmentFactor(
 
     return alignmentFactor;
   }
-}
-
-export interface FooterItem {
-  [reducerId: string]: {
-    value: number | null;
-    formattedValue: string;
-    reducerName: string;
-  };
-}
-
-interface FooterFieldState extends FieldState {
-  lastProcessedRowCount: number;
-}
-
-const nonMathReducers = new Set([
-  'allValues',
-  'changeCount',
-  'count',
-  'countAll',
-  'distinctCount',
-  'first',
-  'firstNotNull',
-  'last',
-  'lastNotNull',
-  'uniqueValues',
-]);
-
-const isNonMathReducer = (reducer: string) => nonMathReducers.has(reducer);
-
-/* ------------------------------ Footer calculations ------------------------------ */
-export function getFooterItemNG(rows: TableRow[], field: Field): FooterItem | null {
-  const reducers: string[] = field.config.custom?.footer?.reducer ?? [];
-
-  if (reducers.length && (field.type === FieldType.number || reducers.some(isNonMathReducer))) {
-    // Create a new state object that matches the original behavior exactly
-    const newState: FooterFieldState = {
-      lastProcessedRowCount: 0,
-      ...(field.state || {}), // Preserve any existing state properties
-    };
-
-    // Assign back to field
-    field.state = newState;
-
-    const currentRowCount = rows.length;
-    const lastRowCount = newState.lastProcessedRowCount;
-
-    // Check if we need to invalidate the cache
-    if (lastRowCount !== currentRowCount) {
-      // Cache should be invalidated as row count has changed
-      if (newState.calcs) {
-        delete newState.calcs;
-      }
-      // Update the row count tracker
-      newState.lastProcessedRowCount = currentRowCount;
-    }
-
-    // Calculate all specified reducers
-    const results: Record<string, number | null> = reduceField({
-      field: {
-        ...field,
-        values: rows.map((row) => row[getDisplayName(field)]),
-      },
-      reducers,
-    });
-
-    // Create an object with reducer names as keys and their formatted values
-    const footerItem: FooterItem = {};
-
-    reducers.forEach((reducerId) => {
-      // For number fields, show all reducers
-      // For non-number fields, only show special count reducers
-      if (results[reducerId] !== undefined && (field.type === FieldType.number || isNonMathReducer(reducerId))) {
-        const value: number | null = results[reducerId];
-        const reducerName = fieldReducers.get(reducerId)?.name || reducerId;
-        const formattedValue = field.display ? formattedValueToString(field.display(value)) : String(value);
-
-        footerItem[reducerId] = {
-          value,
-          formattedValue,
-          reducerName,
-        };
-      }
-    });
-
-    return Object.keys(footerItem).length > 0 ? footerItem : null;
-  }
-
-  return null;
 }
 
 /* ------------------------- Cell color calculation ------------------------- */

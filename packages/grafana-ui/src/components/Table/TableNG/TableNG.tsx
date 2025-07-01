@@ -366,7 +366,7 @@ export function TableNG(props: TableNGProps) {
               showTypeIcons={showTypeIcons}
             />
           ),
-          renderSummaryCell: () => <SummaryCell sortedRows={sortedRows} field={field} omitCountAll={i > 0} />,
+          renderSummaryCell: () => <SummaryCell rows={sortedRows} field={field} omitCountAll={i > 0} />,
         };
 
         result.columns.push(column);
@@ -481,7 +481,7 @@ export function TableNG(props: TableNGProps) {
     textWraps,
     theme,
     visibleFields,
-    widths
+    widths,
   ]);
 
   // invalidate columns on every structureRev change. this supports width editing in the fieldConfig.

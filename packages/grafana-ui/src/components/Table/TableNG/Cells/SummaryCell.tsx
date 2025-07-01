@@ -1,23 +1,120 @@
 import { css, cx } from '@emotion/css';
+import { useMemo } from 'react';
 
-import { GrafanaTheme2, Field } from '@grafana/data';
+import {
+  GrafanaTheme2,
+  Field,
+  FieldState,
+  FieldType,
+  reduceField,
+  fieldReducers,
+  formattedValueToString,
+} from '@grafana/data';
+import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { TableRow } from '../types';
-import { getFooterItemNG } from '../utils';
+import { getDisplayName } from '../utils';
 
 interface SummaryCellProps {
-  sortedRows: TableRow[];
+  rows: TableRow[];
   field: Field;
-  omitCountAll: boolean;
+  omitCountAll?: boolean;
 }
 
-export const SummaryCell = ({ sortedRows, field, omitCountAll }: SummaryCellProps) => {
+export interface FooterItem {
+  [reducerId: string]: {
+    value: number | null;
+    formattedValue: string;
+    reducerName: string;
+  };
+}
+
+interface FooterFieldState extends FieldState {
+  lastProcessedRowCount: number;
+}
+
+const nonMathReducers = new Set([
+  'allValues',
+  'changeCount',
+  'count',
+  'countAll',
+  'distinctCount',
+  'first',
+  'firstNotNull',
+  'last',
+  'lastNotNull',
+  'uniqueValues',
+]);
+
+const isNonMathReducer = (reducer: string) => nonMathReducers.has(reducer);
+
+export const SummaryCell = ({ rows, field, omitCountAll = false }: SummaryCellProps) => {
   const styles = useStyles2(getStyles);
-  const footerItem = getFooterItemNG(sortedRows, field);
+  const displayName = getDisplayName(field);
+
+  const footerItem = useMemo<FooterItem | null>(() => {
+    const reducers: string[] = field.config.custom?.footer?.reducer ?? [];
+
+    if (!reducers.length || (field.type === FieldType.number && reducers.some(isNonMathReducer))) {
+      return null;
+    }
+
+    // Create a new state object that matches the original behavior exactly
+    const newState: FooterFieldState = {
+      lastProcessedRowCount: 0,
+      ...(field.state || {}), // Preserve any existing state properties
+    };
+
+    // Assign back to field
+    field.state = newState;
+
+    const currentRowCount = rows.length;
+    const lastRowCount = newState.lastProcessedRowCount;
+
+    // Check if we need to invalidate the cache
+    if (lastRowCount !== currentRowCount) {
+      // Cache should be invalidated as row count has changed
+      if (newState.calcs) {
+        delete newState.calcs;
+      }
+      // Update the row count tracker
+      newState.lastProcessedRowCount = currentRowCount;
+    }
+
+    // Calculate all specified reducers
+    const results: Record<string, number | null> = reduceField({
+      field: {
+        ...field,
+        values: rows.map((row) => row[displayName]),
+      },
+      reducers,
+    });
+
+    // Create an object with reducer names as keys and their formatted values
+    const footerItem: FooterItem = {};
+
+    reducers.forEach((reducerId) => {
+      // For number fields, show all reducers
+      // For non-number fields, only show special count reducers
+      if (results[reducerId] !== undefined && (field.type === FieldType.number || isNonMathReducer(reducerId))) {
+        const value: number | null = results[reducerId];
+        const reducerName = fieldReducers.get(reducerId)?.name || reducerId;
+        const formattedValue = field.display ? formattedValueToString(field.display(value)) : String(value);
+
+        footerItem[reducerId] = {
+          value,
+          formattedValue,
+          reducerName,
+        };
+      }
+    });
+
+    return Object.keys(footerItem).length > 0 ? footerItem : null;
+  }, [field, rows, displayName]);
 
   if (!footerItem) {
-    return <div className={styles.footerCell} />;
+    return <div data-testid="summary-cell-empty" className={styles.footerCell} />;
   }
 
   const footerItemEntries = Object.entries(footerItem);
@@ -27,20 +124,19 @@ export const SummaryCell = ({ sortedRows, field, omitCountAll }: SummaryCellProp
     <div className={styles.footerCell}>
       {footerItemEntries.map(([reducerId, { reducerName, formattedValue }]) => {
         const isCountAll = reducerId === 'countAll';
-
-        if (!isCountAll || !omitCountAll) {
-          const canonicalReducerName = isCountAll ? 'Count' : reducerName;
-          const isSingleSumReducer = Object.keys(footerItem).every((item) => item === 'sum');
-
-          return (
-            <div key={reducerId} className={cx(styles.footerItem, isSingleSumReducer && styles.sumReducer)}>
-              {!isSingleSumReducer && <div className={styles.footerItemLabel}>{canonicalReducerName}</div>}
-              <div className={styles.footerItemValue}>{formattedValue}</div>
-            </div>
-          );
+        if (isCountAll && omitCountAll) {
+          return null;
         }
 
-        return null;
+        const canonicalReducerName = isCountAll ? t('grafana-ui.table.footer.reducer.count', 'Count') : reducerName;
+        const isSingleSumReducer = Object.keys(footerItem).every((item) => item === 'sum');
+
+        return (
+          <div key={reducerId} className={cx(styles.footerItem, isSingleSumReducer && styles.sumReducer)}>
+            {!isSingleSumReducer && <div className={styles.footerItemLabel}>{canonicalReducerName}</div>}
+            <div className={styles.footerItemValue}>{formattedValue}</div>
+          </div>
+        );
       })}
     </div>
   );
