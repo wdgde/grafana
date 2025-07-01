@@ -22,12 +22,10 @@ interface SummaryCellProps {
   omitCountAll?: boolean;
 }
 
-export interface FooterItem {
-  [reducerId: string]: {
-    value: number | null;
-    formattedValue: string;
-    reducerName: string;
-  };
+export interface ReducerResult {
+  value: number | null;
+  formattedValue: string;
+  reducerName: string;
 }
 
 interface FooterFieldState extends FieldState {
@@ -53,11 +51,11 @@ export const SummaryCell = ({ rows, field, omitCountAll = false }: SummaryCellPr
   const styles = useStyles2(getStyles);
   const displayName = getDisplayName(field);
 
-  const footerItem = useMemo<FooterItem | null>(() => {
+  const reducerResultsEntries = useMemo<Array<[string, ReducerResult]>>(() => {
     const reducers: string[] = field.config.custom?.footer?.reducer ?? [];
 
     if (!reducers.length || (field.type === FieldType.number && reducers.some(isNonMathReducer))) {
-      return null;
+      return [];
     }
 
     // Create a new state object that matches the original behavior exactly
@@ -92,7 +90,7 @@ export const SummaryCell = ({ rows, field, omitCountAll = false }: SummaryCellPr
     });
 
     // Create an object with reducer names as keys and their formatted values
-    const footerItem: FooterItem = {};
+    const reducerResults: Record<string, ReducerResult> = {};
 
     reducers.forEach((reducerId) => {
       // For number fields, show all reducers
@@ -102,7 +100,7 @@ export const SummaryCell = ({ rows, field, omitCountAll = false }: SummaryCellPr
         const reducerName = fieldReducers.get(reducerId)?.name || reducerId;
         const formattedValue = field.display ? formattedValueToString(field.display(value)) : String(value);
 
-        footerItem[reducerId] = {
+        reducerResults[reducerId] = {
           value,
           formattedValue,
           reducerName,
@@ -110,26 +108,28 @@ export const SummaryCell = ({ rows, field, omitCountAll = false }: SummaryCellPr
       }
     });
 
-    return Object.keys(footerItem).length > 0 ? footerItem : null;
+    return Object.entries(reducerResults);
   }, [field, rows, displayName]);
 
-  if (!footerItem) {
+  const isSingleSumReducer = useMemo(
+    () => reducerResultsEntries.every(([item]) => item === 'sum'),
+    [reducerResultsEntries]
+  );
+
+  if (reducerResultsEntries.length === 0) {
     return <div data-testid="summary-cell-empty" className={styles.footerCell} />;
   }
-
-  const footerItemEntries = Object.entries(footerItem);
 
   // Render each reducer in the footer
   return (
     <div className={styles.footerCell}>
-      {footerItemEntries.map(([reducerId, { reducerName, formattedValue }]) => {
+      {reducerResultsEntries.map(([reducerId, { reducerName, formattedValue }]) => {
         const isCountAll = reducerId === 'countAll';
         if (isCountAll && omitCountAll) {
           return null;
         }
 
         const canonicalReducerName = isCountAll ? t('grafana-ui.table.footer.reducer.count', 'Count') : reducerName;
-        const isSingleSumReducer = Object.keys(footerItem).every((item) => item === 'sum');
 
         return (
           <div key={reducerId} className={cx(styles.footerItem, isSingleSumReducer && styles.sumReducer)}>
