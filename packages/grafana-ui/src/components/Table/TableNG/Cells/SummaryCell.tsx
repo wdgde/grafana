@@ -13,6 +13,7 @@ import {
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
+import { TABLE } from '../constants';
 import { TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
@@ -51,7 +52,7 @@ export const SummaryCell = ({ rows, field, omitCountAll = false }: SummaryCellPr
   const styles = useStyles2(getStyles);
   const displayName = getDisplayName(field);
 
-  const reducerResultsEntries = useMemo<Array<[string, ReducerResult]>>(() => {
+  const reducerResultsEntries = useMemo<Array<[string, ReducerResult | null]>>(() => {
     const reducers: string[] = field.config.custom?.footer?.reducer ?? [];
 
     if (
@@ -92,29 +93,26 @@ export const SummaryCell = ({ rows, field, omitCountAll = false }: SummaryCellPr
       reducers,
     });
 
-    return (
-      reducers
-        // For number fields, show all reducers
-        // For non-number fields, only show special count reducers
-        .filter(
-          (reducerId) =>
-            results[reducerId] !== undefined && (field.type === FieldType.number || isNonMathReducer(reducerId))
-        )
-        .map((reducerId) => {
-          const value = results[reducerId];
-          const reducerName = fieldReducers.get(reducerId)?.name || reducerId;
-          const formattedValue = field.display ? formattedValueToString(field.display(value)) : String(value);
+    return reducers.map((reducerId) => {
+      // For number fields, show all reducers
+      // For non-number fields, only show special count reducers
+      if (results[reducerId] === undefined || (field.type !== FieldType.number && !isNonMathReducer(reducerId))) {
+        return [reducerId, null];
+      }
 
-          return [
-            reducerId,
-            {
-              value,
-              formattedValue,
-              reducerName,
-            },
-          ];
-        })
-    );
+      const value = results[reducerId];
+      const reducerName = fieldReducers.get(reducerId)?.name || reducerId;
+      const formattedValue = field.display ? formattedValueToString(field.display(value)) : String(value);
+
+      return [
+        reducerId,
+        {
+          value,
+          formattedValue,
+          reducerName,
+        },
+      ];
+    });
   }, [field, rows, displayName]);
 
   const isSingleSumReducer = useMemo(
@@ -129,11 +127,19 @@ export const SummaryCell = ({ rows, field, omitCountAll = false }: SummaryCellPr
   // Render each reducer in the footer
   return (
     <div className={styles.footerCell}>
-      {reducerResultsEntries.map(([reducerId, { reducerName, formattedValue }]) => {
+      {reducerResultsEntries.map(([reducerId, reducerResultEntry]) => {
         const isCountAll = reducerId === 'countAll';
-        if (isCountAll && omitCountAll) {
-          return null;
+
+        // empty reducer entry, but there may be more after - render a spacer.
+        if ((isCountAll && omitCountAll) || reducerResultEntry === null) {
+          return (
+            <div key={reducerId} className={styles.footerItem}>
+              &nbsp;
+            </div>
+          );
         }
+
+        const { reducerName, formattedValue } = reducerResultEntry;
 
         const canonicalReducerName = isCountAll ? t('grafana-ui.table.footer.reducer.count', 'Count') : reducerName;
 
