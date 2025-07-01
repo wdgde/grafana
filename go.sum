@@ -1611,6 +1611,8 @@ github.com/grafana/grafana-app-sdk v0.39.2 h1:ymfr+1318t+JC9U2OYrzVpGmNG/aJONUmF
 github.com/grafana/grafana-app-sdk v0.39.2/go.mod h1:t0m6q561lpoHQCixS9LUHFUhUzDClzNtm7BH60gHVSY=
 github.com/grafana/grafana-app-sdk/logging v0.39.1 h1:lI5rbrheuwVPuyIM6LIuEYOCSpgmXahfKtqeMyhbGPU=
 github.com/grafana/grafana-app-sdk/logging v0.39.1/go.mod h1:WhDENSnaGHtyVVwZGVnAR7YLvh2xlLDYR3D7E6h7XVk=
+github.com/grafana/grafana-app-sdk/plugin v0.39.2 h1:7PRlJqEPKPT5MghDB5vlFCv6rXRTlqQFv1R5MTXBxlM=
+github.com/grafana/grafana-app-sdk/plugin v0.39.2/go.mod h1:/XqNOAOeOY88IHLOGtoi9f2SVsGy0RtaGbHutibndfQ=
 github.com/grafana/grafana-aws-sdk v0.38.7 h1:9P3DASeWqIG2cBtnmpj0sY3TsK+773wbdIR55WKS3V4=
 github.com/grafana/grafana-aws-sdk v0.38.7/go.mod h1:LflvMuuX0BNSd1Oe6KcH5CGV/zxm4VrfN/0wLNPKvVc=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 h1:OfCkitCuomzZKW1WYHrG8MxKwtMhALb7jqoj+487eTg=
@@ -1673,6 +1675,8 @@ github.com/grafana/sqlds/v4 v4.2.2 h1:bqF9Ex5bb72AvT6h3v6jRFr6Mb1Bk4y7t14YGbHnen
 github.com/grafana/sqlds/v4 v4.2.2/go.mod h1:yRjfMDJ4DhI++VbrnvgVy6Nn4j9tPIR6UfWKbQ3qP6Y=
 github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec h1:wnzJov9RhSHGaTYGzTygL4qq986fLen8xSqnQgaMd28=
 github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec/go.mod h1:j1IY7J2rUz7TcTjFVVx6HCpyTlYOJPtXuGRZ7sI+vSo=
+github.com/graphql-go/graphql v0.8.1 h1:p7/Ou/WpmulocJeEx7wjQy611rtXGQaAcXGqanuMMgc=
+github.com/graphql-go/graphql v0.8.1/go.mod h1:nKiHzRM0qopJEwCITUuIsxk9PlVlwIiiI8pnJEhordQ=
 github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 h1:UH//fgunKIs4JdUbpDl1VZCDaL56wXCB/5+wF6uHfaI=
 github.com/grpc-ecosystem/go-grpc-middleware v1.4.0/go.mod h1:g5qyo/la0ALbONm6Vbp88Yd8NsDy6rZz+RcrMPxvld8=
 github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 h1:QGLs/O40yoNK9vmy4rhUGBVyMf1lISBGtXRpsu/Qu/o=

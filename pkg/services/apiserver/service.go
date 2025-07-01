@@ -107,6 +107,8 @@ type service struct {
 	graphqlService *GraphQLService
 }
 
+// Note: GraphQLProviderApp interface moved to graphql_integration.go
+
 func ProvideService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
@@ -127,6 +129,7 @@ func ProvideService(
 	reg prometheus.Registerer,
 	aggregatorRunner aggregatorrunner.AggregatorRunner,
 	graphqlService *GraphQLService,
+	appProviders []AppProvider, // Auto-injected app providers
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -201,10 +204,17 @@ func ProvideService(
 	s.rr.Group("/openapi", proxyHandler)
 	s.rr.Group("/version", proxyHandler)
 
-	// Initialize GraphQL support
-	if err := s.initGraphQL(); err != nil {
-		return nil, fmt.Errorf("failed to initialize GraphQL: %w", err)
+	// Auto-register all app providers for GraphQL support
+	s.log.Info("Attempting to register app providers for GraphQL", "count", len(appProviders))
+	for _, provider := range appProviders {
+		if err := s.graphqlService.RegisterAppProvider(provider); err != nil {
+			s.log.Error("Failed to register app provider for GraphQL", "app", provider.GetAppName(), "error", err)
+		} else {
+			s.log.Info("Registered app provider for GraphQL", "app", provider.GetAppName())
+		}
 	}
+
+	// GraphQL support is already initialized via app provider registration above
 
 	eventualRestConfigProvider.cfg = s
 	close(eventualRestConfigProvider.ready)
@@ -241,6 +251,8 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 
 // nolint:gocyclo
 func (s *service) start(ctx context.Context) error {
+	// GraphQL endpoint will be added to the API server handler later
+
 	// Get the list of groups the server will support
 	builders := s.builders
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
@@ -330,6 +342,14 @@ func (s *service) start(ctx context.Context) error {
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler))
 	if err != nil {
 		return err
+	}
+
+	// Add GraphQL endpoint to the API server if enabled
+	if s.features.IsEnabledGlobally(featuremgmt.FlagApiServerGraphQL) {
+		s.log.Info("Adding GraphQL endpoint to API server", "registered_apps", len(s.graphqlService.GetRegisteredApps()))
+		
+		// Add GraphQL endpoint to the API server's handler
+		server.Handler.NonGoRestfulMux.HandleFunc("/apis/graphql", s.graphqlService.HandleGraphQL)
 	}
 
 	// Install the API group+version
