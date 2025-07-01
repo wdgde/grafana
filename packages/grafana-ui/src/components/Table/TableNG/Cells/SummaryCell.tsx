@@ -13,7 +13,6 @@ import {
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
-import { TABLE } from '../constants';
 import { TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
