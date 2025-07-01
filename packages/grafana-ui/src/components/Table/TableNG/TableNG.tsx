@@ -76,7 +76,7 @@ export function TableNG(props: TableNGProps) {
     () => data.fields.some((field) => field.config?.custom?.footer?.reducer?.length ?? false),
     [data.fields]
   );
-  const footerHeight = hasFooter ? calculateFooterHeight(props.data, fieldConfig) : 0;
+  const footerHeight = hasFooter ? calculateFooterHeight(data, fieldConfig) : 0;
 
   const theme = useTheme2();
   const styles = useStyles2(getGridStyles, {

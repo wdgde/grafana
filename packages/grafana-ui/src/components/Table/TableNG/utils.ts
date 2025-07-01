@@ -508,7 +508,6 @@ const getMaxReducerCount = (dataFrame: DataFrame, fieldConfig: TableNGProps['fie
     // Check for overrides if field config is available
     if (fieldConfig?.overrides) {
       // Find override that matches this field
-      console.log(fieldConfig.overrides);
       const override = fieldConfig.overrides.find(
         ({ matcher: { id, options } }) => id === 'byName' && options === getDisplayName(field)
       );

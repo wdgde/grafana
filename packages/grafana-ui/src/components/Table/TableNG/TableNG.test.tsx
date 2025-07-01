@@ -443,7 +443,6 @@ describe('TableNG', () => {
     });
   });
 
-  // TODO port over Alex's tests
   describe('Footer options', () => {
     it('defaults to not showing footer', () => {
       const { container } = render(
