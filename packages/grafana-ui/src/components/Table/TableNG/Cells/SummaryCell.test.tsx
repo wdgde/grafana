@@ -149,4 +149,27 @@ describe('SummaryCell', () => {
     expect(screen.getByText('6')).toBeInTheDocument(); // 1 + 2 + 3
     expect(screen.getByText('13')).toBeInTheDocument(); // 3 + 10
   });
+
+  it('should render summary cells with a mix of numeric-and non-numeric reducers and fields', () => {
+    const fields = [numericField, numericField2, textField].map((field, index) => ({
+      ...field,
+      config: {
+        ...field.config,
+        custom: {
+          ...field.config.custom,
+          footer: { reducer: ['sum', 'mean', 'last'] },
+        },
+      },
+    }));
+    render(
+      <>
+        {fields.map((field, index) => (
+          <SummaryCell key={index} rows={rows} field={field} />
+        ))}
+      </>
+    );
+    expect(screen.getByText('13')).toBeInTheDocument(); // sum
+    expect(screen.getByText('6.5')).toBeInTheDocument(); // mean
+    expect(screen.getByText('efghi')).toBeInTheDocument(); // last
+  });
 });

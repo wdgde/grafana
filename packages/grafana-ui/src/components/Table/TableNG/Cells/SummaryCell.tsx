@@ -54,7 +54,10 @@ export const SummaryCell = ({ rows, field, omitCountAll = false }: SummaryCellPr
   const reducerResultsEntries = useMemo<Array<[string, ReducerResult]>>(() => {
     const reducers: string[] = field.config.custom?.footer?.reducer ?? [];
 
-    if (!reducers.length || (field.type === FieldType.number && reducers.some(isNonMathReducer))) {
+    if (
+      reducers.length === 0 ||
+      (field.type !== FieldType.number && reducers.every((reducerId) => !isNonMathReducer(reducerId)))
+    ) {
       return [];
     }
 
@@ -89,26 +92,29 @@ export const SummaryCell = ({ rows, field, omitCountAll = false }: SummaryCellPr
       reducers,
     });
 
-    // Create an object with reducer names as keys and their formatted values
-    const reducerResults: Record<string, ReducerResult> = {};
+    return (
+      reducers
+        // For number fields, show all reducers
+        // For non-number fields, only show special count reducers
+        .filter(
+          (reducerId) =>
+            results[reducerId] !== undefined && (field.type === FieldType.number || isNonMathReducer(reducerId))
+        )
+        .map((reducerId) => {
+          const value = results[reducerId];
+          const reducerName = fieldReducers.get(reducerId)?.name || reducerId;
+          const formattedValue = field.display ? formattedValueToString(field.display(value)) : String(value);
 
-    reducers.forEach((reducerId) => {
-      // For number fields, show all reducers
-      // For non-number fields, only show special count reducers
-      if (results[reducerId] !== undefined && (field.type === FieldType.number || isNonMathReducer(reducerId))) {
-        const value: number | null = results[reducerId];
-        const reducerName = fieldReducers.get(reducerId)?.name || reducerId;
-        const formattedValue = field.display ? formattedValueToString(field.display(value)) : String(value);
-
-        reducerResults[reducerId] = {
-          value,
-          formattedValue,
-          reducerName,
-        };
-      }
-    });
-
-    return Object.entries(reducerResults);
+          return [
+            reducerId,
+            {
+              value,
+              formattedValue,
+              reducerName,
+            },
+          ];
+        })
+    );
   }, [field, rows, displayName]);
 
   const isSingleSumReducer = useMemo(

@@ -79,11 +79,7 @@ export function TableNG(props: TableNGProps) {
   const footerHeight = hasFooter ? calculateFooterHeight(data, fieldConfig) : 0;
 
   const theme = useTheme2();
-  const styles = useStyles2(getGridStyles, {
-    enablePagination,
-    noHeader,
-    footerHeight,
-  });
+  const styles = useStyles2(getGridStyles, { enablePagination, noHeader });
   const panelContext = usePanelContext();
 
   const hasHeader = !noHeader;
@@ -210,6 +206,7 @@ export function TableNG(props: TableNGProps) {
         sortColumns,
         rowHeight,
         bottomSummaryRows: hasFooter ? [{}] : undefined,
+        summaryRowHeight: footerHeight,
         headerRowClass: styles.headerRow,
         headerRowHeight: noHeader ? 0 : TABLE.HEADER_ROW_HEIGHT,
       }) satisfies Partial<DataGridProps<TableRow, TableSummaryRow>>,
@@ -223,6 +220,7 @@ export function TableNG(props: TableNGProps) {
       noHeader,
       setSortColumns,
       onSortByChange,
+      footerHeight,
     ]
   );
 
@@ -618,7 +616,7 @@ const renderRowFactory =
 
 const getGridStyles = (
   theme: GrafanaTheme2,
-  { enablePagination, noHeader, footerHeight }: { enablePagination?: boolean; noHeader?: boolean; footerHeight: number }
+  { enablePagination, noHeader }: { enablePagination?: boolean; noHeader?: boolean }
 ) => ({
   grid: css({
     '--rdg-background-color': theme.colors.background.primary,
@@ -643,7 +641,6 @@ const getGridStyles = (
         zIndex: theme.zIndex.tooltip - 1,
         paddingInline: TABLE.CELL_PADDING,
         paddingBlock: TABLE.CELL_PADDING,
-        height: footerHeight,
       },
     },
   }),
