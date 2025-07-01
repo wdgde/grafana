@@ -444,7 +444,7 @@ describe('TableNG', () => {
   });
 
   // TODO port over Alex's tests
-  describe.skip('Footer options', () => {
+  describe('Footer options', () => {
     it('defaults to not showing footer', () => {
       const { container } = render(
         <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
