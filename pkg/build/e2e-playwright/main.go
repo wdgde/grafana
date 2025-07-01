@@ -47,6 +47,12 @@ func NewApp() *cli.Command {
 				TakesFile: true,
 			},
 			&cli.StringFlag{
+				Name:      "node-modules",
+				Usage:     "Path to cached node_modules directory",
+				Validator: mustBeDir("node-modules", true, true),
+				TakesFile: true,
+			},
+			&cli.StringFlag{
 				Name:      "license",
 				Usage:     "Path to the Grafana Enterprise license file (optional)",
 				Validator: mustBeFile("license", true),
@@ -79,6 +85,7 @@ func NewApp() *cli.Command {
 func run(ctx context.Context, cmd *cli.Command) error {
 	grafanaDir := cmd.String("grafana-dir")
 	targzPath := cmd.String("package")
+	nodeModulesPath := cmd.String("node-modules")
 	licensePath := cmd.String("license")
 	pwShard := cmd.String("shard")
 	resultsDir := cmd.String("results-dir")
@@ -108,6 +115,11 @@ func run(ctx context.Context, cmd *cli.Command) error {
 	targz := d.Host().File(targzPath)
 	// pa11yConfig := d.Host().File(pa11yConfigPath)
 
+	var nodeModules *dagger.Directory
+	if nodeModulesPath != "" {
+		nodeModules = d.Host().Directory(nodeModulesPath)
+	}
+
 	var license *dagger.File
 	if licensePath != "" {
 		license = d.Host().File(licensePath)
@@ -128,6 +140,7 @@ func run(ctx context.Context, cmd *cli.Command) error {
 		TestResultsExportDir: resultsDir,
 		HTMLReportExportDir:  htmlDir,
 		BlobReportExportDir:  blobDir,
+		NodeModules:          nodeModules,
 	}
 
 	c, runErr := RunTest(ctx, d, runOpts)

@@ -51,6 +51,7 @@ type RunTestOpts struct {
 	HTMLReportExportDir  string
 	BlobReportExportDir  string
 	TestResultsExportDir string
+	NodeModules          *dagger.Directory
 }
 
 func RunTest(
@@ -107,7 +108,17 @@ func RunTest(
 
 	playwrightCommand := buildPlaywrightCommand(opts)
 
-	e2eContainer := WithYarnInstall(d, playwrightBase, yarnHostSrc).
+	container := playwrightBase.WithWorkdir("/src")
+
+	if opts.NodeModules != nil {
+		container = container.
+			WithDirectory("/src", yarnHostSrc).
+			WithMountedDirectory("/src/node_modules", opts.NodeModules)
+	} else {
+		container = WithYarnInstall(d, container, yarnHostSrc)
+	}
+
+	e2eContainer := container.
 		WithWorkdir("/src").
 		WithDirectory("/src", e2eHostSrc).
 		WithMountedCache(".nx", nxCache).
