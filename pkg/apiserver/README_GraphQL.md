@@ -66,14 +66,6 @@ apiServerGraphQL = true
 { __schema { queryType { fields { name } } } }
 ```
 
-### Testing
-```bash
-curl -X POST http://localhost:3000/apis/graphql \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Basic YWRtaW46YWRtaW4=" \
-  -d '{"query": "{ ping }"}'
-```
-
 ## Key Benefits
 
 - **Zero Code Changes**: Apps get GraphQL automatically
