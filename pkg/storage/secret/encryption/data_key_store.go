@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
-	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -26,7 +25,6 @@ func ProvideDataKeyStorage(
 	db contracts.Database,
 	tracer trace.Tracer,
 	features featuremgmt.FeatureToggles,
-	registerer prometheus.Registerer,
 ) (contracts.DataKeyStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
