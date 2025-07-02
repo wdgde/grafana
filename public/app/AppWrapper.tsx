@@ -1,3 +1,4 @@
+import { GrowthBook, GrowthBookProvider } from '@growthbook/growthbook-react';
 import { Action, KBarProvider } from 'kbar';
 import { Component, ComponentType, Fragment, ReactNode } from 'react';
 import CacheProvider from 'react-inlinesvg/provider';
@@ -47,6 +48,12 @@ export function addPageBanner(fn: ComponentType) {
   pageBanners.push(fn);
 }
 
+const growthbook = new GrowthBook({
+  apiHost: 'http://localhost:3300',
+  clientKey: 'sdk-JSqixqDMw4lnumUQ',
+  enableDevMode: true,
+});
+
 export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
   private iconCacheID = `grafana-icon-cache-${config.buildInfo.commit}`;
 
@@ -56,6 +63,12 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
   }
 
   async componentDidMount() {
+    // Load features asynchronously when the app renders
+    growthbook.init({ streaming: true });
+    growthbook.updateAttributes({
+      grafana_version: config.buildInfo.version,
+    });
+
     this.setState({ ready: true });
     $('.preloader').remove();
 
@@ -110,33 +123,35 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
 
     return (
       <Provider store={store}>
-        <ErrorBoundaryAlert style="page">
-          <GrafanaContext.Provider value={app.context}>
-            <ThemeProvider value={config.theme2}>
-              <CacheProvider name={this.iconCacheID}>
-                <KBarProvider
-                  actions={[]}
-                  options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
-                >
-                  <MaybeTimeRangeProvider>
-                    <ScopesContextProvider>
-                      <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
-                        <MaybeExtensionSidebarProvider>
-                          <GlobalStylesWrapper />
-                          <div className="grafana-app">
-                            <RouterWrapper {...routerWrapperProps} />
-                            <LiveConnectionWarning />
-                            <PortalContainer />
-                          </div>
-                        </MaybeExtensionSidebarProvider>
-                      </ExtensionRegistriesProvider>
-                    </ScopesContextProvider>
-                  </MaybeTimeRangeProvider>
-                </KBarProvider>
-              </CacheProvider>
-            </ThemeProvider>
-          </GrafanaContext.Provider>
-        </ErrorBoundaryAlert>
+        <GrowthBookProvider growthbook={growthbook}>
+          <ErrorBoundaryAlert style="page">
+            <GrafanaContext.Provider value={app.context}>
+              <ThemeProvider value={config.theme2}>
+                <CacheProvider name={this.iconCacheID}>
+                  <KBarProvider
+                    actions={[]}
+                    options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+                  >
+                    <MaybeTimeRangeProvider>
+                      <ScopesContextProvider>
+                        <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
+                          <MaybeExtensionSidebarProvider>
+                            <GlobalStylesWrapper />
+                            <div className="grafana-app">
+                              <RouterWrapper {...routerWrapperProps} />
+                              <LiveConnectionWarning />
+                              <PortalContainer />
+                            </div>
+                          </MaybeExtensionSidebarProvider>
+                        </ExtensionRegistriesProvider>
+                      </ScopesContextProvider>
+                    </MaybeTimeRangeProvider>
+                  </KBarProvider>
+                </CacheProvider>
+              </ThemeProvider>
+            </GrafanaContext.Provider>
+          </ErrorBoundaryAlert>
+        </GrowthBookProvider>
       </Provider>
     );
   }

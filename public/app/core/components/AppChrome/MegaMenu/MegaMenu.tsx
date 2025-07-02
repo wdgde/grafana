@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useFeatureIsOn } from '@growthbook/growthbook-react';
 import { DOMAttributes } from '@react-types/shared';
 import { memo, forwardRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
@@ -6,7 +7,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { setBookmark } from 'app/core/reducers/navBarTree';
@@ -37,13 +38,15 @@ export const MegaMenu = memo(
     const state = chrome.useState();
     const [patchPreferences] = usePatchUserPreferencesMutation();
     const pinnedItems = usePinnedItems();
+    const isPinnedNavItemsEnabled = useFeatureIsOn('pinNavItems');
 
     // Remove profile + help from tree
     const navItems = navTree
       .filter((item) => item.id !== 'profile' && item.id !== 'help')
+      .filter((item) => item.id !== 'bookmarks' || isPinnedNavItemsEnabled)
       .map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked));
 
-    if (config.featureToggles.pinNavItems) {
+    if (isPinnedNavItemsEnabled) {
       const bookmarksItem = navItems.find((item) => item.id === 'bookmarks');
       if (bookmarksItem) {
         // Add children to the bookmarks section
@@ -89,7 +92,7 @@ export const MegaMenu = memo(
 
     const onPinItem = (item: NavModelItem) => {
       const url = item.url;
-      if (url && config.featureToggles.pinNavItems) {
+      if (url && isPinnedNavItemsEnabled) {
         const isSaved = isPinned(url);
         const newItems = isSaved ? pinnedItems.filter((i) => url !== i) : [...pinnedItems, url];
         const interactionName = isSaved ? 'grafana_nav_item_unpinned' : 'grafana_nav_item_pinned';
