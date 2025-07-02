@@ -20,9 +20,9 @@ type StaticFlagEvaluator interface {
 // ProvideStaticEvaluator creates a static evaluator from configuration
 // This can be used in wire dependency injection
 func ProvideStaticEvaluator(cfg *setting.Cfg) (StaticFlagEvaluator, error) {
-	if cfg.OpenFeature.ProviderType == setting.GOFFProviderType {
+	if cfg.OpenFeature.ProviderType != setting.StaticProviderType {
 		l := log.New("static-evaluator")
-		l.Debug("cannot create static evaluator if configured provider is goff")
+		l.Debug("cannot create static evaluator if configured provider is %s", cfg.OpenFeature.ProviderType)
 		return &staticEvaluator{}, nil
 	}
 
@@ -31,12 +31,12 @@ func ProvideStaticEvaluator(cfg *setting.Cfg) (StaticFlagEvaluator, error) {
 		return nil, fmt.Errorf("failed to read feature toggles from config: %w", err)
 	}
 
-	return createStaticEvaluator(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, confFlags)
+	return createStaticEvaluator(cfg.OpenFeature.ProviderType, cfg.OpenFeature.URL, cfg.OpenFeature.ClientKey, confFlags)
 }
 
 // createStaticEvaluator evaluator that allows evaluating static flags from config.ini
-func createStaticEvaluator(providerType string, u *url.URL, staticFlags map[string]bool) (StaticFlagEvaluator, error) {
-	provider, err := createProvider(providerType, u, staticFlags)
+func createStaticEvaluator(providerType string, u *url.URL, clientKey string, staticFlags map[string]bool) (StaticFlagEvaluator, error) {
+	provider, err := createProvider(providerType, u, clientKey, staticFlags)
 	if err != nil {
 		return nil, err
 	}

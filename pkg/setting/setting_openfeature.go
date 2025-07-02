@@ -6,15 +6,17 @@ import (
 )
 
 const (
-	StaticProviderType = "static"
-	GOFFProviderType   = "goff"
+	StaticProviderType     = "static"
+	GOFFProviderType       = "goff"
+	GrowthBookProviderType = "growthbook"
 )
 
 type OpenFeatureSettings struct {
-	ProviderType string
-	URL          *url.URL
-	TargetingKey string
-	ContextAttrs map[string]any
+	ProviderType string         `json:"providerType"`
+	URL          *url.URL       `json:"url"`
+	ClientKey    string         `json:"clientKey"`
+	TargetingKey string         `json:"targetingKey"`
+	ContextAttrs map[string]any `json:"contextAttrs"`
 }
 
 func (cfg *Cfg) readOpenFeatureSettings() error {
@@ -23,10 +25,11 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 	config := cfg.Raw.Section("feature_toggles.openfeature")
 	cfg.OpenFeature.ProviderType = config.Key("provider").MustString(StaticProviderType)
 	cfg.OpenFeature.TargetingKey = config.Key("targetingKey").MustString(cfg.AppURL)
+	cfg.OpenFeature.ClientKey = config.Key("clientKey").MustString("")
 
 	strURL := config.Key("url").MustString("")
 
-	if strURL != "" && cfg.OpenFeature.ProviderType == GOFFProviderType {
+	if strURL != "" && (cfg.OpenFeature.ProviderType == GOFFProviderType || cfg.OpenFeature.ProviderType == GrowthBookProviderType) {
 		u, err := url.Parse(strURL)
 		if err != nil {
 			return fmt.Errorf("invalid feature provider url: %w", err)
@@ -43,7 +46,7 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 
 	// Some default attributes
 	if _, ok := attrs["grafana_version"]; !ok {
-		attrs["grafana_version"] = BuildVersion
+		attrs["grafana_version"] = cfg.BuildVersion
 	}
 
 	cfg.OpenFeature.ContextAttrs = attrs

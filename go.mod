@@ -247,6 +247,11 @@ require (
 )
 
 require (
+	github.com/growthbook/growthbook-golang v0.2.3
+	github.com/growthbook/growthbook-openfeature-provider-go v0.0.3
+)
+
+require (
 	cel.dev/expr v0.23.1 // indirect
 	cloud.google.com/go v0.120.0 // indirect
 	cloud.google.com/go/auth v0.16.1 // indirect
@@ -530,6 +535,7 @@ require (
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tetratelabs/wazero v1.8.2 // indirect
+	github.com/tmaxmax/go-sse v0.10.0 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect

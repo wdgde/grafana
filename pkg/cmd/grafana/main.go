@@ -14,7 +14,7 @@ import (
 )
 
 // The following variables cannot be constants, since they can be overridden through the -X link flag
-var version = "9.2.0"
+var version = "12.0.2"
 var commit = gcli.DefaultCommitValue
 var enterpriseCommit = gcli.DefaultCommitValue
 var buildBranch = "main"
