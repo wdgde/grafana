@@ -1798,6 +1798,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@dagrejs/dagre@npm:^1.1.5":
+  version: 1.1.5
+  resolution: "@dagrejs/dagre@npm:1.1.5"
+  dependencies:
+    "@dagrejs/graphlib": "npm:2.2.4"
+  checksum: 10/c00abd1e04d19f90ad8dfa0a4e16365371bc4309affead3827a1b39f6b0b946643b8af0b1e5519011deca3fda4c7471b27e9ebb03423309a94f95ac0b881ac4f
+  languageName: node
+  linkType: hard
+
+"@dagrejs/graphlib@npm:2.2.4":
+  version: 2.2.4
+  resolution: "@dagrejs/graphlib@npm:2.2.4"
+  checksum: 10/1fc5393525a3d666284ca740867d082768bc87ff61f5f181eb5c1a73c1a6e328ad23581f7415c81df2614171b8a4b4a8e6a417eefd7f9fca74a4a625ec3aa848
+  languageName: node
+  linkType: hard
+
 "@daybrush/utils@npm:^1.1.1, @daybrush/utils@npm:^1.13.0, @daybrush/utils@npm:^1.4.0, @daybrush/utils@npm:^1.6.0, @daybrush/utils@npm:^1.7.1":
   version: 1.13.0
   resolution: "@daybrush/utils@npm:1.13.0"
@@ -18205,6 +18221,7 @@ __metadata:
     "@bsull/augurs": "npm:^0.10.0"
     "@crowdin/crowdin-api-client": "npm:^1.42.0"
     "@cypress/webpack-preprocessor": "npm:6.0.4"
+    "@dagrejs/dagre": "npm:^1.1.5"
     "@emotion/css": "npm:11.13.5"
     "@emotion/eslint-plugin": "npm:11.12.0"
     "@emotion/react": "npm:11.14.0"
