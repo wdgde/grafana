@@ -438,7 +438,7 @@ func TestLoader_Load(t *testing.T) {
 				validation.New(tt.cfg, validation.Opts{}), initialization.New(tt.cfg, initialization.Opts{}),
 				terminationStage, et)
 
-			got, err := l.Load(context.Background(), sources.NewLocalSource(tt.class, tt.pluginPaths))
+			got, err := l.Load(context.Background(), sources.NewLocalSource(tt.class, tt.pluginPaths, tt.cfg))
 			require.NoError(t, err)
 			if !cmp.Equal(got, tt.want, compareOpts...) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts...))

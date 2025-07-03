@@ -37,7 +37,6 @@ import (
 	provider2 "github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	manager3 "github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -340,9 +339,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	keyRetriever := dynamic.ProvideService(cfg, keystoreService)
 	keyretrieverService := keyretriever.ProvideService(keyRetriever)
 	signatureSignature := signature.ProvideService(pluginManagementCfg, keyretrieverService)
-	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
-	assetpathService := assetpath.ProvideService(pluginManagementCfg, pluginscdnService)
-	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, assetpathService)
+	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature)
 	unsignedPluginAuthorizer := signature.ProvideOSSAuthorizer(pluginManagementCfg)
 	validation := signature.ProvideValidatorService(unsignedPluginAuthorizer)
 	angularpatternsstoreService := angularpatternsstore.ProvideService(kvStore)
@@ -605,6 +602,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
+	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
 	pluginassetsService := pluginassets.ProvideService(pluginManagementCfg, pluginscdnService, signatureSignature, pluginstoreService)
 	avatarCacheServer := avatar.ProvideAvatarCacheServer(cfg)
 	prefService := prefimpl.ProvideService(sqlStore, cfg)
@@ -851,9 +849,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	keyRetriever := dynamic.ProvideService(cfg, keystoreService)
 	keyretrieverService := keyretriever.ProvideService(keyRetriever)
 	signatureSignature := signature.ProvideService(pluginManagementCfg, keyretrieverService)
-	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
-	assetpathService := assetpath.ProvideService(pluginManagementCfg, pluginscdnService)
-	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature, assetpathService)
+	bootstrap := pipeline.ProvideBootstrapStage(pluginManagementCfg, signatureSignature)
 	unsignedPluginAuthorizer := signature.ProvideOSSAuthorizer(pluginManagementCfg)
 	validation := signature.ProvideValidatorService(unsignedPluginAuthorizer)
 	angularpatternsstoreService := angularpatternsstore.ProvideService(kvStore)
@@ -1118,6 +1114,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
+	pluginscdnService := pluginscdn.ProvideService(pluginManagementCfg)
 	pluginassetsService := pluginassets.ProvideService(pluginManagementCfg, pluginscdnService, signatureSignature, pluginstoreService)
 	avatarCacheServer := avatar.ProvideAvatarCacheServer(cfg)
 	prefService := prefimpl.ProvideService(sqlStore, cfg)

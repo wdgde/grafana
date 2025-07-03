@@ -24,6 +24,8 @@ type PluginSource interface {
 	DefaultSignature(ctx context.Context, pluginID string) (Signature, bool)
 	// Discover finds and returns plugin bundles from this source
 	Discover(ctx context.Context) ([]*FoundBundle, error)
+	// AssetProvider returns the plugin asset provider associated with this source
+	AssetProvider(ctx context.Context) PluginAssetProvider
 }
 
 type FileStore interface {
@@ -140,4 +142,62 @@ type KeyStore interface {
 
 type KeyRetriever interface {
 	GetPublicKey(ctx context.Context, keyID string) (string, error)
+}
+
+type PluginAssetProvider interface {
+	PluginAssets(p PluginAssetPlugin) (AssetInfo, error)
+}
+
+type PluginAssetPlugin interface {
+	JSONData() JSONData
+	FS() FS
+	Parent() PluginAssetPlugin
+}
+
+type PluginWithAssets struct {
+	jsonData JSONData
+	fs       FS
+	parent   PluginAssetPlugin
+}
+
+func NewPluginWithAssets(jsonData JSONData, fs FS, parent PluginAssetPlugin) *PluginWithAssets {
+	return &PluginWithAssets{
+		jsonData: jsonData,
+		fs:       fs,
+		parent:   parent,
+	}
+}
+
+func (p *PluginWithAssets) JSONData() JSONData {
+	return p.jsonData
+}
+
+func (p *PluginWithAssets) FS() FS {
+	return p.fs
+}
+
+func (p *PluginWithAssets) Parent() PluginAssetPlugin {
+	return p.parent
+}
+
+// AssetInfo contains the information needed to serve plugin assets
+type AssetInfo struct {
+	BaseURLFunc     func() (string, error)
+	ModuleURLFunc   func() (string, error)
+	RelativeURLFunc func(string) (string, error)
+}
+
+// BaseURL returns the base URL for plugin assets
+func (a AssetInfo) BaseURL() (string, error) {
+	return a.BaseURLFunc()
+}
+
+// ModuleURL returns the module.js URL for the plugin
+func (a AssetInfo) ModuleURL() (string, error) {
+	return a.ModuleURLFunc()
+}
+
+// RelativeURL returns the URL for a specific plugin asset
+func (a AssetInfo) RelativeURL(assetPath string) (string, error) {
+	return a.RelativeURLFunc(assetPath)
 }

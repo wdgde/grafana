@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
@@ -40,9 +39,9 @@ func ProvideDiscoveryStage(cfg *config.PluginManagementCfg, pr registry.Service)
 	})
 }
 
-func ProvideBootstrapStage(cfg *config.PluginManagementCfg, sc plugins.SignatureCalculator, a *assetpath.Service) *bootstrap.Bootstrap {
+func ProvideBootstrapStage(cfg *config.PluginManagementCfg, sc plugins.SignatureCalculator) *bootstrap.Bootstrap {
 	return bootstrap.New(cfg, bootstrap.Opts{
-		ConstructFunc: bootstrap.DefaultConstructFunc(cfg, sc, a),
+		ConstructFunc: bootstrap.DefaultConstructFunc(cfg, sc),
 		DecorateFuncs: bootstrap.DefaultDecorateFuncs(cfg),
 	})
 }

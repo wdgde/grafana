@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
@@ -26,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
@@ -45,13 +43,12 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 	pCfg, err := pluginconfig.ProvidePluginManagementConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
 	require.NoError(t, err)
 
-	cdn := pluginscdn.ProvideService(pCfg)
 	reg := registry.ProvideService()
 	angularInspector := angularinspector.NewStaticInspector()
 	proc := process.ProvideService()
 
 	disc := pipeline.ProvideDiscoveryStage(pCfg, reg)
-	boot := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), assetpath.ProvideService(pCfg, cdn))
+	boot := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()))
 	valid := pipeline.ProvideValidationStage(pCfg, signature.NewValidator(signature.NewUnsignedAuthorizer(pCfg)), angularInspector)
 	init := pipeline.ProvideInitializationStage(pCfg, reg, provider.ProvideService(coreRegistry), proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), nil, tracing.InitializeTracerForTest())
 	term, err := pipeline.ProvideTerminationStage(pCfg, reg, proc)
@@ -89,7 +86,7 @@ func CreateTestLoader(t *testing.T, cfg *pluginsCfg.PluginManagementCfg, opts Lo
 	}
 
 	if opts.Bootstrapper == nil {
-		opts.Bootstrapper = pipeline.ProvideBootstrapStage(cfg, signature.ProvideService(cfg, statickey.New()), assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg)))
+		opts.Bootstrapper = pipeline.ProvideBootstrapStage(cfg, signature.ProvideService(cfg, statickey.New()))
 	}
 
 	if opts.Validator == nil {

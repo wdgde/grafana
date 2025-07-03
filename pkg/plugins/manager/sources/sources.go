@@ -30,6 +30,7 @@ func (s *Service) List(_ context.Context) []plugins.PluginSource {
 		NewLocalSource(
 			plugins.ClassCore,
 			s.corePluginPaths(),
+			s.cfg,
 		),
 	}
 	r = append(r, s.externalPluginSources()...)
@@ -59,11 +60,7 @@ func (s *Service) pluginSettingSources() []plugins.PluginSource {
 		if !exists || path == "" {
 			continue
 		}
-		if s.cfg.DevMode {
-			sources = append(sources, NewUnsafeLocalSource(plugins.ClassExternal, []string{path}))
-		} else {
-			sources = append(sources, NewLocalSource(plugins.ClassExternal, []string{path}))
-		}
+		sources = append(sources, NewLocalSource(plugins.ClassExternal, []string{path}, s.cfg))
 	}
 
 	return sources

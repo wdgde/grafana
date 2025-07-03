@@ -482,6 +482,7 @@ type FakePluginSource struct {
 	PluginClassFunc      func(ctx context.Context) plugins.Class
 	DiscoverFunc         func(ctx context.Context) ([]*plugins.FoundBundle, error)
 	DefaultSignatureFunc func(ctx context.Context) (plugins.Signature, bool)
+	AssetProviderFunc    func(ctx context.Context) plugins.PluginAssetProvider
 }
 
 func (s *FakePluginSource) PluginClass(ctx context.Context) plugins.Class {
@@ -503,6 +504,12 @@ func (s *FakePluginSource) DefaultSignature(ctx context.Context, _ string) (plug
 		return s.DefaultSignatureFunc(ctx)
 	}
 	return plugins.Signature{}, false
+}
+func (s *FakePluginSource) AssetProvider(ctx context.Context) plugins.PluginAssetProvider {
+	if s.AssetProviderFunc != nil {
+		return s.AssetProviderFunc(ctx)
+	}
+	return nil
 }
 
 type FakePluginFileStore struct {
@@ -660,4 +667,31 @@ func (p *FakeBackendPlugin) Kill() {
 
 func (p *FakeBackendPlugin) Target() backendplugin.Target {
 	return "test-target"
+}
+
+type FakeAssetProvider struct {
+	assetInfo []plugins.AssetInfo
+}
+
+func NewFakeAssetProvider(ai ...plugins.AssetInfo) *FakeAssetProvider {
+	return &FakeAssetProvider{
+		assetInfo: ai,
+	}
+}
+
+func (f *FakeAssetProvider) PluginAssets(p plugins.PluginAssetPlugin) (plugins.AssetInfo, error) {
+	if len(f.assetInfo) == 0 {
+		return plugins.AssetInfo{
+			BaseURLFunc: func() (string, error) {
+				return "", nil
+			},
+			ModuleURLFunc: func() (string, error) {
+				return "", nil
+			},
+			RelativeURLFunc: func(s string) (string, error) {
+				return "", nil
+			},
+		}, nil
+	}
+	return f.assetInfo[0], nil
 }

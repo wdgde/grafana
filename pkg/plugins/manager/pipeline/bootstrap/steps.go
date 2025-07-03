@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 )
 
 // DefaultConstructor implements the default ConstructFunc used for the Construct step of the Bootstrap stage.
@@ -22,8 +21,8 @@ type DefaultConstructor struct {
 }
 
 // DefaultConstructFunc is the default ConstructFunc used for the Construct step of the Bootstrap stage.
-func DefaultConstructFunc(cfg *config.PluginManagementCfg, signatureCalculator plugins.SignatureCalculator, assetPath *assetpath.Service) ConstructFunc {
-	return NewDefaultConstructor(cfg, signatureCalculator, assetPath).Construct
+func DefaultConstructFunc(cfg *config.PluginManagementCfg, signatureCalculator plugins.SignatureCalculator) ConstructFunc {
+	return NewDefaultConstructor(cfg, signatureCalculator).Construct
 }
 
 // DefaultDecorateFuncs are the default DecorateFuncs used for the Decorate step of the Bootstrap stage.
@@ -37,9 +36,9 @@ func DefaultDecorateFuncs(cfg *config.PluginManagementCfg) []DecorateFunc {
 }
 
 // NewDefaultConstructor returns a new DefaultConstructor.
-func NewDefaultConstructor(cfg *config.PluginManagementCfg, signatureCalculator plugins.SignatureCalculator, assetPath *assetpath.Service) *DefaultConstructor {
+func NewDefaultConstructor(cfg *config.PluginManagementCfg, signatureCalculator plugins.SignatureCalculator) *DefaultConstructor {
 	return &DefaultConstructor{
-		pluginFactoryFunc:   NewDefaultPluginFactory(&cfg.Features, assetPath).createPlugin,
+		pluginFactoryFunc:   NewDefaultPluginFactory(&cfg.Features).createPlugin,
 		signatureCalculator: signatureCalculator,
 		log:                 log.New("plugins.construct"),
 	}
@@ -52,7 +51,7 @@ func (c *DefaultConstructor) Construct(ctx context.Context, src plugins.PluginSo
 		c.log.Warn("Could not calculate plugin signature state", "pluginId", bundle.Primary.JSONData.ID, "error", err)
 		return nil, err
 	}
-	plugin, err := c.pluginFactoryFunc(bundle, src.PluginClass(ctx), sig)
+	plugin, err := c.pluginFactoryFunc(bundle, src.PluginClass(ctx), sig, src.AssetProvider(ctx))
 	if err != nil {
 		c.log.Error("Could not create primary plugin base", "pluginId", bundle.Primary.JSONData.ID, "error", err)
 		return nil, err

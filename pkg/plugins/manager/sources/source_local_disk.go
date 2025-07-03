@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginassets"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -21,33 +23,34 @@ var walk = util.Walk
 
 var (
 	ErrInvalidPluginJSONFilePath = errors.New("invalid plugin.json filepath was provided")
+	logger                       = log.New("local.source")
 )
 
 type LocalSource struct {
-	paths      []string
-	class      plugins.Class
-	strictMode bool // If true, tracks files via a StaticFS
-	log        log.Logger
+	paths         []string
+	class         plugins.Class
+	assetProvider plugins.PluginAssetProvider
+	strictMode    bool // If true, tracks files via a StaticFS
 }
 
 // NewLocalSource represents a plugin with a fixed set of files.
-func NewLocalSource(class plugins.Class, paths []string) *LocalSource {
-	return &LocalSource{
-		paths:      paths,
-		class:      class,
-		strictMode: true,
-		log:        log.New("local.source"),
-	}
+func NewLocalSource(class plugins.Class, paths []string, cfg *config.PluginManagementCfg) *LocalSource {
+	return newLocalSource(paths, class, nil, cfg)
 }
 
-// NewUnsafeLocalSource represents a plugin that has an unbounded set of files. This useful when running in
-// dev mode whilst developing a plugin.
-func NewUnsafeLocalSource(class plugins.Class, paths []string) *LocalSource {
+func newLocalSource(paths []string, class plugins.Class, assetProvider plugins.PluginAssetProvider,
+	cfg *config.PluginManagementCfg) *LocalSource {
+	if assetProvider == nil {
+		assetProvider = pluginassets.NewLocalExternal(pluginscdn.ProvideService(cfg))
+	}
+	if class == plugins.ClassCore {
+		assetProvider = pluginassets.NewLocalCore()
+	}
 	return &LocalSource{
-		paths:      paths,
-		class:      class,
-		strictMode: false,
-		log:        log.New("local.source"),
+		paths:         paths,
+		class:         class,
+		assetProvider: assetProvider,
+		strictMode:    !cfg.DevMode,
 	}
 }
 
@@ -81,15 +84,15 @@ func (s *LocalSource) Discover(_ context.Context) ([]*plugins.FoundBundle, error
 	for _, path := range s.paths {
 		exists, err := fs.Exists(path)
 		if err != nil {
-			s.log.Warn("Skipping finding plugins as an error occurred", "path", path, "error", err)
+			logger.Warn("Skipping finding plugins as an error occurred", "path", path, "error", err)
 			continue
 		}
 		if !exists {
-			s.log.Warn("Skipping finding plugins as directory does not exist", "path", path)
+			logger.Warn("Skipping finding plugins as directory does not exist", "path", path)
 			continue
 		}
 
-		paths, err := s.getAbsPluginJSONPaths(path)
+		paths, err := getAbsPluginJSONPaths(path)
 		if err != nil {
 			return nil, err
 		}
@@ -99,15 +102,15 @@ func (s *LocalSource) Discover(_ context.Context) ([]*plugins.FoundBundle, error
 	// load plugin.json files and map directory to JSON data
 	foundPlugins := make(map[string]plugins.JSONData)
 	for _, pluginJSONPath := range pluginJSONPaths {
-		plugin, err := s.readPluginJSON(pluginJSONPath)
+		plugin, err := readPluginJSON(pluginJSONPath)
 		if err != nil {
-			s.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "error", err)
+			logger.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "error", err)
 			continue
 		}
 
 		pluginJSONAbsPath, err := filepath.Abs(pluginJSONPath)
 		if err != nil {
-			s.log.Warn("Skipping plugin loading as absolute plugin.json path could not be calculated", "pluginId", plugin.ID, "error", err)
+			logger.Warn("Skipping plugin loading as absolute plugin.json path could not be calculated", "pluginId", plugin.ID, "error", err)
 			continue
 		}
 
@@ -146,12 +149,12 @@ func (s *LocalSource) Discover(_ context.Context) ([]*plugins.FoundBundle, error
 
 			relPath, err := filepath.Rel(dir, dir2)
 			if err != nil {
-				s.log.Error("Cannot calculate relative path. Skipping", "pluginId", p2.Primary.JSONData.ID, "err", err)
+				logger.Error("Cannot calculate relative path. Skipping", "pluginId", p2.Primary.JSONData.ID, "err", err)
 				continue
 			}
 			if !strings.Contains(relPath, "..") {
 				child := p2.Primary
-				s.log.Debug("Adding child", "parent", p.Primary.JSONData.ID, "child", child.JSONData.ID, "relPath", relPath)
+				logger.Debug("Adding child", "parent", p.Primary.JSONData.ID, "child", child.JSONData.ID, "relPath", relPath)
 				p.Children = append(p.Children, &child)
 				childPlugins[dir2] = struct{}{}
 			}
@@ -169,30 +172,34 @@ func (s *LocalSource) Discover(_ context.Context) ([]*plugins.FoundBundle, error
 	return result, nil
 }
 
-func (s *LocalSource) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) {
-	reader, err := s.readFile(pluginJSONPath)
+func (s *LocalSource) AssetProvider(_ context.Context) plugins.PluginAssetProvider {
+	return s.assetProvider
+}
+
+func readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) {
+	reader, err := readFile(pluginJSONPath)
 	defer func() {
 		if reader == nil {
 			return
 		}
 		if err = reader.Close(); err != nil {
-			s.log.Warn("Failed to close plugin JSON file", "path", pluginJSONPath, "error", err)
+			logger.Warn("Failed to close plugin JSON file", "path", pluginJSONPath, "error", err)
 		}
 	}()
 	if err != nil {
-		s.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "error", err)
+		logger.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "error", err)
 		return plugins.JSONData{}, err
 	}
 	plugin, err := plugins.ReadPluginJSON(reader)
 	if err != nil {
-		s.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "error", err)
+		logger.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "error", err)
 		return plugins.JSONData{}, err
 	}
 
 	return plugin, nil
 }
 
-func (s *LocalSource) getAbsPluginJSONPaths(path string) ([]string, error) {
+func getAbsPluginJSONPaths(path string) ([]string, error) {
 	var pluginJSONPaths []string
 
 	var err error
@@ -205,11 +212,11 @@ func (s *LocalSource) getAbsPluginJSONPaths(path string) ([]string, error) {
 		func(currentPath string, fi os.FileInfo, err error) error {
 			if err != nil {
 				if errors.Is(err, os.ErrNotExist) {
-					s.log.Error("Couldn't scan directory since it doesn't exist", "pluginDir", path, "error", err)
+					logger.Error("Couldn't scan directory since it doesn't exist", "pluginDir", path, "error", err)
 					return nil
 				}
 				if errors.Is(err, os.ErrPermission) {
-					s.log.Error("Couldn't scan directory due to lack of permissions", "pluginDir", path, "error", err)
+					logger.Error("Couldn't scan directory due to lack of permissions", "pluginDir", path, "error", err)
 					return nil
 				}
 
@@ -237,8 +244,8 @@ func (s *LocalSource) getAbsPluginJSONPaths(path string) ([]string, error) {
 	return pluginJSONPaths, nil
 }
 
-func (s *LocalSource) readFile(pluginJSONPath string) (io.ReadCloser, error) {
-	s.log.Debug("Loading plugin", "path", pluginJSONPath)
+func readFile(pluginJSONPath string) (io.ReadCloser, error) {
+	logger.Debug("Loading plugin", "path", pluginJSONPath)
 
 	if !strings.EqualFold(filepath.Ext(pluginJSONPath), ".json") {
 		return nil, ErrInvalidPluginJSONFilePath
@@ -255,8 +262,22 @@ func (s *LocalSource) readFile(pluginJSONPath string) (io.ReadCloser, error) {
 }
 
 func DirAsLocalSources(cfg *config.PluginManagementCfg, pluginsPath string, class plugins.Class) ([]*LocalSource, error) {
+	pluginDirs, err := ReadDir(pluginsPath)
+	if err != nil {
+		return nil, err
+	}
+
+	sources := make([]*LocalSource, len(pluginDirs))
+	for i, dir := range pluginDirs {
+		sources[i] = NewLocalSource(class, []string{dir}, cfg)
+	}
+
+	return sources, nil
+}
+
+func ReadDir(pluginsPath string) ([]string, error) {
 	if pluginsPath == "" {
-		return []*LocalSource{}, errors.New("plugins path not configured")
+		return []string{}, errors.New("plugins path not configured")
 	}
 
 	// It's safe to ignore gosec warning G304 since the variable part of the file path comes from a configuration
@@ -264,7 +285,7 @@ func DirAsLocalSources(cfg *config.PluginManagementCfg, pluginsPath string, clas
 	// nolint:gosec
 	d, err := os.ReadDir(pluginsPath)
 	if err != nil {
-		return []*LocalSource{}, errors.New("failed to open plugins path")
+		return []string{}, errors.New("failed to open plugins path")
 	}
 
 	var pluginDirs []string
@@ -275,14 +296,5 @@ func DirAsLocalSources(cfg *config.PluginManagementCfg, pluginsPath string, clas
 	}
 	slices.Sort(pluginDirs)
 
-	sources := make([]*LocalSource, len(pluginDirs))
-	for i, dir := range pluginDirs {
-		if cfg.DevMode {
-			sources[i] = NewUnsafeLocalSource(class, []string{dir})
-		} else {
-			sources[i] = NewLocalSource(class, []string{dir})
-		}
-	}
-
-	return sources, nil
+	return pluginDirs, nil
 }

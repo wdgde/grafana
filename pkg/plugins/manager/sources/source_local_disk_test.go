@@ -6,14 +6,19 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/pluginassets"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 )
 
-var compareOpts = []cmp.Option{cmpopts.IgnoreFields(LocalSource{}, "log"), cmp.AllowUnexported(LocalSource{})}
+var compareOpts = []cmp.Option{
+	cmp.AllowUnexported(LocalSource{}),
+	cmp.AllowUnexported(pluginassets.LocalExternal{}),
+	cmp.AllowUnexported(pluginscdn.Service{}),
+}
 
 func TestDirAsLocalSources(t *testing.T) {
 	testdataDir := "../testdata"
@@ -37,19 +42,22 @@ func TestDirAsLocalSources(t *testing.T) {
 			cfg:         &config.PluginManagementCfg{},
 			expected: []*LocalSource{
 				{
-					paths:      []string{filepath.Join(testdataDir, "pluginRootWithDist", "datasource")},
-					strictMode: true,
-					class:      plugins.ClassExternal,
+					paths:         []string{filepath.Join(testdataDir, "pluginRootWithDist", "datasource")},
+					strictMode:    true,
+					class:         plugins.ClassExternal,
+					assetProvider: pluginassets.NewLocalExternal(pluginscdn.ProvideService(&config.PluginManagementCfg{})),
 				},
 				{
-					paths:      []string{filepath.Join(testdataDir, "pluginRootWithDist", "dist")},
-					strictMode: true,
-					class:      plugins.ClassExternal,
+					paths:         []string{filepath.Join(testdataDir, "pluginRootWithDist", "dist")},
+					strictMode:    true,
+					class:         plugins.ClassExternal,
+					assetProvider: pluginassets.NewLocalExternal(pluginscdn.ProvideService(&config.PluginManagementCfg{})),
 				},
 				{
-					paths:      []string{filepath.Join(testdataDir, "pluginRootWithDist", "panel")},
-					strictMode: true,
-					class:      plugins.ClassExternal,
+					paths:         []string{filepath.Join(testdataDir, "pluginRootWithDist", "panel")},
+					strictMode:    true,
+					class:         plugins.ClassExternal,
+					assetProvider: pluginassets.NewLocalExternal(pluginscdn.ProvideService(&config.PluginManagementCfg{})),
 				},
 			},
 		},
@@ -64,16 +72,25 @@ func TestDirAsLocalSources(t *testing.T) {
 					paths:      []string{filepath.Join(testdataDir, "pluginRootWithDist", "datasource")},
 					class:      plugins.ClassExternal,
 					strictMode: false,
+					assetProvider: pluginassets.NewLocalExternal(pluginscdn.ProvideService(&config.PluginManagementCfg{
+						DevMode: true,
+					})),
 				},
 				{
 					paths:      []string{filepath.Join(testdataDir, "pluginRootWithDist", "dist")},
 					class:      plugins.ClassExternal,
 					strictMode: false,
+					assetProvider: pluginassets.NewLocalExternal(pluginscdn.ProvideService(&config.PluginManagementCfg{
+						DevMode: true,
+					})),
 				},
 				{
 					paths:      []string{filepath.Join(testdataDir, "pluginRootWithDist", "panel")},
 					class:      plugins.ClassExternal,
 					strictMode: false,
+					assetProvider: pluginassets.NewLocalExternal(pluginscdn.ProvideService(&config.PluginManagementCfg{
+						DevMode: true,
+					})),
 				},
 			},
 		},
@@ -89,9 +106,10 @@ func TestDirAsLocalSources(t *testing.T) {
 			cfg:         &config.PluginManagementCfg{},
 			expected: []*LocalSource{
 				{
-					paths:      []string{filepath.Join(testdataDir, "symbolic-plugin-dirs", "plugin")},
-					class:      plugins.ClassExternal,
-					strictMode: true,
+					paths:         []string{filepath.Join(testdataDir, "symbolic-plugin-dirs", "plugin")},
+					class:         plugins.ClassExternal,
+					strictMode:    true,
+					assetProvider: pluginassets.NewLocalExternal(pluginscdn.ProvideService(&config.PluginManagementCfg{})),
 				},
 			},
 		},

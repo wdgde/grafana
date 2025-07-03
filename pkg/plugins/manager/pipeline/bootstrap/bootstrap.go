@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 )
 
@@ -44,7 +43,7 @@ type Opts struct {
 // New returns a new Bootstrap stage.
 func New(cfg *config.PluginManagementCfg, opts Opts) *Bootstrap {
 	if opts.ConstructFunc == nil {
-		opts.ConstructFunc = DefaultConstructFunc(cfg, signature.DefaultCalculator(cfg), assetpath.DefaultService(cfg))
+		opts.ConstructFunc = DefaultConstructFunc(cfg, signature.DefaultCalculator(cfg))
 	}
 
 	if opts.DecorateFuncs == nil {
