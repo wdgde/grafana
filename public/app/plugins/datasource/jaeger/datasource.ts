@@ -45,20 +45,12 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
   traceIdTimeParams?: TraceIdTimeParamsOptions;
   spanBar?: SpanBarOptions;
   constructor(
-    private instanceSettings: DataSourceInstanceSettings<JaegerJsonData>,
+    instanceSettings: DataSourceInstanceSettings<JaegerJsonData>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
     this.traceIdTimeParams = instanceSettings.jsonData.traceIdTimeParams;
-  }
-
-  async metadataRequest(url: string, params?: Record<string, unknown>) {
-    return await this.getResource(url, params);
-  }
-
-  isSearchFormValid(query: JaegerQuery): boolean {
-    return !!query.service;
   }
 
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
@@ -97,6 +89,18 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
     );
   }
 
+  async metadataRequest(url: string, params?: Record<string, unknown>) {
+    return await this.getResource(url, params);
+  }
+
+  async testDatasource() {
+    return await super.testDatasource();
+  }
+
+  getQueryDisplayText(query: JaegerQuery) {
+    return query.query || '';
+  }
+
   interpolateVariablesInQueries(queries: JaegerQuery[], scopedVars: ScopedVars): JaegerQuery[] {
     if (!queries || queries.length === 0) {
       return [];
@@ -129,43 +133,6 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
       maxDuration: this.templateSrv.replace(query.maxDuration ?? '', scopedVars),
     };
   }
-
-  async testDatasource() {
-    return await super.testDatasource();
-  }
-
-  getTimeRange(range = getDefaultTimeRange()): { start: number; end: number } {
-    return {
-      start: getTime(range.from, false),
-      end: getTime(range.to, true),
-    };
-  }
-
-  getQueryDisplayText(query: JaegerQuery) {
-    return query.query || '';
-  }
-
-  private _request(
-    apiUrl: string,
-    data?: Record<string, unknown>,
-    options?: Partial<BackendSrvRequest>
-  ): Observable<Record<string, any>> {
-    const params = data ? urlUtil.serializeParams(data) : '';
-    const url = `${this.instanceSettings.url}${apiUrl}${params.length ? `?${params}` : ''}`;
-    const req = {
-      ...options,
-      url,
-    };
-
-    return getBackendSrv().fetch(req);
-  }
-}
-
-function getTime(date: string | DateTime, roundUp: boolean) {
-  if (typeof date === 'string') {
-    date = dateMath.parse(date, roundUp)!;
-  }
-  return date.valueOf() * 1000;
 }
 
 const emptyTraceDataFrame = new MutableDataFrame({

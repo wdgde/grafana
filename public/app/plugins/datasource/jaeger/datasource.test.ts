@@ -484,14 +484,6 @@ describe('Test behavior with unmocked time', () => {
     jest.restoreAllMocks();
   });
 
-  it('getTimeRange()', async () => {
-    const ds = new JaegerDatasource(defaultSettings);
-    const timeRange = ds.getTimeRange();
-    const now = Date.now();
-    expect(timeRange.end).toBeCloseTo(now * 1000, numDigits);
-    expect(timeRange.start).toBeCloseTo((now - 6 * 3600 * 1000) * 1000, numDigits);
-  });
-
   it("call for `query()` when `queryType === 'dependencyGraph'`", async () => {
     const mock = setupFetchMock({ data: [testResponse] });
     const ds = new JaegerDatasource(defaultSettings);
