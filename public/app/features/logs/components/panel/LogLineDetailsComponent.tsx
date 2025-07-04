@@ -18,11 +18,12 @@ import { LogListModel } from './processing';
 
 interface LogLineDetailsComponentProps {
   log: LogListModel;
+  logOptionsStorageKey?: string;
   logs: LogListModel[];
 }
 
-export const LogLineDetailsComponent = ({ log, logs }: LogLineDetailsComponentProps) => {
-  const { displayedFields, logOptionsStorageKey, setDisplayedFields } = useLogListContext();
+export const LogLineDetailsComponent = ({ log, logOptionsStorageKey, logs }: LogLineDetailsComponentProps) => {
+  const { displayedFields, setDisplayedFields } = useLogListContext();
   const [search, setSearch] = useState('');
   const inputRef = useRef('');
   const styles = useStyles2(getStyles);
