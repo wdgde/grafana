@@ -67,6 +67,7 @@ export interface InlineLogLineDetailsProps {
   logs: LogListModel[];
 }
 
+export const INLINE_DETAILS_VH = 40;
 export const InlineLogLineDetails = ({ logs }: InlineLogLineDetailsProps) => {
   const { showDetails } = useLogListContext();
   const styles = useStyles2(getStyles);
@@ -76,7 +77,7 @@ export const InlineLogLineDetails = ({ logs }: InlineLogLineDetailsProps) => {
   }
 
   return (
-    <div className={styles.container} style={{ height: '30vh' }}>
+    <div className={`${styles.container} ${styles.inlineContainer}`} style={{ height: `${INLINE_DETAILS_VH}vh` }}>
       <div className={styles.scrollContainer}>
         <LogLineDetailsComponent log={showDetails[0]} logs={logs} />
       </div>
@@ -91,6 +92,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     boxShadow: theme.shadows.z1,
     border: `1px solid ${theme.colors.border.medium}`,
     borderRight: 'none',
+  }),
+  inlineContainer: css({
+    paddingBottom: theme.spacing(0.5),
   }),
   scrollContainer: css({
     overflow: 'auto',

@@ -460,6 +460,7 @@ const LogListComponent = ({
               itemSize={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
                 hasLogsWithErrors,
                 hasSampledLogs,
+                showDetails: detailsMode === 'inline' ? showDetails : undefined,
                 showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
                 showTime,
                 wrap: wrapLogMessage,
@@ -482,7 +483,6 @@ const LogListComponent = ({
         <LogLineDetails
           containerElement={containerElement}
           focusLogLine={focusLogLine}
-          logOptionsStorageKey={logOptionsStorageKey}
           logs={filteredLogs}
           onResize={handleLogDetailsResize}
         />

@@ -499,6 +499,7 @@ export const LogListContextProvider = ({
         hasUnescapedContent: logListState.hasUnescapedContent,
         isLabelFilterActive,
         getRowContextQuery,
+        logOptionsStorageKey,
         logSupportsContext,
         logLineMenuCustomItems,
         onClickFilterLabel,
