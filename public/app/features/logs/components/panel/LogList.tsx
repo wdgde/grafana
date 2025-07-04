@@ -93,6 +93,7 @@ type LogListComponentProps = Omit<
   | 'dedupStrategy'
   | 'displayedFields'
   | 'enableLogDetails'
+  | 'logOptionsStorageKey'
   | 'permalinkedLogId'
   | 'showTime'
   | 'sortOrder'
@@ -194,7 +195,6 @@ export const LogList = ({
           initialScrollPosition={initialScrollPosition}
           loading={loading}
           loadMore={loadMore}
-          logOptionsStorageKey={logOptionsStorageKey}
           logs={logs}
           showControls={showControls}
           timeRange={timeRange}
@@ -213,7 +213,6 @@ const LogListComponent = ({
   initialScrollPosition = 'top',
   loading,
   loadMore,
-  logOptionsStorageKey,
   logs,
   showControls,
   timeRange,
@@ -223,7 +222,8 @@ const LogListComponent = ({
     app,
     displayedFields,
     dedupStrategy,
-    detailsMode,
+    detailsHeight,
+    detailsPosition,
     filterLevels,
     fontSize,
     forceEscape,
@@ -455,7 +455,7 @@ const LogListComponent = ({
           {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
             <VariableSizeList
               className={styles.logList}
-              height={listHeight}
+              height={listHeight - detailsHeight}
               itemCount={itemCount}
               itemSize={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
                 hasLogsWithErrors,
@@ -470,19 +470,26 @@ const LogListComponent = ({
               outerRef={scrollRef}
               overscanCount={5}
               ref={listRef}
-              style={{ overflowY: 'scroll' }}
+              style={{ overflowY: 'scroll', height: listHeight - detailsHeight }}
               width="100%"
             >
               {Renderer}
             </VariableSizeList>
           )}
         </InfiniteScroll>
+        {detailsPosition === 'bottom' && showDetails.length > 0 && detailsHeight > 0 && (
+          <LogLineDetails
+            containerElement={containerElement}
+            focusLogLine={focusLogLine}
+            logs={filteredLogs}
+            onResize={handleLogDetailsResize}
+          />
+        )}
       </div>
-      {detailsMode === 'sidebar' && showDetails.length > 0 && (
+      {detailsPosition === 'right' && showDetails.length > 0 && (
         <LogLineDetails
           containerElement={containerElement}
           focusLogLine={focusLogLine}
-          logOptionsStorageKey={logOptionsStorageKey}
           logs={filteredLogs}
           onResize={handleLogDetailsResize}
         />

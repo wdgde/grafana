@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Resizable } from 're-resizable';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getDragStyles, useStyles2 } from '@grafana/ui';
@@ -8,20 +8,22 @@ import { getDragStyles, useStyles2 } from '@grafana/ui';
 import { LogLineDetailsComponent } from './LogLineDetailsComponent';
 import { useLogListContext } from './LogListContext';
 import { LogListModel } from './processing';
-import { LOG_LIST_MIN_WIDTH } from './virtualization';
+import { LOG_LIST_MIN_HEIGHT, LOG_LIST_MIN_WIDTH } from './virtualization';
 
 export interface Props {
   containerElement: HTMLDivElement;
   focusLogLine: (log: LogListModel) => void;
-  logOptionsStorageKey?: string;
   logs: LogListModel[];
   onResize(): void;
 }
 
-export type LogLineDetailsMode = 'inline' | 'sidebar';
+export type LogLineDetailsPosition = 'bottom' | 'right';
 
-export const LogLineDetails = ({ containerElement, focusLogLine, logOptionsStorageKey, logs, onResize }: Props) => {
-  const { detailsWidth, setDetailsWidth, showDetails } = useLogListContext();
+export const DETAILS_BOTTOM_HEIGHT = 40;
+
+export const LogLineDetails = ({ containerElement, focusLogLine, logs, onResize }: Props) => {
+  const { detailsHeight, detailsPosition, detailsWidth, logOptionsStorageKey, setDetailsHeight, setDetailsWidth, showDetails } =
+    useLogListContext();
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragStyles);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -33,13 +35,46 @@ export const LogLineDetails = ({ containerElement, focusLogLine, logOptionsStora
   }, []);
 
   const handleResize = useCallback(() => {
-    if (containerRef.current) {
+    if (!containerRef.current) {
+      return;
+    }
+    if (detailsPosition === 'right') {
       setDetailsWidth(containerRef.current.clientWidth);
+    } else {
+      setDetailsHeight(containerRef.current.clientHeight);
     }
     onResize();
-  }, [onResize, setDetailsWidth]);
+  }, [detailsPosition, onResize, setDetailsHeight, setDetailsWidth]);
 
-  const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
+  const resizable = useMemo(() => {
+    if (detailsPosition === 'right') {
+      return {
+        defaultSize: { width: detailsWidth, height: containerElement.clientHeight },
+        enable: { left: true },
+        handleClasses: { left: dragStyles.dragHandleVertical },
+        maxHeight: undefined,
+        maxWidth: containerElement.clientWidth - LOG_LIST_MIN_WIDTH,
+        size: { width: detailsWidth, height: containerElement.clientHeight },
+      };
+    }
+
+    return {
+      defaultSize: { width: '100%', height: detailsHeight },
+      enable: { top: true },
+      handleClasses: { top: dragStyles.dragHandleHorizontal },
+      maxHeight: containerElement.clientHeight - LOG_LIST_MIN_HEIGHT,
+      maxWidth: undefined,
+      size: { width: '100%', height: detailsHeight },
+    };
+  }, [
+    containerElement.clientHeight,
+    containerElement.clientWidth,
+    detailsHeight,
+    detailsPosition,
+    detailsWidth,
+    dragStyles.dragHandleHorizontal,
+    dragStyles.dragHandleVertical,
+  ]);
 
   if (!showDetails.length) {
     return null;
@@ -48,12 +83,14 @@ export const LogLineDetails = ({ containerElement, focusLogLine, logOptionsStora
   return (
     <Resizable
       onResize={handleResize}
-      handleClasses={{ left: dragStyles.dragHandleVertical }}
-      defaultSize={{ width: detailsWidth, height: containerElement.clientHeight }}
-      size={{ width: detailsWidth, height: containerElement.clientHeight }}
-      enable={{ left: true }}
-      minWidth={40}
-      maxWidth={maxWidth}
+      handleClasses={resizable.handleClasses}
+      defaultSize={resizable.defaultSize}
+      size={resizable.size}
+      enable={resizable.enable}
+      minHeight={100}
+      maxHeight={resizable.maxHeight}
+      minWidth={180}
+      maxWidth={resizable.maxWidth}
     >
       <div className={styles.container} ref={containerRef}>
         <div className={styles.scrollContainer}>

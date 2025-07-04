@@ -5,6 +5,7 @@ import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
 
+export const LOG_LIST_MIN_HEIGHT = 5 * 8;
 export const LOG_LIST_MIN_WIDTH = 35 * 8;
 // Controls the space between fields in the log line, timestamp, level, displayed fields, and log line body
 export const FIELD_GAP_MULTIPLIER = 1.5;

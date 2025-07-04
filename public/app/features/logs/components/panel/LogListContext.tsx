@@ -26,16 +26,17 @@ import { PopoverContent } from '@grafana/ui';
 
 import { DownloadFormat, checkLogsError, checkLogsSampled, downloadLogs as download } from '../../utils';
 
-import { LogLineDetailsMode } from './LogLineDetails';
+import { LogLineDetailsPosition } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
 import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
-import { LOG_LIST_MIN_WIDTH } from './virtualization';
+import { LOG_LIST_MIN_HEIGHT, LOG_LIST_MIN_WIDTH } from './virtualization';
 
 export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
   closeDetails: () => void;
   detailsDisplayed: (log: LogListModel) => boolean;
-  detailsMode: LogLineDetailsMode;
+  detailsPosition: LogLineDetailsPosition;
+  detailsHeight: number;
   detailsWidth: number;
   downloadLogs: (format: DownloadFormat) => void;
   enableLogDetails: boolean;
@@ -45,7 +46,7 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   hasUnescapedContent?: boolean;
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
-  setDetailsMode: (mode: LogLineDetailsMode) => void;
+  setDetailsPosition: (mode: LogLineDetailsPosition) => void;
   setDetailsWidth: (width: number) => void;
   setFilterLevels: (filterLevels: LogLevel[]) => void;
   setFontSize: (size: LogListFontSize) => void;
@@ -67,7 +68,8 @@ export const LogListContext = createContext<LogListContextData>({
   closeDetails: () => {},
   dedupStrategy: LogsDedupStrategy.none,
   detailsDisplayed: () => false,
-  detailsMode: 'sidebar',
+  detailsPosition: 'right',
+  detailsHeight: 0,
   detailsWidth: 0,
   displayedFields: [],
   downloadLogs: () => {},
@@ -76,7 +78,7 @@ export const LogListContext = createContext<LogListContextData>({
   fontSize: 'default',
   hasUnescapedContent: false,
   setDedupStrategy: () => {},
-  setDetailsMode: () => {},
+  setDetailsPosition: () => {},
   setDetailsWidth: () => {},
   setFilterLevels: () => {},
   setFontSize: () => {},
@@ -234,8 +236,9 @@ export const LogListContextProvider = ({
     wrapLogMessage,
   });
   const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
+  const [detailsPosition, setDetailsPosition] = useState<LogLineDetailsPosition>('bottom');
+  const [detailsHeight, setDetailsHeightState] = useState(getDetailsHeight(containerElement, logOptionsStorageKey));
   const [detailsWidth, setDetailsWidthState] = useState(getDetailsWidth(containerElement, logOptionsStorageKey));
-  const [detailsMode, setDetailsMode] = useState<LogLineDetailsMode>('sidebar');
 
   useEffect(() => {
     // Props are updated in the context only of the panel is being externally controlled.
@@ -452,11 +455,31 @@ export const LogListContextProvider = ({
       if (found >= 0) {
         setShowDetails(showDetails.filter((stateLog) => stateLog !== log && stateLog.uid !== log.uid));
       } else {
+        if (!detailsHeight && detailsPosition === 'bottom') {
+          setDetailsHeightState(getDetailsHeight(containerElement, logOptionsStorageKey));
+        }
         // Supporting one displayed details for now
         setShowDetails([log]);
       }
     },
-    [enableLogDetails, showDetails]
+    [containerElement, detailsHeight, detailsPosition, enableLogDetails, logOptionsStorageKey, showDetails]
+  );
+
+  const setDetailsHeight = useCallback(
+    (height: number) => {
+      if (!logOptionsStorageKey || !containerElement) {
+        return;
+      }
+
+      const maxHeight = containerElement.clientHeight - LOG_LIST_MIN_HEIGHT;
+      if (height > maxHeight) {
+        return;
+      }
+
+      store.set(`${logOptionsStorageKey}.detailsHeight`, height);
+      setDetailsHeightState(height);
+    },
+    [containerElement, logOptionsStorageKey]
   );
 
   const setDetailsWidth = useCallback(
@@ -479,6 +502,8 @@ export const LogListContextProvider = ({
   const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
 
+  console.log(detailsHeight)
+
   return (
     <LogListContext.Provider
       value={{
@@ -486,7 +511,8 @@ export const LogListContextProvider = ({
         closeDetails,
         detailsDisplayed,
         dedupStrategy: logListState.dedupStrategy,
-        detailsMode,
+        detailsPosition,
+        detailsHeight: detailsPosition === 'bottom' && showDetails.length > 0 ? detailsHeight : 0,
         detailsWidth,
         displayedFields,
         downloadLogs,
@@ -501,6 +527,7 @@ export const LogListContextProvider = ({
         getRowContextQuery,
         logSupportsContext,
         logLineMenuCustomItems,
+        logOptionsStorageKey,
         onClickFilterLabel,
         onClickFilterOutLabel,
         onClickFilterString,
@@ -517,9 +544,10 @@ export const LogListContextProvider = ({
         pinnedLogs: logListState.pinnedLogs,
         prettifyJSON: logListState.prettifyJSON,
         setDedupStrategy,
+        setDetailsHeight,
         setDetailsWidth,
         setDisplayedFields,
-        setDetailsMode,
+        setDetailsPosition,
         setFilterLevels,
         setFontSize,
         setForceEscape,
@@ -559,6 +587,30 @@ export function isDedupStrategy(value: unknown): value is LogsDedupStrategy {
 }
 
 // Only ControlledLogRows can send an undefined containerElement. See LogList.tsx
+function getDetailsHeight(
+  containerElement: HTMLDivElement | undefined,
+  logOptionsStorageKey?: string,
+  currentHeight?: number
+) {
+  if (!containerElement) {
+    return 0;
+  }
+  const defaultHeight = containerElement.clientHeight * 0.4;
+  const detailsHeight =
+    currentHeight ||
+    (logOptionsStorageKey
+      ? parseInt(store.get(`${logOptionsStorageKey}.detailsHeight`) ?? defaultHeight, 10)
+      : defaultHeight);
+
+  const maxHeight = containerElement.clientHeight - LOG_LIST_MIN_HEIGHT;
+
+  // The user might have resized the screen.
+  if (detailsHeight >= containerElement.clientHeight || detailsHeight > maxHeight) {
+    return defaultHeight;
+  }
+  return detailsHeight;
+}
+
 function getDetailsWidth(
   containerElement: HTMLDivElement | undefined,
   logOptionsStorageKey?: string,
@@ -570,13 +622,15 @@ function getDetailsWidth(
   const defaultWidth = containerElement.clientWidth * 0.4;
   const detailsWidth =
     currentWidth ||
-    (logOptionsStorageKey ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`), 10) : defaultWidth);
+    (logOptionsStorageKey
+      ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`) ?? defaultWidth, 10)
+      : defaultWidth);
 
   const maxWidth = containerElement.clientWidth - LOG_LIST_MIN_WIDTH;
 
   // The user might have resized the screen.
   if (detailsWidth >= containerElement.clientWidth || detailsWidth > maxWidth) {
-    return currentWidth ?? defaultWidth;
+    return defaultWidth;
   }
   return detailsWidth;
 }
