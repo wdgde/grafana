@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"context"
+	"errors"
 	"io/fs"
 	"time"
 
@@ -144,60 +145,31 @@ type KeyRetriever interface {
 	GetPublicKey(ctx context.Context, keyID string) (string, error)
 }
 
+// PluginAssetProvider exposes information required for serving static assets for a plugin.
+// `parent` is nil when the `target` itself is a top-level plugin (i.e. not nested in another bundle).
 type PluginAssetProvider interface {
-	PluginAssets(p PluginAssetPlugin) (AssetInfo, error)
+	PluginAssets(target *FoundPlugin, parent *FoundPlugin) (AssetInfo, error)
 }
 
-type PluginAssetPlugin interface {
-	JSONData() JSONData
-	FS() FS
-	Parent() PluginAssetPlugin
-}
-
-type PluginWithAssets struct {
-	jsonData JSONData
-	fs       FS
-	parent   PluginAssetPlugin
-}
-
-func NewPluginWithAssets(jsonData JSONData, fs FS, parent PluginAssetPlugin) *PluginWithAssets {
-	return &PluginWithAssets{
-		jsonData: jsonData,
-		fs:       fs,
-		parent:   parent,
-	}
-}
-
-func (p *PluginWithAssets) JSONData() JSONData {
-	return p.jsonData
-}
-
-func (p *PluginWithAssets) FS() FS {
-	return p.fs
-}
-
-func (p *PluginWithAssets) Parent() PluginAssetPlugin {
-	return p.parent
-}
-
-// AssetInfo contains the information needed to serve plugin assets
+// AssetInfo contains the information needed to serve plugin assets.
+// BaseURL and ModuleURL are resolved once during construction, while RelativeURL can
+// still be dynamic because it may need to rewrite arbitrary paths at runtime.
 type AssetInfo struct {
-	BaseURLFunc     func() (string, error)
-	ModuleURLFunc   func() (string, error)
-	RelativeURLFunc func(string) (string, error)
+	Base          string
+	Module        string
+	RelativeURLFn func(string) (string, error)
 }
 
-// BaseURL returns the base URL for plugin assets
-func (a AssetInfo) BaseURL() (string, error) {
-	return a.BaseURLFunc()
-}
+// BaseURL returns the base URL for plugin assets.
+func (a AssetInfo) BaseURL() (string, error) { return a.Base, nil }
 
-// ModuleURL returns the module.js URL for the plugin
-func (a AssetInfo) ModuleURL() (string, error) {
-	return a.ModuleURLFunc()
-}
+// ModuleURL returns the module.js URL for the plugin.
+func (a AssetInfo) ModuleURL() (string, error) { return a.Module, nil }
 
-// RelativeURL returns the URL for a specific plugin asset
+// RelativeURL returns the URL for a specific plugin asset.
 func (a AssetInfo) RelativeURL(assetPath string) (string, error) {
-	return a.RelativeURLFunc(assetPath)
+	if a.RelativeURLFn == nil {
+		return "", errors.New("RelativeURLFn not defined")
+	}
+	return a.RelativeURLFn(assetPath)
 }

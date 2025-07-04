@@ -21,79 +21,75 @@ func NewLocalExternal(cdn *pluginscdn.Service) *LocalExternal {
 	}
 }
 
-func (l *LocalExternal) PluginAssets(p plugins.PluginAssetPlugin) (plugins.AssetInfo, error) {
-	baseURL, err := l.baseURL(p)
+func (l *LocalExternal) PluginAssets(target *plugins.FoundPlugin, parent *plugins.FoundPlugin) (plugins.AssetInfo, error) {
+	baseURL, err := l.baseURL(target, parent)
 	if err != nil {
 		return plugins.AssetInfo{}, err
 	}
 
-	moduleURL, err := l.moduleURL(p)
+	moduleURL, err := l.moduleURL(target, parent)
 	if err != nil {
 		return plugins.AssetInfo{}, err
 	}
 
 	return plugins.AssetInfo{
-		BaseURLFunc: func() (string, error) {
-			return baseURL, nil
-		},
-		ModuleURLFunc: func() (string, error) {
-			return moduleURL, nil
-		},
-		RelativeURLFunc: func(s string) (string, error) {
-			return l.relativeURL(p, s)
+		Base:   baseURL,
+		Module: moduleURL,
+		RelativeURLFn: func(s string) (string, error) {
+			return l.relativeURL(target, parent, s)
 		},
 	}, nil
 }
 
-func (l *LocalExternal) baseURL(plugin plugins.PluginAssetPlugin) (string, error) {
-	if l.cdn.PluginSupported(plugin.JSONData().ID) {
-		return l.cdn.AssetURL(plugin.JSONData().ID, plugin.JSONData().Info.Version, "")
+func (l *LocalExternal) baseURL(plugin *plugins.FoundPlugin, parent *plugins.FoundPlugin) (string, error) {
+	if l.cdn.PluginSupported(plugin.JSONData.ID) {
+		return l.cdn.AssetURL(plugin.JSONData.ID, plugin.JSONData.Info.Version, "")
 	}
 
-	if plugin.Parent() != nil {
-		relPath, err := plugin.Parent().FS().Rel(plugin.FS().Base())
+	if parent != nil {
+		relPath, err := parent.FS.Rel(plugin.FS.Base())
 		if err != nil {
 			return "", err
 		}
 
-		return path.Join(grafanaServerPluginsAssetPath, plugin.Parent().JSONData().ID, relPath), nil
+		return path.Join(grafanaServerPluginsAssetPath, parent.JSONData.ID, relPath), nil
 	}
 
-	return path.Join(grafanaServerPluginsAssetPath, plugin.JSONData().ID), nil
+	return path.Join(grafanaServerPluginsAssetPath, plugin.JSONData.ID), nil
 }
 
-func (l *LocalExternal) moduleURL(plugin plugins.PluginAssetPlugin) (string, error) {
-	if l.cdn.PluginSupported(plugin.JSONData().ID) {
-		return l.cdn.AssetURL(plugin.JSONData().ID, plugin.JSONData().Info.Version, "module.js")
+func (l *LocalExternal) moduleURL(plugin *plugins.FoundPlugin, parent *plugins.FoundPlugin) (string, error) {
+	if l.cdn.PluginSupported(plugin.JSONData.ID) {
+		return l.cdn.AssetURL(plugin.JSONData.ID, plugin.JSONData.Info.Version, "module.js")
 	}
 
-	if plugin.Parent() != nil {
-		relPath, err := plugin.Parent().FS().Rel(plugin.FS().Base())
+	if parent != nil {
+		relPath, err := parent.FS.Rel(plugin.FS.Base())
 		if err != nil {
 			return "", err
 		}
 
-		if l.cdn.PluginSupported(plugin.Parent().JSONData().ID) {
-			return l.cdn.AssetURL(plugin.Parent().JSONData().ID, plugin.Parent().JSONData().Info.Version, path.Join(relPath, "module.js"))
+		if l.cdn.PluginSupported(parent.JSONData.ID) {
+			return l.cdn.AssetURL(parent.JSONData.ID, parent.JSONData.Info.Version, path.Join(relPath, "module.js"))
 		}
 
-		return path.Join(grafanaServerPluginsAssetPath, plugin.Parent().JSONData().ID, relPath, "module.js"), nil
+		return path.Join(grafanaServerPluginsAssetPath, parent.JSONData.ID, relPath, "module.js"), nil
 	}
 
-	return path.Join(grafanaServerPluginsAssetPath, plugin.JSONData().ID, "module.js"), nil
+	return path.Join(grafanaServerPluginsAssetPath, plugin.JSONData.ID, "module.js"), nil
 }
 
-func (l *LocalExternal) relativeURL(plugin plugins.PluginAssetPlugin, assetPath string) (string, error) {
-	if l.cdn.PluginSupported(plugin.JSONData().ID) {
-		return l.cdn.NewCDNURLConstructor(plugin.JSONData().ID, plugin.JSONData().ID).StringPath(assetPath)
+func (l *LocalExternal) relativeURL(plugin *plugins.FoundPlugin, parent *plugins.FoundPlugin, assetPath string) (string, error) {
+	if l.cdn.PluginSupported(plugin.JSONData.ID) {
+		return l.cdn.NewCDNURLConstructor(plugin.JSONData.ID, plugin.JSONData.ID).StringPath(assetPath)
 	}
-	if plugin.Parent() != nil {
-		if l.cdn.PluginSupported(plugin.Parent().JSONData().ID) {
-			relPath, err := plugin.Parent().FS().Rel(plugin.FS().Base())
+	if parent != nil {
+		if l.cdn.PluginSupported(parent.JSONData.ID) {
+			relPath, err := parent.FS.Rel(plugin.FS.Base())
 			if err != nil {
 				return "", err
 			}
-			return l.cdn.AssetURL(plugin.Parent().JSONData().ID, plugin.Parent().JSONData().Info.Version, path.Join(relPath, assetPath))
+			return l.cdn.AssetURL(parent.JSONData.ID, parent.JSONData.Info.Version, path.Join(relPath, assetPath))
 		}
 	}
 
@@ -103,7 +99,7 @@ func (l *LocalExternal) relativeURL(plugin plugins.PluginAssetPlugin, assetPath 
 	}
 
 	// Calculate base URL
-	baseURL, err := l.baseURL(plugin)
+	baseURL, err := l.baseURL(plugin, parent)
 	if err != nil {
 		return "", err
 	}

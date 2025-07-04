@@ -18,53 +18,47 @@ const (
 	grafanaCorePluginsPath        = "app/plugins"
 )
 
-// TODO maybe remove struct?
-// TODO this file is actually really specific to core plugins based on filesystem (IE maybe using FS abstraction is misleading)
 type LocalCore struct{}
 
 func NewLocalCore() *LocalCore {
 	return &LocalCore{}
 }
 
-func (l *LocalCore) PluginAssets(p plugins.PluginAssetPlugin) (plugins.AssetInfo, error) {
-	baseURL, err := l.baseURL(p)
+func (l *LocalCore) PluginAssets(target *plugins.FoundPlugin, _ *plugins.FoundPlugin) (plugins.AssetInfo, error) {
+	baseURL, err := l.baseURL(target)
 	if err != nil {
 		return plugins.AssetInfo{}, err
 	}
 
-	moduleURL, err := l.moduleURL(p)
+	moduleURL, err := l.moduleURL(target)
 	if err != nil {
 		return plugins.AssetInfo{}, err
 	}
 
 	return plugins.AssetInfo{
-		BaseURLFunc: func() (string, error) {
-			return baseURL, nil
-		},
-		ModuleURLFunc: func() (string, error) {
-			return moduleURL, nil
-		},
-		RelativeURLFunc: func(s string) (string, error) {
-			return l.relativeURL(p, s)
+		Base:   baseURL,
+		Module: moduleURL,
+		RelativeURLFn: func(s string) (string, error) {
+			return l.relativeURL(target, s)
 		},
 	}, nil
 }
 
-func (l *LocalCore) baseURL(plugin plugins.PluginAssetPlugin) (string, error) {
-	baseDir := getBaseDir(plugin.FS().Base())
-	return path.Join(grafanaServerPublicPath, grafanaCorePluginsPath, string(plugin.JSONData().Type), baseDir), nil
+func (l *LocalCore) baseURL(plugin *plugins.FoundPlugin) (string, error) {
+	baseDir := getBaseDir(plugin.FS.Base())
+	return path.Join(grafanaServerPublicPath, grafanaCorePluginsPath, string(plugin.JSONData.Type), baseDir), nil
 }
 
-func (l *LocalCore) moduleURL(plugin plugins.PluginAssetPlugin) (string, error) {
-	if filepath.Base(plugin.FS().Base()) == "dist" {
+func (l *LocalCore) moduleURL(plugin *plugins.FoundPlugin) (string, error) {
+	if filepath.Base(plugin.FS.Base()) == "dist" {
 		// Core plugin built externally - fall back to filesystem path
-		return path.Join(grafanaServerPluginsAssetPath, plugin.JSONData().ID, "module.js"), nil
+		return path.Join(grafanaServerPluginsAssetPath, plugin.JSONData.ID, "module.js"), nil
 	}
-	baseDir := getBaseDir(plugin.FS().Base())
+	baseDir := getBaseDir(plugin.FS.Base())
 	return path.Join(coreModulePathPrefix, baseDir), nil
 }
 
-func (l *LocalCore) relativeURL(plugin plugins.PluginAssetPlugin, assetPath string) (string, error) {
+func (l *LocalCore) relativeURL(plugin *plugins.FoundPlugin, assetPath string) (string, error) {
 	if u, err := url.Parse(assetPath); err == nil && u.IsAbs() {
 		return assetPath, nil
 	}

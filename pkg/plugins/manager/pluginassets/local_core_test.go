@@ -47,9 +47,9 @@ func TestLocalCore_PluginAssets(t *testing.T) {
 			}
 
 			pluginFS := fakes.NewFakePluginFS(tt.basePath)
-			plugin := plugins.NewPluginWithAssets(jsonData, pluginFS, nil)
+			plugin := &plugins.FoundPlugin{JSONData: jsonData, FS: pluginFS}
 
-			assetInfo, err := localCore.PluginAssets(plugin)
+			assetInfo, err := localCore.PluginAssets(plugin, nil)
 			require.NoError(t, err)
 
 			// Test BaseURL function
@@ -80,7 +80,7 @@ func TestLocalCore_relativeURL(t *testing.T) {
 	}
 
 	pluginFS := fakes.NewFakePluginFS("/test-plugin")
-	plugin := plugins.NewPluginWithAssets(jsonData, pluginFS, nil)
+	plugin := &plugins.FoundPlugin{JSONData: jsonData, FS: pluginFS}
 
 	tests := []struct {
 		name        string
@@ -165,7 +165,7 @@ func TestLocalCore_ErrorHandling(t *testing.T) {
 		}
 
 		pluginFS := fakes.NewFakePluginFS("/grafana/public/app/plugins/panel/test-plugin")
-		plugin := plugins.NewPluginWithAssets(jsonData, pluginFS, nil)
+		plugin := &plugins.FoundPlugin{JSONData: jsonData, FS: pluginFS}
 
 		// Test with invalid URL that can't be parsed (path.Join cleans it)
 		relativeURL, err := localCore.relativeURL(plugin, "://invalid-url")

@@ -16,7 +16,7 @@ func TestLocalExternal_PluginAssets(t *testing.T) {
 		name                string
 		cdnTemplate         string
 		pluginSettings      map[string]map[string]string
-		setupPlugin         func() plugins.PluginAssetPlugin
+		setupPlugin         func() (*plugins.FoundPlugin, *plugins.FoundPlugin)
 		expectedBase        string
 		expectedModule      string
 		expectedRelativeURL string
@@ -27,14 +27,14 @@ func TestLocalExternal_PluginAssets(t *testing.T) {
 			pluginSettings: map[string]map[string]string{
 				"external-datasource": {}, // No CDN setting
 			},
-			setupPlugin: func() plugins.PluginAssetPlugin {
+			setupPlugin: func() (*plugins.FoundPlugin, *plugins.FoundPlugin) {
 				jsonData := plugins.JSONData{
 					ID:   "external-datasource",
 					Type: plugins.TypeDataSource,
 					Info: plugins.Info{Version: "1.0.0"},
 				}
 				pluginFS := fakes.NewFakePluginFS("/plugins/external-datasource")
-				return plugins.NewPluginWithAssets(jsonData, pluginFS, nil)
+				return &plugins.FoundPlugin{JSONData: jsonData, FS: pluginFS}, nil
 			},
 			expectedBase:        "public/plugins/external-datasource",
 			expectedModule:      "public/plugins/external-datasource/module.js",
@@ -46,14 +46,14 @@ func TestLocalExternal_PluginAssets(t *testing.T) {
 			pluginSettings: map[string]map[string]string{
 				"cdn-plugin": {"cdn": "true"},
 			},
-			setupPlugin: func() plugins.PluginAssetPlugin {
+			setupPlugin: func() (*plugins.FoundPlugin, *plugins.FoundPlugin) {
 				jsonData := plugins.JSONData{
 					ID:   "cdn-plugin",
 					Type: plugins.TypePanel,
 					Info: plugins.Info{Version: "2.0.0"},
 				}
 				pluginFS := fakes.NewFakePluginFS("/plugins/cdn-plugin")
-				return plugins.NewPluginWithAssets(jsonData, pluginFS, nil)
+				return &plugins.FoundPlugin{JSONData: jsonData, FS: pluginFS}, nil
 			},
 			expectedBase:        "https://cdn.example.com/cdn-plugin/2.0.0/public/plugins/cdn-plugin",
 			expectedModule:      "https://cdn.example.com/cdn-plugin/2.0.0/public/plugins/cdn-plugin/module.js",
@@ -65,7 +65,7 @@ func TestLocalExternal_PluginAssets(t *testing.T) {
 			pluginSettings: map[string]map[string]string{
 				"parent-app": {}, // No CDN setting
 			},
-			setupPlugin: func() plugins.PluginAssetPlugin {
+			setupPlugin: func() (*plugins.FoundPlugin, *plugins.FoundPlugin) {
 				// Create parent plugin (non-CDN)
 				parentJSON := plugins.JSONData{
 					ID:   "parent-app",
@@ -76,7 +76,7 @@ func TestLocalExternal_PluginAssets(t *testing.T) {
 				parentFS.RelFunc = func(childPath string) (string, error) {
 					return "panels/child-panel", nil
 				}
-				parentPlugin := plugins.NewPluginWithAssets(parentJSON, parentFS, nil)
+				parentPlugin := &plugins.FoundPlugin{JSONData: parentJSON, FS: parentFS}
 
 				// Create child plugin
 				childJSON := plugins.JSONData{
@@ -85,7 +85,9 @@ func TestLocalExternal_PluginAssets(t *testing.T) {
 					Info: plugins.Info{Version: "1.0.0"},
 				}
 				childFS := fakes.NewFakePluginFS("/plugins/parent-app/panels/child-panel")
-				return plugins.NewPluginWithAssets(childJSON, childFS, parentPlugin)
+				childPlugin := &plugins.FoundPlugin{JSONData: childJSON, FS: childFS}
+
+				return childPlugin, parentPlugin
 			},
 			expectedBase:        "public/plugins/parent-app/panels/child-panel",
 			expectedModule:      "public/plugins/parent-app/panels/child-panel/module.js",
@@ -97,7 +99,7 @@ func TestLocalExternal_PluginAssets(t *testing.T) {
 			pluginSettings: map[string]map[string]string{
 				"cdn-parent-app": {"cdn": "true"},
 			},
-			setupPlugin: func() plugins.PluginAssetPlugin {
+			setupPlugin: func() (*plugins.FoundPlugin, *plugins.FoundPlugin) {
 				// Create parent plugin (CDN-enabled)
 				parentJSON := plugins.JSONData{
 					ID:   "cdn-parent-app",
@@ -108,7 +110,7 @@ func TestLocalExternal_PluginAssets(t *testing.T) {
 				parentFS.RelFunc = func(childPath string) (string, error) {
 					return "extensions/child-extension", nil
 				}
-				parentPlugin := plugins.NewPluginWithAssets(parentJSON, parentFS, nil)
+				parentPlugin := &plugins.FoundPlugin{JSONData: parentJSON, FS: parentFS}
 
 				// Create child plugin
 				childJSON := plugins.JSONData{
@@ -117,7 +119,9 @@ func TestLocalExternal_PluginAssets(t *testing.T) {
 					Info: plugins.Info{Version: "1.0.0"},
 				}
 				childFS := fakes.NewFakePluginFS("/plugins/cdn-parent-app/extensions/child-extension")
-				return plugins.NewPluginWithAssets(childJSON, childFS, parentPlugin)
+				childPlugin := &plugins.FoundPlugin{JSONData: childJSON, FS: childFS}
+
+				return childPlugin, parentPlugin
 			},
 			expectedBase:        "public/plugins/cdn-parent-app/extensions/child-extension",
 			expectedModule:      "https://cdn.example.com/cdn-parent-app/1.5.0/public/plugins/cdn-parent-app/extensions/child-extension/module.js",
@@ -133,9 +137,9 @@ func TestLocalExternal_PluginAssets(t *testing.T) {
 			}
 			cdnService := pluginscdn.ProvideService(cfg)
 			localExternal := NewLocalExternal(cdnService)
-			plugin := tc.setupPlugin()
+			plugin, parent := tc.setupPlugin()
 
-			assetInfo, err := localExternal.PluginAssets(plugin)
+			assetInfo, err := localExternal.PluginAssets(plugin, parent)
 			require.NoError(t, err)
 
 			// Test BaseURL function

@@ -679,18 +679,12 @@ func NewFakeAssetProvider(ai ...plugins.AssetInfo) *FakeAssetProvider {
 	}
 }
 
-func (f *FakeAssetProvider) PluginAssets(p plugins.PluginAssetPlugin) (plugins.AssetInfo, error) {
+func (f *FakeAssetProvider) PluginAssets(_ *plugins.FoundPlugin, _ *plugins.FoundPlugin) (plugins.AssetInfo, error) {
 	if len(f.assetInfo) == 0 {
 		return plugins.AssetInfo{
-			BaseURLFunc: func() (string, error) {
-				return "", nil
-			},
-			ModuleURLFunc: func() (string, error) {
-				return "", nil
-			},
-			RelativeURLFunc: func(s string) (string, error) {
-				return "", nil
-			},
+			Base:          "",
+			Module:        "",
+			RelativeURLFn: func(s string) (string, error) { return "", nil },
 		}, nil
 	}
 	return f.assetInfo[0], nil

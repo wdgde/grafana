@@ -644,13 +644,9 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 			},
 			AssetProviderFunc: func(ctx context.Context) plugins.PluginAssetProvider {
 				return fakes.NewFakeAssetProvider(plugins.AssetInfo{
-					BaseURLFunc: func() (string, error) {
-						return "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel", nil
-					},
-					ModuleURLFunc: func() (string, error) {
-						return "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module.js", nil
-					},
-					RelativeURLFunc: func(s string) (string, error) {
+					Base:   "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
+					Module: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module.js",
+					RelativeURLFn: func(s string) (string, error) {
 						return url.JoinPath("https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel", s)
 					},
 				})
