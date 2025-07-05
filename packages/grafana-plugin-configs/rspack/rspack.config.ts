@@ -17,7 +17,7 @@ import { TsCheckerRspackPlugin } from 'ts-checker-rspack-plugin';
 
 import { DIST_DIR, SOURCE_DIR } from '../constants';
 
-import { getCPConfigVersion, getEntries, getPackageJson, getPluginJson, hasReadme, isWSL } from './utils';
+import { getCPConfigVersion, getEntries, getPackageJson, getPluginJson, hasLicense, hasReadme, isWSL } from './utils';
 
 const { SubresourceIntegrityPlugin } = rspack.experiments;
 const pluginJson = getPluginJson();
@@ -214,7 +214,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
           // To `compiler.options.output`
           { from: hasReadme() ? 'README.md' : '../README.md', to: '.', force: true },
           { from: 'plugin.json', to: '.' },
-          { from: '../LICENSE', to: '.' },
+          { from: hasLicense() ? 'LICENSE' : '../../../LICENSE', to: '.' }, // Point to Grafana License by default
           { from: '../CHANGELOG.md', to: '.', force: true },
           { from: '**/*.json', to: '.' }, // TODO<Add an error for checking the basic structure of the repo>
           { from: '**/*.svg', to: '.', noErrorOnMissing: true }, // Optional

@@ -62,3 +62,7 @@ export async function getEntries(): Promise<Record<string, string>> {
     }, result);
   }, {});
 }
+
+export function hasLicense() {
+  return fs.existsSync(path.resolve(process.cwd(), 'LICENSE'));
+}

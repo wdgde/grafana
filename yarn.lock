@@ -2643,6 +2643,7 @@ __metadata:
     "@grafana/runtime": "npm:12.1.0-pre"
     "@grafana/schema": "npm:12.1.0-pre"
     "@grafana/ui": "npm:12.1.0-pre"
+    "@rspack/cli": "npm:^1.4.4"
     "@testing-library/dom": "npm:10.4.0"
     "@testing-library/react": "npm:16.2.0"
     "@testing-library/user-event": "npm:14.6.1"
@@ -2665,7 +2666,6 @@ __metadata:
     tslib: "npm:2.8.1"
     typescript: "npm:5.7.3"
     uuid: "npm:11.1.0"
-    webpack: "npm:5.97.1"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
