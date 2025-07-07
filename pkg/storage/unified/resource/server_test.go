@@ -242,4 +242,93 @@ func TestSimpleServer(t *testing.T) {
 			ResourceVersion: created.ResourceVersion})
 		require.ErrorIs(t, err, ErrOptimisticLockingFailed)
 	})
+
+	t.Run("delete operation with object metadata", func(t *testing.T) {
+		// Create a resource with folder information and metadata
+		raw := []byte(`{
+			"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {
+				"name": "test-delete-metadata",
+				"namespace": "default",
+				"uid": "test-uid-123",
+				"folder": "test-folder",
+				"labels": {
+					"test-label": "test-value"
+				},
+				"annotations": {
+					"test-annotation": "test-value",
+					"grafana.app/repoName": "test-repo"
+				}
+			},
+			"spec": {
+				"title": "Test Delete Resource",
+				"interval": "5m",
+				"items": [
+					{
+						"type": "dashboard_by_uid",
+						"value": "test-dashboard"
+					}
+				]
+			}
+		}`)
+
+		key := &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "test-resource",
+			Namespace: "default",
+			Name:      "test-delete-metadata",
+		}
+
+		// Create the resource
+		created, err := server.Create(ctx, &resourcepb.CreateRequest{
+			Value: raw,
+			Key:   key,
+		})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+		require.True(t, created.ResourceVersion > 0)
+
+		// Verify the resource was created successfully
+		found, err := server.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		require.Nil(t, found.Error)
+		require.Equal(t, created.ResourceVersion, found.ResourceVersion)
+
+		// Parse the created resource to verify metadata
+		tmp := &unstructured.Unstructured{}
+		err = json.Unmarshal(found.Value, tmp)
+		require.NoError(t, err)
+
+		obj, err := utils.MetaAccessor(tmp)
+		require.NoError(t, err)
+		require.Equal(t, "test-folder", obj.GetFolder())
+		require.Equal(t, "test-value", obj.GetLabels()["test-label"])
+		require.Equal(t, "test-value", obj.GetAnnotation("test-annotation"))
+
+		// Delete the resource
+		deleted, err := server.Delete(ctx, &resourcepb.DeleteRequest{
+			Key:             key,
+			ResourceVersion: created.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.Nil(t, deleted.Error)
+		require.True(t, deleted.ResourceVersion > created.ResourceVersion)
+
+		// Verify the resource is no longer accessible
+		found, err = server.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.NoError(t, err)
+		require.NotNil(t, found.Error)
+		require.Equal(t, int32(http.StatusNotFound), found.Error.Code)
+
+		// Verify the resource is not in the list
+		all, err := server.List(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:    key.Group,
+				Resource: key.Resource,
+			},
+		}})
+		require.NoError(t, err)
+		require.Len(t, all.Items, 0)
+	})
 }
