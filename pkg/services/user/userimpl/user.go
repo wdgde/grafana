@@ -9,20 +9,31 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	settings "github.com/grafana/grafana/apps/settings/pkg/apis/settings/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Service struct {
@@ -30,9 +41,10 @@ type Service struct {
 	orgService   org.Service
 	teamService  team.Service
 	cacheService *localcache.CacheService
-	cfg          *setting.Cfg
-	tracer       tracing.Tracer
-	db           db.DB
+	// cfg          *setting.Cfg
+	tracer            tracing.Tracer
+	db                db.DB
+	k8sclientSettings client.K8sHandler
 }
 
 func ProvideService(
@@ -42,16 +54,59 @@ func ProvideService(
 	teamService team.Service,
 	cacheService *localcache.CacheService, tracer tracing.Tracer,
 	quotaService quota.Service, bundleRegistry supportbundles.Service,
+	resourceClient resource.ResourceClient,
+	dual dualwrite.Service,
+	sorter sort.Service,
+	restConfig apiserver.RestConfigProvider,
 ) (user.Service, error) {
 	store := ProvideStore(db, cfg)
+
+	settingsResourceInfo := utils.NewResourceInfo(
+		settings.SettingKind().Group(),
+		settings.SettingKind().Version(),
+		"settings",
+		settings.SettingKind().Plural(),
+		settings.SettingKind().Kind(),
+		func() runtime.Object { return &settings.Setting{} },
+		func() runtime.Object { return &settings.SettingList{} },
+		utils.TableColumns{
+			Definition: []metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				{Name: "Group", Type: "string", Format: "string", Description: "The group of the setting"},
+				{Name: "Created At", Type: "date"},
+			},
+			Reader: func(obj any) ([]interface{}, error) {
+				c, ok := obj.(*settings.Setting)
+				if ok {
+					return []interface{}{
+						c.Name,
+						c.Spec.Group,
+						c.CreationTimestamp.UTC().Format(time.RFC3339),
+					}, nil
+				}
+				return nil, fmt.Errorf("expected setting")
+			},
+		},
+	)
+
 	s := &Service{
-		store:        &store,
-		orgService:   orgService,
-		cfg:          cfg,
+		store:      &store,
+		orgService: orgService,
+		// cfg:          cfg,
 		teamService:  teamService,
 		cacheService: cacheService,
 		tracer:       tracer,
 		db:           db,
+		k8sclientSettings: client.NewK8sHandler(
+			dual,
+			request.GetNamespaceMapper(cfg),
+			settingsResourceInfo.GroupVersionResource(),
+			restConfig.GetRestConfig,
+			nil,
+			nil,
+			resourceClient,
+			sorter,
+		),
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -71,10 +126,26 @@ func ProvideService(
 	return s, nil
 }
 
+func (s *Service) GetSettingValue(ctx context.Context, name string) (string, error) {
+	settingsResourceInfo, err := s.k8sclientSettings.Get(ctx, name, 0, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	setting := settings.Setting{}
+	err = json.Unmarshal(settingsResourceInfo.Object["spec"].(map[string]interface{})["value"].([]byte), &setting)
+	if err != nil {
+		return "", err
+	}
+
+	return setting.Spec.Value, nil
+}
+
 func (s *Service) GetUsageStats(ctx context.Context) map[string]any {
 	stats := map[string]any{}
 	basicAuthStrongPasswordPolicyVal := 0
-	if s.cfg.BasicAuthStrongPasswordPolicy {
+
+	if v, err := s.GetSettingValue(ctx, "basicAuth.strongPasswordPolicy"); err == nil && v == "true" {
 		basicAuthStrongPasswordPolicyVal = 1
 	}
 
@@ -164,9 +235,12 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 	usr.Rands = rands
 
 	if len(cmd.Password) > 0 {
-		if err := cmd.Password.Validate(s.cfg); err != nil {
-			return nil, err
-		}
+		// TODO: re-enable this validation once we have a way to get the setting value from the k8s client
+		/*
+			if err := cmd.Password.Validate(s.cfg); err != nil {
+				return nil, err
+			}
+		*/
 
 		usr.Password, err = cmd.Password.Hash(usr.Salt)
 		if err != nil {
@@ -190,11 +264,21 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 				Updated: time.Now(),
 			}
 
-			if s.cfg.AutoAssignOrg && !usr.IsAdmin {
+			autoAssignOrg, err := s.GetSettingValue(ctx, "autoAssignOrg")
+			if err != nil {
+				return err
+			}
+
+			autoAssignOrgRole, err := s.GetSettingValue(ctx, "autoAssignOrgRole")
+			if err != nil {
+				return err
+			}
+
+			if autoAssignOrg == "true" && !usr.IsAdmin {
 				if len(cmd.DefaultOrgRole) > 0 {
 					orgUser.Role = org.RoleType(cmd.DefaultOrgRole)
 				} else {
-					orgUser.Role = org.RoleType(s.cfg.AutoAssignOrgRole)
+					orgUser.Role = org.RoleType(autoAssignOrgRole)
 				}
 			}
 			_, err = s.orgService.InsertOrgUser(ctx, &orgUser)
@@ -287,9 +371,12 @@ func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error
 	}
 
 	if cmd.Password != nil {
-		if err := cmd.Password.Validate(s.cfg); err != nil {
-			return err
-		}
+		// TODO: re-enable this validation once we have a way to get the setting value from the k8s client
+		/*
+			if err := cmd.Password.Validate(s.cfg); err != nil {
+				return err
+			}
+		*/
 
 		hashed, err := cmd.Password.Hash(usr.Salt)
 		if err != nil {
@@ -329,20 +416,29 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 		UserID: cmd.UserID,
 		OrgID:  cmd.OrgID,
 	})
-
 	if err != nil {
 		return err
 	}
 
-	if !s.shouldUpdateLastSeen(u.LastSeenAt) {
+	if !s.shouldUpdateLastSeen(ctx, u.LastSeenAt) {
 		return user.ErrLastSeenUpToDate
 	}
 
 	return s.store.UpdateLastSeenAt(ctx, cmd)
 }
 
-func (s *Service) shouldUpdateLastSeen(t time.Time) bool {
-	return time.Since(t) > s.cfg.UserLastSeenUpdateInterval
+func (s *Service) shouldUpdateLastSeen(ctx context.Context, t time.Time) bool {
+	userLastSeenUpdateInterval, err := s.GetSettingValue(ctx, "userLastSeenUpdateInterval")
+	if err != nil {
+		return false
+	}
+
+	duration, err := gtime.ParseDuration(userLastSeenUpdateInterval)
+	if err != nil {
+		return false
+	}
+
+	return time.Since(t) > duration*time.Second
 }
 
 func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
