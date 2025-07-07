@@ -15,14 +15,14 @@ import { RspackVirtualModulePlugin } from 'rspack-plugin-virtual-module';
 import TerserPlugin from 'terser-webpack-plugin';
 import { TsCheckerRspackPlugin } from 'ts-checker-rspack-plugin';
 
-import { DIST_DIR, SOURCE_DIR } from '../constants';
-
-import { getCPConfigVersion, getEntries, getPackageJson, getPluginJson, hasLicense, hasReadme, isWSL } from './utils';
+import { getEntries, getPackageJson, getPluginJson, hasLicense, hasReadme, isWSL } from './utils';
 
 const { SubresourceIntegrityPlugin } = rspack.experiments;
 const pluginJson = getPluginJson();
-const cpVersion = getCPConfigVersion();
 const pkgJson = getPackageJson();
+const SOURCE_DIR = 'src';
+const DIST_DIR = path.resolve(process.cwd(), '..', '..', `public/app/plugins/datasource/${pluginJson.id}/dist`);
+// const SECONDARY_DIST_DIR = path.resolve(process.cwd(), '..', '..', `public/app/plugins/datasource/${pluginJson.id}/dist-secondary`);
 
 const virtualPublicPath = new RspackVirtualModulePlugin({
   'grafana-public-path': `
@@ -76,8 +76,8 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       'react-redux',
       'redux',
       'rxjs',
+      'rxjs/operators',
       'react-router',
-      'react-router-dom',
       'd3',
       'angular',
       /^@grafana\/ui/i,
@@ -134,6 +134,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
                   },
                   transform: {
                     react: {
+                      runtime: 'automatic',
                       development: Boolean(env.development),
                       // refresh: Boolean(env.development),
                     },
@@ -194,7 +195,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       library: {
         type: 'amd',
       },
-      path: path.resolve(process.cwd(), DIST_DIR),
+      path: DIST_DIR,
       publicPath: `public/plugins/${pluginJson.id}/`,
       uniqueName: pluginJson.id,
       crossOriginLoading: 'anonymous',
@@ -204,7 +205,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       virtualPublicPath,
       // Insert create plugin version information into the bundle
       new rspack.BannerPlugin({
-        banner: '/* [create-plugin] version: ' + cpVersion + ' */',
+        banner: '/* [create-plugin] version: 5.22.0 */',
         raw: true,
         entryOnly: true,
       }),
@@ -216,16 +217,22 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
           { from: 'plugin.json', to: '.' },
           { from: hasLicense() ? 'LICENSE' : '../../../LICENSE', to: '.' }, // Point to Grafana License by default
           { from: '../CHANGELOG.md', to: '.', force: true },
-          { from: '**/*.json', to: '.' }, // TODO<Add an error for checking the basic structure of the repo>
+          { from: '**/*.json', to: '.', noErrorOnMissing: true }, // TODO<Add an error for checking the basic structure of the repo>
           { from: '**/*.svg', to: '.', noErrorOnMissing: true }, // Optional
           { from: '**/*.png', to: '.', noErrorOnMissing: true }, // Optional
           { from: '**/*.html', to: '.', noErrorOnMissing: true }, // Optional
-          { from: 'img/**/*', to: '.', noErrorOnMissing: true }, // Optional
+          { from: 'img/**/*', to: '../', noErrorOnMissing: true }, // Optional
           { from: 'libs/**/*', to: '.', noErrorOnMissing: true }, // Optional
           { from: 'static/**/*', to: '.', noErrorOnMissing: true }, // Optional
           { from: '**/query_help.md', to: '.', noErrorOnMissing: true }, // Optional
         ],
       }),
+      // Copy all build output to secondary directory
+      // new rspack.CopyRspackPlugin({
+      //   patterns: [
+      //     { from: DIST_DIR, to: SECONDARY_DIST_DIR, noErrorOnMissing: true },
+      //   ],
+      // }),
       // Replace certain template-variables in the README and plugin.json
       new ReplaceInFileWebpackPlugin([
         {
