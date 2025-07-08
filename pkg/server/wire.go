@@ -433,6 +433,7 @@ var wireBasicSet = wire.NewSet(
 	secretencryption.ProvideEncryptedValueStorage,
 	secretmetadata.ProvideOutboxQueue,
 	secretsecurevalueservice.ProvideSecureValueService,
+	secretdecrypt.ProvideDecryptService,
 	secretmigrator.NewWithEngine,
 	secretdatabase.ProvideDatabase,
 	wire.Bind(new(secretcontracts.Database), new(*secretdatabase.Database)),

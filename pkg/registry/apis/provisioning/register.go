@@ -24,6 +24,8 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -31,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	clientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
@@ -52,10 +55,11 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	grafanasecrets "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
+	legacysecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -93,7 +97,9 @@ type APIBuilder struct {
 	legacyMigrator   legacy.LegacyMigrator
 	storageStatus    dualwrite.Service
 	unified          resource.ResourceClient
-	secrets          secrets.Service
+	internalSecrets  secrets.Service
+	secrets          *grafanasecrets.SecureValueService
+	decryptSvc       grafanasecrets.DecryptService
 	client           client.ProvisioningV0alpha1Interface
 	access           authlib.AccessChecker
 	statusPatcher    *controller.RepositoryStatusPatcher
@@ -114,6 +120,8 @@ func NewAPIBuilder(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	secrets secrets.Service,
+	secretsSvc *grafanasecrets.SecureValueService,
+	decryptSvc grafanasecrets.DecryptService,
 	access authlib.AccessChecker,
 	extraBuilders []ExtraBuilder,
 ) *APIBuilder {
@@ -133,7 +141,9 @@ func NewAPIBuilder(
 		legacyMigrator:      legacyMigrator,
 		storageStatus:       storageStatus,
 		unified:             unified,
-		secrets:             secrets,
+		internalSecrets:     secrets,
+		secrets:             secretsSvc,
+		decryptSvc:          decryptSvc,
 		access:              access,
 		jobHistory:          jobs.NewJobHistoryCache(),
 	}
@@ -160,8 +170,10 @@ func RegisterAPIService(
 	legacyMigrator legacy.LegacyMigrator,
 	storageStatus dualwrite.Service,
 	usageStatsService usagestats.Service,
+	internalSecrets legacysecrets.Service,
 	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
-	secretsSvc grafanasecrets.Service,
+	secretsSvc *grafanasecrets.SecureValueService,
+	decryptSvc grafanasecrets.DecryptService,
 	extraBuilders []ExtraBuilder,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
@@ -184,7 +196,7 @@ func RegisterAPIService(
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
-		secrets.NewSingleTenant(secretsSvc), access,
+		secrets.NewSingleTenant(internalSecrets), secretsSvc, decryptSvc, access,
 		extraBuilders,
 	)
 	apiregistration.RegisterAPI(builder)
@@ -465,14 +477,64 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 
 // TODO: move this to a more appropriate place
 func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.Repository) error {
-	var err error
+	name := repo.Name + "-github-token"
+	// TODO: use https://github.com/grafana/grafana/pull/107581
+	identitySvc := "provisioning"
 	if repo.Spec.GitHub != nil &&
 		repo.Spec.GitHub.Token != "" {
-		repo.Spec.GitHub.EncryptedToken, err = b.secrets.Encrypt(ctx, []byte(repo.Spec.GitHub.Token))
+
+		secureValue := &secretv0alpha1.SecureValue{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: repo.Namespace,
+				Name:      name,
+			},
+			Spec: secretv0alpha1.SecureValueSpec{
+				Description: "Github token for repository " + repo.Name,
+				Value:       secretv0alpha1.NewExposedSecureValue(repo.Spec.GitHub.Token),
+				Decrypters:  []string{identitySvc},
+			},
+		}
+		user, err := identity.GetRequester(ctx)
 		if err != nil {
+			fmt.Println("error getting requester", err)
 			return err
 		}
+
+		secret, err := b.secrets.Create(ctx, secureValue, user.GetUID())
+		if err != nil {
+			fmt.Println("error creating secret", err)
+			return err
+		}
+		repo.Spec.GitHub.EncryptedToken = []byte(secret.GetName())
 		repo.Spec.GitHub.Token = ""
+	}
+
+	time.Sleep(10 * time.Second)
+
+	// TODO: remove! just testing to see if it works :)
+	requester := &identity.StaticRequester{
+		Type:      types.TypeAccessPolicy,
+		Namespace: repo.Namespace,
+		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
+			Rest: authn.AccessTokenClaims{
+				Permissions:     []string{"secret.grafana.app/securevalues:decrypt"},
+				ServiceIdentity: identitySvc,
+			},
+		},
+	}
+	ctx = types.WithAuthInfo(ctx, requester)
+
+	results, err := b.decryptSvc.Decrypt(ctx, repo.Namespace, name)
+	if err != nil {
+		return err
+	}
+
+	if res, ok := results[name]; ok {
+		if res.Error() != nil {
+			fmt.Println("error decrypting secret", res.Error())
+			return res.Error()
+		}
+		fmt.Println("got result", res.Value().DangerouslyExposeAndConsumeValue())
 	}
 
 	return nil
@@ -480,13 +542,30 @@ func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.
 
 // TODO: move this to a more appropriate place
 func (b *APIBuilder) encryptGitToken(ctx context.Context, repo *provisioning.Repository) error {
-	var err error
 	if repo.Spec.Git != nil &&
 		repo.Spec.Git.Token != "" {
-		repo.Spec.Git.EncryptedToken, err = b.secrets.Encrypt(ctx, []byte(repo.Spec.Git.Token))
+		secureValue := &secretv0alpha1.SecureValue{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: repo.Namespace,
+				Name:      repo.Name + "-git-token",
+			},
+			Spec: secretv0alpha1.SecureValueSpec{
+				Description: "Git token for repository " + repo.Name,
+				Value:       secretv0alpha1.NewExposedSecureValue(repo.Spec.Git.Token),
+				// TODO: use https://github.com/grafana/grafana/pull/107581
+				Decrypters: []string{"provisioning"},
+			},
+		}
+		user, err := identity.GetRequester(ctx)
 		if err != nil {
 			return err
 		}
+
+		secret, err := b.secrets.Create(ctx, secureValue, user.GetUID())
+		if err != nil {
+			return err
+		}
+		repo.Spec.Git.EncryptedToken = []byte(secret.GetName())
 		repo.Spec.Git.Token = ""
 	}
 
@@ -680,7 +759,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.clients,
 				&repository.Tester{},
 				b.jobs,
-				b.secrets,
+				b.internalSecrets,
 				b.storageStatus,
 			)
 			if err != nil {
@@ -1172,7 +1251,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitRepositoryType:
-		return nanogit.NewGitRepository(ctx, b.secrets, r, nanogit.RepositoryConfig{
+		return nanogit.NewGitRepository(ctx, b.internalSecrets, r, nanogit.RepositoryConfig{
 			URL:            r.Spec.Git.URL,
 			Branch:         r.Spec.Git.Branch,
 			Path:           r.Spec.Git.Path,
@@ -1181,10 +1260,10 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		})
 	case provisioning.GitHubRepositoryType:
 		cloneFn := func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
-			return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
+			return gogit.Clone(ctx, b.clonedir, r, opts, b.internalSecrets)
 		}
 
-		apiRepo, err := repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, cloneFn)
+		apiRepo, err := repository.NewGitHub(ctx, r, b.ghFactory, b.internalSecrets, cloneFn)
 		if err != nil {
 			return nil, fmt.Errorf("create github API repository: %w", err)
 		}
@@ -1210,7 +1289,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			EncryptedToken: ghCfg.EncryptedToken,
 		}
 
-		nanogitRepo, err := nanogit.NewGitRepository(ctx, b.secrets, r, gitCfg)
+		nanogitRepo, err := nanogit.NewGitRepository(ctx, b.internalSecrets, r, gitCfg)
 		if err != nil {
 			return nil, fmt.Errorf("error creating nanogit repository: %w", err)
 		}
