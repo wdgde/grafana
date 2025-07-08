@@ -53,6 +53,7 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},    // Fixed size of a UUID.
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
+			{Name: "api_version", Type: migrator.DB_Text, Nullable: false},                // e.g. "secret.grafana.com/v0alpha1".
 			{Name: "annotations", Type: migrator.DB_Text, Nullable: true},
 			{Name: "labels", Type: migrator.DB_Text, Nullable: true},
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
@@ -83,6 +84,7 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},    // Fixed size of a UUID.
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
+			{Name: "api_version", Type: migrator.DB_Text, Nullable: false},                // e.g. "secret.grafana.com/v0alpha1".
 			{Name: "annotations", Type: migrator.DB_Text, Nullable: true},
 			{Name: "labels", Type: migrator.DB_Text, Nullable: true},
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},

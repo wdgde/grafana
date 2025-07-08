@@ -19,6 +19,7 @@ type keeperDB struct {
 	GUID        string
 	Name        string
 	Namespace   string
+	APIVersion  string
 	Annotations string // map[string]string
 	Labels      string // map[string]string
 	Created     int64
@@ -180,6 +181,7 @@ func toKeeperRow(kp *secretv0alpha1.Keeper) (*keeperDB, error) {
 		GUID:        string(kp.UID),
 		Name:        kp.Name,
 		Namespace:   kp.Namespace,
+		APIVersion:  kp.APIVersion,
 		Annotations: annotations,
 		Labels:      labels,
 		Created:     meta.GetCreationTimestamp().Unix(),

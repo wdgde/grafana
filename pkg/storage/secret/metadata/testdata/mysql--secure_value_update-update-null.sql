@@ -4,6 +4,7 @@ SET
   `guid` = 'abc',
   `name` = 'name',
   `namespace` = 'ns',
+  `api_version` = 'secret.grafana.com/v0alpha1',
   `annotations` = '{"x":"XXXX"}',
   `labels` = '{"a":"AAA", "b", "BBBB"}',
   `created` = 1234,

@@ -2,6 +2,7 @@ SELECT
   {{ .Ident "guid" }},
   {{ .Ident "name" }},
   {{ .Ident "namespace" }},
+  {{ .Ident "api_version" }},
   {{ .Ident "annotations" }},
   {{ .Ident "labels" }},
   {{ .Ident "created" }},

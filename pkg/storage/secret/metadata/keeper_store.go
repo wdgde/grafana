@@ -161,7 +161,7 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string
 
 	var keeper keeperDB
 	err = res.Scan(
-		&keeper.GUID, &keeper.Name, &keeper.Namespace, &keeper.Annotations, &keeper.Labels, &keeper.Created,
+		&keeper.GUID, &keeper.Name, &keeper.Namespace, &keeper.APIVersion, &keeper.Annotations, &keeper.Labels, &keeper.Created,
 		&keeper.CreatedBy, &keeper.Updated, &keeper.UpdatedBy, &keeper.Description, &keeper.Type, &keeper.Payload,
 	)
 	if err != nil {
@@ -323,7 +323,7 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 	for rows.Next() {
 		var row keeperDB
 		err = rows.Scan(
-			&row.GUID, &row.Name, &row.Namespace, &row.Annotations, &row.Labels, &row.Created,
+			&row.GUID, &row.Name, &row.Namespace, &row.APIVersion, &row.Annotations, &row.Labels, &row.Created,
 			&row.CreatedBy, &row.Updated, &row.UpdatedBy, &row.Description, &row.Type, &row.Payload,
 		)
 		if err != nil {

@@ -21,6 +21,7 @@ type secureValueDB struct {
 	GUID        string
 	Name        string
 	Namespace   string
+	APIVersion  string
 	Annotations string // map[string]string
 	Labels      string // map[string]string
 	Created     int64
@@ -210,6 +211,7 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		GUID:        string(sv.UID),
 		Name:        sv.Name,
 		Namespace:   sv.Namespace,
+		APIVersion:  sv.APIVersion,
 		Annotations: annotations,
 		Labels:      labels,
 		Created:     meta.GetCreationTimestamp().UnixMilli(),

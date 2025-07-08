@@ -2,6 +2,7 @@ SELECT
   `guid`,
   `name`,
   `namespace`,
+  `api_version`,
   `annotations`,
   `labels`,
   `created`,

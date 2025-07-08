@@ -319,8 +319,8 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 		row := secureValueDB{}
 
 		err = rows.Scan(&row.GUID,
-			&row.Name, &row.Namespace, &row.Annotations,
-			&row.Labels,
+			&row.Name, &row.Namespace, &row.APIVersion,
+			&row.Annotations, &row.Labels,
 			&row.Created, &row.CreatedBy,
 			&row.Updated, &row.UpdatedBy,
 			&row.Phase, &row.Message,
@@ -504,7 +504,7 @@ func (s *secureValueMetadataStorage) read(ctx context.Context, namespace xkube.N
 	}
 
 	if err := res.Scan(
-		&secureValue.GUID, &secureValue.Name, &secureValue.Namespace,
+		&secureValue.GUID, &secureValue.Name, &secureValue.Namespace, &secureValue.APIVersion,
 		&secureValue.Annotations, &secureValue.Labels,
 		&secureValue.Created, &secureValue.CreatedBy,
 		&secureValue.Updated, &secureValue.UpdatedBy,

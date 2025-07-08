@@ -4,6 +4,7 @@ SET
   {{ .Ident "guid" }} = {{ .Arg .Row.GUID }},
   {{ .Ident "name" }} = {{ .Arg .Row.Name }},
   {{ .Ident "namespace" }} = {{ .Arg .Row.Namespace }},
+  {{ .Ident "api_version" }} = {{ .Arg .Row.APIVersion }},
   {{ .Ident "annotations" }} = {{ .Arg .Row.Annotations }},
   {{ .Ident "labels" }} = {{ .Arg .Row.Labels }},
   {{ .Ident "created" }} = {{ .Arg .Row.Created }},
