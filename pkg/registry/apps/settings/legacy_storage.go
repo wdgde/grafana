@@ -26,6 +26,8 @@ var (
 	_ rest.GracefulDeleter      = (*legacyStorage)(nil)
 )
 
+const separator = ":"
+
 type legacyStorage struct {
 	setting        *setting.Cfg
 	namespacer     request.NamespaceMapper
@@ -60,10 +62,11 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		for _, key := range section.Keys() {
 			list.Items = append(list.Items, settings.Setting{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: key.Name(),
+					Name: fmt.Sprintf("%s%s%s", section.Name(), separator, key.Name()),
 				},
 				Spec: settings.SettingSpec{
 					Group: section.Name(),
+					Key:   key.Name(),
 					// consider redacting sensitive values?
 					Value: key.Value(),
 				},
@@ -75,24 +78,34 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	// what if there are duplicate names in different sections?
-	for _, section := range s.setting.Raw.Sections() {
-		for _, key := range section.Keys() {
-			if key.Name() == name {
-				return &settings.Setting{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: name,
-					},
-					Spec: settings.SettingSpec{
-						Group: section.Name(),
-						Value: key.Value(),
-					},
-					Status: settings.SettingStatus{},
-				}, nil
-			}
-		}
+	parts := strings.Split(name, separator)
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid name: %s", name)
 	}
-	return nil, fmt.Errorf("setting %s not found", name)
+	groupName := parts[0]
+	keyName := parts[1]
+
+	section, err := s.setting.Raw.GetSection(groupName)
+	if err != nil {
+		return nil, fmt.Errorf("section %s not found", section)
+	}
+
+	key, err := section.GetKey(keyName)
+	if err != nil {
+		return nil, fmt.Errorf("key %s not found", keyName)
+	}
+
+	return &settings.Setting{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Spec: settings.SettingSpec{
+			Group: section.Name(),
+			Key:   keyName,
+			Value: key.Value(),
+		},
+		Status: settings.SettingStatus{},
+	}, nil
 }
 
 func (s *legacyStorage) Create(ctx context.Context,

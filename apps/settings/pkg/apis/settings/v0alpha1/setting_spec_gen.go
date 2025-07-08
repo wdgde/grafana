@@ -5,6 +5,7 @@ package v0alpha1
 // +k8s:openapi-gen=true
 type SettingSpec struct {
 	Group string `json:"group"`
+	Key   string `json:"key"`
 	Value string `json:"value"`
 }
 
