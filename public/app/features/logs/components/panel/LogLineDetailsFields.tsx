@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
+import tinycolor from 'tinycolor2';
 
 import { CoreApp, Field, fuzzySearch, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -366,52 +367,61 @@ export const LogLineDetailsField = ({
   );
 };
 
-const getFieldStyles = (theme: GrafanaTheme2) => ({
-  row: css({
-    display: 'contents',
-  }),
-  actions: css({
-    whiteSpace: 'nowrap',
-  }),
-  label: css({
-    overflowWrap: 'break-word',
-    wordBreak: 'break-word',
-  }),
-  value: css({
-    overflowWrap: 'break-word',
-    wordBreak: 'break-word',
-    button: {
-      visibility: 'hidden',
-    },
-    '&:hover': {
-      button: {
-        visibility: 'visible',
+const getFieldStyles = (theme: GrafanaTheme2) => {
+  const hoverColor = tinycolor(theme.colors.background.canvas).darken(4).toRgbString();
+  return {
+    row: css({
+      display: 'contents',
+      '&:hover > div': {
+        background: hoverColor,
       },
-    },
-  }),
-  link: css({
-    gridColumn: 'span 3',
-  }),
-  linkNoActions: css({
-    gridColumn: 'span 2',
-  }),
-  stats: css({
-    paddingRight: theme.spacing(1),
-    wordBreak: 'break-all',
-    width: '100%',
-    maxWidth: '50vh',
-  }),
-  statsColumn: css({
-    gridColumn: 'span 2',
-  }),
-  valueContainer: css({
-    display: 'flex',
-    alignItems: 'center',
-    lineHeight: theme.typography.body.lineHeight,
-    whiteSpace: 'pre-wrap',
-    wordBreak: 'break-all',
-  }),
-});
+    }),
+    actions: css({
+      alignItems: 'baseline',
+      display: 'flex',
+      padding: theme.spacing(0.25, 0, 0, 0.5),
+      whiteSpace: 'nowrap',
+    }),
+    label: css({
+      overflowWrap: 'break-word',
+      wordBreak: 'break-word',
+    }),
+    value: css({
+      overflowWrap: 'break-word',
+      wordBreak: 'break-word',
+      button: {
+        visibility: 'hidden',
+      },
+      '&:hover': {
+        button: {
+          visibility: 'visible',
+        },
+      },
+    }),
+    link: css({
+      gridColumn: 'span 3',
+    }),
+    linkNoActions: css({
+      gridColumn: 'span 2',
+    }),
+    stats: css({
+      paddingRight: theme.spacing(1),
+      wordBreak: 'break-all',
+      width: '100%',
+      maxWidth: '50vh',
+    }),
+    statsColumn: css({
+      gridColumn: 'span 2',
+    }),
+    valueContainer: css({
+      display: 'flex',
+      alignItems: 'center',
+      lineHeight: theme.typography.body.lineHeight,
+      whiteSpace: 'pre-wrap',
+      wordBreak: 'break-all',
+    }),
+  };
+};
 
 const ClipboardButtonWrapper = ({ value }: { value: string }) => {
   const styles = useStyles2(getClipboardButtonStyles);
