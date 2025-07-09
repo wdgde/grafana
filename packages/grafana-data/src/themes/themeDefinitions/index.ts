@@ -1,6 +1,7 @@
 export { default as aubergine } from './aubergine';
 export { default as debug } from './debug';
 export { default as desertbloom } from './desertbloom';
+export { default as deuteranopiadark } from './deuteranopiadark';
 export { default as gildedgrove } from './gildedgrove';
 export { default as mars } from './mars';
 export { default as matrix } from './matrix';
