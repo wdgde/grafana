@@ -22,6 +22,19 @@ func GetAuthorizer() authorizer.Authorizer {
 			return authorizer.DecisionAllow, "", nil
 		}
 
+		// require a user
+		u, err := identity.GetRequester(ctx)
+
+		if err != nil {
+			return authorizer.DecisionDeny, "valid user is required", err
+		}
+
+		// check if is admin
+		if u.HasRole(identity.RoleAdmin) {
+			klog.InfoS("admin access", "resource", attr.GetResource())
+			return authorizer.DecisionAllow, "", nil
+		}
+
 		return authorizer.DecisionDeny, "forbidden", nil
 	})
 }

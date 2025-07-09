@@ -14,7 +14,7 @@ type SettingMetadata struct {
 	// Can't use this as it's not yet enforced CUE:
 	// ...string
 	// Have to do this gnarly regex instead
-	Group             string            `json:"group"`
+	Section           string            `json:"section"`
 	UpdateTimestamp   time.Time         `json:"updateTimestamp"`
 	CreatedBy         string            `json:"createdBy"`
 	Uid               string            `json:"uid"`

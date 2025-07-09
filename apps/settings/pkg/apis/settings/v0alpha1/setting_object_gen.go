@@ -181,20 +181,20 @@ func (o *Setting) SetCreatedBy(createdBy string) {
 	o.ObjectMeta.Annotations["grafana.com/createdBy"] = createdBy
 }
 
-func (o *Setting) GetGroup() string {
+func (o *Setting) GetSection() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
 
-	return o.ObjectMeta.Annotations["grafana.com/group"]
+	return o.ObjectMeta.Annotations["grafana.com/section"]
 }
 
-func (o *Setting) SetGroup(group string) {
+func (o *Setting) SetSection(section string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
 
-	o.ObjectMeta.Annotations["grafana.com/group"] = group
+	o.ObjectMeta.Annotations["grafana.com/section"] = section
 }
 
 func (o *Setting) GetUpdateTimestamp() time.Time {

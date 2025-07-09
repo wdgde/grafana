@@ -4,12 +4,15 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type SettingSpec struct {
-	Group string `json:"group"`
-	Key   string `json:"key"`
-	Value string `json:"value"`
+	// Settings section
+	Section string `json:"section"`
+	// Settings overrides
+	Overrides map[string]string `json:"overrides"`
 }
 
 // NewSettingSpec creates a new SettingSpec object.
 func NewSettingSpec() *SettingSpec {
-	return &SettingSpec{}
+	return &SettingSpec{
+		Overrides: map[string]string{},
+	}
 }

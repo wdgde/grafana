@@ -25,6 +25,15 @@ var appManifestData = app.ManifestData{
 			Versions: []app.ManifestKindVersion{
 				{
 					Name: "v0alpha1",
+					Admission: &app.AdmissionCapabilities{
+
+						Mutation: &app.MutationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
 				},
 			},
 		},

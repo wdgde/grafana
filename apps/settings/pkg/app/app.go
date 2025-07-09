@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -14,21 +15,18 @@ import (
 	"k8s.io/klog/v2"
 
 	settings "github.com/grafana/grafana/apps/settings/pkg/apis/settings/v0alpha1"
+	mutators "github.com/grafana/grafana/apps/settings/pkg/mutators"
 	reconcilers "github.com/grafana/grafana/apps/settings/pkg/reconcilers"
 )
 
-func NewFactory(pCfg *setting.Cfg) func(app.Config) (app.App, error) {
-	return func(appConfig app.Config) (app.App, error) {
-		return New(appConfig, pCfg)
-	}
-}
-
-func New(cfg app.Config, pCfg *setting.Cfg) (app.App, error) {
+func New(cfg app.Config) (app.App, error) {
 	patchClient, err := getPatchClient(cfg.KubeConfig, settings.SettingKind())
 	if err != nil {
 		klog.ErrorS(err, "Error getting patch client for use with opinionated reconciler")
 		return nil, err
 	}
+
+	pCfg := cfg.SpecificConfig.(*setting.Cfg)
 
 	settingReconciler, err := reconcilers.NewSettingReconciler(patchClient, pCfg)
 	if err != nil {
@@ -48,6 +46,7 @@ func New(cfg app.Config, pCfg *setting.Cfg) (app.App, error) {
 			{
 				Kind:       settings.SettingKind(),
 				Reconciler: settingReconciler,
+				Mutator:    mutators.NewSettingsMutator(),
 			},
 		},
 	}
