@@ -22,3 +22,16 @@ addedLinksRegistry.register({
   pluginId: 'grafana',
   configs: getCoreExtensionConfigurations(),
 });
+
+addedFunctionsRegistry.register({
+  pluginId: 'grafana',
+  configs: [
+    {
+      title: 'grafana-core-callback',
+      targets: ['grafana/grafana-assistant-app/grafana-core-callback/v0-alpha'],
+      fn: (args: any) => {
+        console.log('grafana-core-callback', args);
+      },
+    },
+  ],
+});
