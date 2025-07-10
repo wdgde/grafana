@@ -2,6 +2,7 @@ package settings
 
 import (
 	"context"
+
 	"github.com/grafana/grafana/pkg/setting"
 
 	"k8s.io/klog/v2"
@@ -37,7 +38,7 @@ func NewSettingReconciler(patchClient operator.PatchClient, processConfig *setti
 	}
 
 	// prefixing the finalizer with <group>-<kind> similar to how OpinionatedWatcher does
-	reconciler, err := operator.NewOpinionatedReconciler(patchClient, "setting-settings-finalizer")
+	reconciler, err := operator.NewOpinionatedReconciler(patchClient, "settings-settings-finalizer")
 	if err != nil {
 		klog.ErrorS(err, "Error creating opinionated reconciler for settings")
 		return nil, err
