@@ -1,3 +1,4 @@
+import { createRoutesFromChildren } from 'react-router-dom-v5-compat';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
@@ -13,6 +14,7 @@ import { SCOPES_PRIORITY } from '../values';
 export function useScopeServicesState() {
   const services = useScopesServices();
   if (!services) {
+    const emptyNodesMap: NodesMap = {};
     return {
       updateNode: () => {},
       selectScope: () => {},
@@ -20,7 +22,7 @@ export function useScopeServicesState() {
       searchAllNodes: () => Promise.resolve([]),
       apply: () => {},
       deselectScope: () => {},
-      nodes: {},
+      nodes: emptyNodesMap,
       scopes: {},
       selectedScopes: [],
       appliedScopes: [],
@@ -67,7 +69,7 @@ export function mapScopesNodesTreeToActions(
 ): CommandPaletteAction[] {
   const actions: CommandPaletteAction[] = [getScopesParentAction()];
 
-  const traverse = (tree: TreeNode, parentId: string | undefined) => {
+  const traverse = (tree: TreeNode, parentIdPath: string | undefined) => {
     // TODO: not sure how and why a node.nodes can be undefined
     if (!tree.children || Object.keys(tree.children).length === 0) {
       return;
@@ -89,7 +91,12 @@ export function mapScopesNodesTreeToActions(
       if (child.spec.nodeType === 'leaf' && scopeIsSelected) {
         continue;
       }
-      let action = mapScopeNodeToAction(child, selectScope, parentId);
+      const parentNodeId = parentIdPath?.split('/').pop();
+      const parent = parentNodeId ? nodes[parentNodeId] : undefined;
+      console.log(child.spec.nodeType,child.spec.title, parentIdPath, parentNodeId);
+    
+      console.log(nodes);
+      let action = mapScopeNodeToAction(child, selectScope, parentIdPath, parent?.spec.title);
       actions.push(action);
       traverse(childTreeNode, action.id);
     }
@@ -105,24 +112,29 @@ export function mapScopesNodesTreeToActions(
  * @param scopeNode
  * @param selectScope
  * @param parentId
+ * @param parentTitle
  */
 export function mapScopeNodeToAction(
   scopeNode: ScopeNode,
   selectScope: (id: string) => void,
-  parentId?: string
+  parentId?: string,
+  parentTitle?: string
 ): CommandPaletteAction {
   let action: CommandPaletteAction;
   if (parentId) {
+    const isLeafNode = scopeNode.spec.nodeType === 'leaf';
+
     action = {
       id: `${parentId}/${scopeNode.metadata.name}`,
       name: scopeNode.spec.title,
       keywords: `${scopeNode.spec.title} ${scopeNode.metadata.name}`,
       priority: SCOPES_PRIORITY,
+      subtitle: parentTitle,
       parent: parentId,
     };
 
     // TODO: some non leaf nodes can also be selectable, but we don't have a way to show that in the UI yet.
-    if (scopeNode.spec.nodeType === 'leaf') {
+    if (isLeafNode) {
       action.perform = () => {
         selectScope(scopeNode.metadata.name);
       };
@@ -134,7 +146,7 @@ export function mapScopeNodeToAction(
       keywords: `${scopeNode.spec.title} ${scopeNode.metadata.name}`,
       priority: SCOPES_PRIORITY,
       section: t('command-palette.action.scopes', 'Scopes'),
-      subtitle: scopeNode.spec.parentName,
+      subtitle: parentTitle || scopeNode.spec.parentName,
       perform: () => {
         selectScope(scopeNode.metadata.name);
       },

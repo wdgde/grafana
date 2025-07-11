@@ -136,16 +136,22 @@ function useScopesRow(onApply: () => void) {
  * Register actions based on global search call. This returns actions that are separate from the scope service tree
  * and are just flat list without updating the scope service state.
  * @param searchQuery
- * @param parentId
+ * @param parentIdPath
  */
-function useGlobalScopesSearch(searchQuery: string, parentId?: string | null) {
-  const { selectScope, searchAllNodes } = useScopeServicesState();
+function useGlobalScopesSearch(searchQuery: string, parentIdPath?: string | null) {
+  const { selectScope, searchAllNodes, nodes: loadedNodes } = useScopeServicesState();
   const [actions, setActions] = useState<CommandPaletteAction[] | undefined>(undefined);
   const searchQueryRef = useRef<string>();
+  const loadedNodesRef = useRef(loadedNodes);
+
+  // Update the ref when loadedNodes changes
+  useEffect(() => {
+    loadedNodesRef.current = loadedNodes;
+  }, [loadedNodes]);
 
   useEffect(() => {
-    if ((!parentId || parentId === 'scopes') && searchQuery && config.featureToggles.scopeSearchAllLevels) {
-      // We only search globally if there is no parentId
+    if ((!parentIdPath || parentIdPath === 'scopes') && searchQuery && config.featureToggles.scopeSearchAllLevels) {
+      // We only search globally if there is no parentIdPath
       searchQueryRef.current = searchQuery;
       searchAllNodes(searchQuery, 10).then((nodes) => {
         if (searchQueryRef.current === searchQuery) {
@@ -154,7 +160,11 @@ function useGlobalScopesSearch(searchQuery: string, parentId?: string | null) {
           const leafNodes = nodes.filter((node) => node.spec.nodeType === 'leaf');
           const actions = [getScopesParentAction()];
           for (const node of leafNodes) {
-            actions.push(mapScopeNodeToAction(node, selectScope, parentId || undefined));
+            // Get parent to display as subtitle
+            const parentId = node.spec.parentName;
+            const parent = parentId ? loadedNodesRef.current[parentId] : undefined;
+            const parentTitle = parent ? parent.spec.title : undefined;
+            actions.push(mapScopeNodeToAction(node, selectScope, parentIdPath || undefined, parentTitle));
           }
           setActions(actions);
         }
@@ -163,7 +173,7 @@ function useGlobalScopesSearch(searchQuery: string, parentId?: string | null) {
       searchQueryRef.current = undefined;
       setActions(undefined);
     }
-  }, [searchAllNodes, searchQuery, parentId, selectScope]);
+  }, [searchAllNodes, searchQuery, parentIdPath, selectScope]);
 
   return actions;
 }
