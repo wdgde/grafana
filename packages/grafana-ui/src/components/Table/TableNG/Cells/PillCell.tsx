@@ -1,13 +1,17 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 
-import { GrafanaTheme2, classicColors, colorManipulator, Field, getColorByStringHash } from '@grafana/data';
-import { FieldColorModeId } from '@grafana/schema';
+import {
+  GrafanaTheme2,
+  classicColors,
+  colorManipulator,
+  getColorByStringHash,
+  fieldColorModeRegistry,
+  Field,
+} from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { TableCellRendererProps } from '../types';
-
-const DEFAULT_PILL_BG_COLOR = '#FF780A';
 
 interface Pill {
   value: string;
@@ -16,10 +20,23 @@ interface Pill {
   color: string;
 }
 
-function createPills(pillValues: string[], field: Field): Pill[] {
+const WHITE = '#FFFFFF' as const;
+const BLACK = '#000000' as const;
+const LUMINANCE_THRESHOLD = 4.5; // WCAG 2.0 AA contrast ratio threshold for text readability
+
+type ContrastRatioCache = Record<string, typeof WHITE | typeof BLACK>;
+
+function getTextColor(bgColor: string, contrastRatios: ContrastRatioCache): string {
+  if (contrastRatios[bgColor] === undefined) {
+    contrastRatios[bgColor] = colorManipulator.getContrastRatio(WHITE, bgColor) >= LUMINANCE_THRESHOLD ? WHITE : BLACK;
+  }
+  return contrastRatios[bgColor];
+}
+
+function createPills(pillValues: string[], colors: string[], contrastRatios: ContrastRatioCache): Pill[] {
   return pillValues.map((pill, index) => {
-    const bgColor = getPillColor(pill, field);
-    const textColor = colorManipulator.getContrastRatio('#FFFFFF', bgColor) >= 4.5 ? '#FFFFFF' : '#000000';
+    const bgColor = getColorByStringHash(colors, pill);
+    const textColor = getTextColor(bgColor, contrastRatios);
     return {
       value: pill,
       key: `${pill}-${index}`,
@@ -29,13 +46,17 @@ function createPills(pillValues: string[], field: Field): Pill[] {
   });
 }
 
-export function PillCell({ value, field }: TableCellRendererProps) {
+export function PillCell({ value, field, theme }: TableCellRendererProps) {
+  // cache luminance calculations to avoid recalculating the same color for the same background.
+  const contrastRatios = useRef<ContrastRatioCache>({});
   const styles = useStyles2(getStyles);
 
-  const pills: Pill[] = useMemo(() => {
-    const pillValues = inferPills(String(value));
-    return createPills(pillValues, field);
-  }, [value, field]);
+  const pillValues = useMemo(() => inferPills(String(value)), [value]);
+  const colors = useMemo(() => getColors(field, theme, pillValues), [field, theme, pillValues]);
+  const pills = useMemo(
+    () => createPills(pillValues, colors, contrastRatios.current ?? {}),
+    [colors, pillValues, contrastRatios]
+  );
 
   return pills.map((pill) => (
     <span
@@ -53,7 +74,7 @@ export function PillCell({ value, field }: TableCellRendererProps) {
 
 const SPLIT_RE = /\s*,\s*/;
 
-export function inferPills(value: string): string[] {
+function inferPills(value: string): string[] {
   if (value === '') {
     return [];
   }
@@ -69,25 +90,33 @@ export function inferPills(value: string): string[] {
   return value.trim().split(SPLIT_RE);
 }
 
-function getPillColor(value: string, field: Field): string {
-  const cfg = field.config;
-
-  if (cfg.mappings?.length ?? 0 > 0) {
-    return field.display!(value).color ?? DEFAULT_PILL_BG_COLOR;
+function getColors(field: Field, theme: GrafanaTheme2, pillValues: string[]): string[] {
+  let colors = classicColors;
+  const configuredColor = field.config.color;
+  if (configuredColor) {
+    const mode = fieldColorModeRegistry.get(configuredColor.mode);
+    if (mode) {
+      if (mode.getColors) {
+        colors = mode.getColors(theme);
+      } else {
+        colors = [];
+        // only generate a maximum of 20 colors for a set of pills.
+        for (let i = 0; i < Math.min(pillValues.length, 20); i++) {
+          // spoof the series index changing to get a range of colors from the color mode for these pills.
+          colors[i] = mode.getCalculator({ ...field, state: { ...field.state, seriesIndex: i } }, theme)(0, 0);
+        }
+      }
+    }
   }
-
-  if (cfg.color?.mode === FieldColorModeId.Fixed) {
-    return cfg.color?.fixedColor ?? DEFAULT_PILL_BG_COLOR;
-  }
-
-  // TODO: instead of classicColors we need to pull colors from theme, same way as FieldColorModeId.PaletteClassicByName (see fieldColor.ts)
-  return getColorByStringHash(classicColors, value);
+  return colors;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   pill: css({
     display: 'inline-block',
     padding: theme.spacing(0.25, 0.75),
+    marginInlineEnd: theme.spacing(0.25),
+    marginBlock: theme.spacing(0.25),
     borderRadius: theme.shape.radius.default,
     fontSize: theme.typography.bodySmall.fontSize,
     lineHeight: theme.typography.bodySmall.lineHeight,
