@@ -49,7 +49,7 @@ func NewSettingReconciler(patchClient operator.PatchClient, processConfig *setti
 
 func simpleConfigCheck(request operator.TypedReconcileRequest[*settings.Setting], processConfig *setting.Cfg) {
 	settingObject := request.Object
-	if settingObject.Spec.Section == "server" && settingObject.Name == "enable_gzip" {
+	if settingObject.Spec.Section == "server" && settingObject.Spec.Overrides["enable_gzip"] != "" {
 		klog.InfoS("Adding override for [server]enable_gzip", "current_value", processConfig.EnableGzip)
 	}
 	klog.InfoS("Added resource", "name", request.Object.GetStaticMetadata().Identifier().Name)

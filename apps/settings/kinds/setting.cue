@@ -11,6 +11,12 @@ setting: {
 			"UPDATE",
 		]
 	}
+	validation: {
+		operations: [
+			"CREATE",
+			"UPDATE",
+		]
+	}
 	versions: {
 		"v0alpha1": {
 			codegen: {

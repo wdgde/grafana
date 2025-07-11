@@ -26,7 +26,12 @@ var appManifestData = app.ManifestData{
 				{
 					Name: "v0alpha1",
 					Admission: &app.AdmissionCapabilities{
-
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
 						Mutation: &app.MutationCapability{
 							Operations: []app.AdmissionOperation{
 								app.AdmissionOperationCreate,

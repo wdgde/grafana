@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
@@ -17,9 +18,12 @@ import (
 	settings "github.com/grafana/grafana/apps/settings/pkg/apis/settings/v0alpha1"
 	mutators "github.com/grafana/grafana/apps/settings/pkg/mutators"
 	reconcilers "github.com/grafana/grafana/apps/settings/pkg/reconcilers"
+	validators "github.com/grafana/grafana/apps/settings/pkg/validators"
 )
 
 func New(cfg app.Config) (app.App, error) {
+	log := logging.DefaultLogger.With("app", "settings")
+
 	patchClient, err := getPatchClient(cfg.KubeConfig, settings.SettingKind())
 	if err != nil {
 		klog.ErrorS(err, "Error getting patch client for use with opinionated reconciler")
@@ -39,14 +43,15 @@ func New(cfg app.Config) (app.App, error) {
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
 			ErrorHandler: func(ctx context.Context, err error) {
-				klog.ErrorS(err, "Informer processing error")
+				log.WithContext(ctx).Error("Informer processing error", "error", err)
 			},
 		},
 		ManagedKinds: []simple.AppManagedKind{
 			{
 				Kind:       settings.SettingKind(),
 				Reconciler: settingReconciler,
-				Mutator:    mutators.NewSettingsMutator(),
+				Validator:  validators.NewSettingsValidator(log),
+				Mutator:    mutators.NewSettingsMutator(log),
 			},
 		},
 	}

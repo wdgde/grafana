@@ -24,7 +24,7 @@ func RegisterApp(
 	appCfg := &runner.AppBuilderConfig{
 		OpenAPIDefGetter: settingsv0alpha1.GetOpenAPIDefinitions,
 		ManagedKinds:     settingsapp.GetKinds(),
-		Authorizer:       settingsapp.GetAuthorizer(),
+		Authorizer:       settingsapp.GetAuthorizer(cfg),
 		CustomConfig:     cfg,
 		// LegacyStorageGetter: provider.legacyStorageGetter,
 	}

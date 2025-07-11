@@ -3,8 +3,7 @@ package settings
 import (
 	"context"
 	"fmt"
-
-	"k8s.io/klog/v2"
+	"github.com/grafana/grafana-app-sdk/logging"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -12,11 +11,12 @@ import (
 	settings "github.com/grafana/grafana/apps/settings/pkg/apis/settings/v0alpha1"
 )
 
-func NewSettingsMutator() simple.KindMutator {
+func NewSettingsMutator(log logging.Logger) simple.KindMutator {
 	return &simple.Mutator{
 		MutateFunc: func(ctx context.Context, request *app.AdmissionRequest) (*app.MutatingResponse, error) {
+			logger := log.WithContext(ctx).With("mutator", "settings")
 			if request.Action != resource.AdmissionActionCreate && request.Action != resource.AdmissionActionUpdate {
-				klog.InfoS("[Mutator] Called for unsupported action", "action", request.Action)
+				logger.Info("called for unsupported action", "action", request.Action)
 				return &app.MutatingResponse{
 					UpdatedObject: request.Object,
 				}, nil

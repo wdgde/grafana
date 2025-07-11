@@ -584,6 +584,9 @@ type Cfg struct {
 
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
+
+	// Settings provider
+	SettingsAllowAdminAccess bool
 }
 
 type UnifiedStorageConfig struct {
@@ -1415,6 +1418,9 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
+
+	// settings provider config
+	cfg.setSettingsProviderConfig()
 
 	return nil
 }
