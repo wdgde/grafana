@@ -3,7 +3,7 @@ docker_compose("./tilt-docker-compose.yaml")
 
 local_resource(
   'backend-build',
-  'make GO_BUILD_DEV=1 build-backend',
+  "go build -o ./bin/grafana ./pkg/cmd/grafana",
   deps=[
     './pkg',
     './apps',
@@ -15,6 +15,13 @@ local_resource(
     './go.sum',
     './go.mod',
   ],
+  env={
+    'GOOS': 'linux',
+    'GOARCH': 'arm64',
+    'CC': 'zig cc -target aarch64-linux',
+    'CXX': 'zig c++ -target aarch64-linux',
+    'CGO_ENABLED': '1',
+  },
   allow_parallel=True
 )
 
