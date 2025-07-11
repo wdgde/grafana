@@ -1,0 +1,21 @@
+apiVersion: 1
+contactPoints:
+    - orgId: 1
+      name: pushover
+      receivers:
+        - uid: pushover-uid
+          type: pushover
+          settings:
+            apiToken: '[REDACTED]'
+            device: test-device
+            expire: 333
+            message: test-message
+            okPriority: 2
+            okSound: test-ok-sound
+            priority: 1
+            retry: 555
+            sound: test-sound
+            title: test-title
+            uploadImage: false
+            userKey: '[REDACTED]'
+          disableResolveMessage: true

@@ -1,0 +1,48 @@
+apiVersion: 1
+contactPoints:
+    - orgId: 1
+      name: webhook
+      receivers:
+        - uid: webhook-uid
+          type: webhook
+          settings:
+            authorization_scheme: basic
+            hmacConfig:
+                header: X-Grafana-Alerting-Signature
+                secret: '[REDACTED]'
+                timestampHeader: X-Grafana-Alerting-Timestamp
+            http_config:
+                oauth2:
+                    client_id: test-client-id
+                    client_secret: '[REDACTED]'
+                    endpoint_params:
+                        param1: value1
+                        param2: value2
+                    proxy_config:
+                        no_proxy: localhost
+                        proxy_connect_header:
+                            X-Proxy-Header: proxy-value
+                        proxy_from_environment: false
+                        proxy_url: http://localproxy:8080
+                    scopes:
+                        - scope1
+                        - scope2
+                    tls_config:
+                        caCertificate: '[REDACTED]'
+                        clientCertificate: '[REDACTED]'
+                        clientKey: '[REDACTED]'
+                        insecureSkipVerify: false
+                    token_url: https://localhost/auth/token
+            httpMethod: PUT
+            maxAlerts: "2"
+            message: test-message
+            password: '[REDACTED]'
+            title: test-title
+            tlsConfig:
+                caCertificate: '[REDACTED]'
+                clientCertificate: '[REDACTED]'
+                clientKey: '[REDACTED]'
+                insecureSkipVerify: false
+            url: http://localhost
+            username: test-user
+          disableResolveMessage: true

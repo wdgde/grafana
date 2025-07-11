@@ -1,0 +1,1 @@
+{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"dingding","receivers":[{"uid":"dingding-uid","type":"dingding","settings":{"message":"{{ len .Alerts.Firing }} alerts are firing, {{ len .Alerts.Resolved }} are resolved","msgType":"actionCard","title":"Alerts firing: {{ len .Alerts.Firing }}","url":"[REDACTED]"},"disableResolveMessage":true}]}]}

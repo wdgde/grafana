@@ -1,0 +1,1 @@
+{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"prometheus-alertmanager","receivers":[{"uid":"prometheus-alertmanager-uid","type":"prometheus-alertmanager","settings":{"basicAuthPassword":"[REDACTED]","basicAuthUser":"grafana","url":"https://alertmanager-01.com"},"disableResolveMessage":true}]}]}

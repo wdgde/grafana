@@ -1,0 +1,12 @@
+apiVersion: 1
+contactPoints:
+    - orgId: 1
+      name: line
+      receivers:
+        - uid: line-uid
+          type: LINE
+          settings:
+            description: test-description
+            title: test-title
+            token: test
+          disableResolveMessage: false

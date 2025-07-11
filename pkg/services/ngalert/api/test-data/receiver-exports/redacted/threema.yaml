@@ -1,0 +1,14 @@
+apiVersion: 1
+contactPoints:
+    - orgId: 1
+      name: threema
+      receivers:
+        - uid: threema-uid
+          type: threema
+          settings:
+            api_secret: '[REDACTED]'
+            description: test-description
+            gateway_id: '*1234567'
+            recipient_id: '*1234567'
+            title: test-title
+          disableResolveMessage: true

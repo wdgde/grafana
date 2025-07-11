@@ -1,0 +1,1 @@
+{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"email","receivers":[{"uid":"email-uid","type":"email","settings":{"addresses":"test@grafana.com","message":"test-message","singleEmail":true,"subject":"test-subject"},"disableResolveMessage":true}]}]}

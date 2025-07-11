@@ -1,0 +1,17 @@
+apiVersion: 1
+contactPoints:
+    - orgId: 1
+      name: oncall
+      receivers:
+        - uid: oncall-uid
+          type: oncall
+          settings:
+            authorization_scheme: basic
+            httpMethod: PUT
+            maxAlerts: "2"
+            message: test-message
+            password: test-pass
+            title: test-title
+            url: http://localhost
+            username: test-user
+          disableResolveMessage: false

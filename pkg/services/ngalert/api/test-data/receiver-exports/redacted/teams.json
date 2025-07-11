@@ -1,0 +1,1 @@
+{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"teams","receivers":[{"uid":"teams-uid","type":"teams","settings":{"message":"test-message","sectiontitle":"test-second-title","title":"test-title","url":"http://localhost"},"disableResolveMessage":true}]}]}

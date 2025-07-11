@@ -1,0 +1,17 @@
+apiVersion: 1
+contactPoints:
+    - orgId: 1
+      name: kafka
+      receivers:
+        - uid: kafka-uid
+          type: kafka
+          settings:
+            apiVersion: v2
+            description: test-description
+            details: test-details
+            kafkaClusterId: "12345"
+            kafkaRestProxy: http://localhost/
+            kafkaTopic: test-topic
+            password: password
+            username: test-user
+          disableResolveMessage: false

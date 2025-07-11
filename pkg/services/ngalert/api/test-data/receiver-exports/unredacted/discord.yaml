@@ -1,0 +1,14 @@
+apiVersion: 1
+contactPoints:
+    - orgId: 1
+      name: discord
+      receivers:
+        - uid: discord-uid
+          type: discord
+          settings:
+            avatar_url: http://avatar
+            message: test-message
+            title: test-title
+            url: http://localhost
+            use_discord_username: true
+          disableResolveMessage: false

@@ -1,0 +1,19 @@
+apiVersion: 1
+contactPoints:
+    - orgId: 1
+      name: pagerduty
+      receivers:
+        - uid: pagerduty-uid
+          type: pagerduty
+          settings:
+            class: test-class
+            client: test-client
+            client_url: http://localhost/test-client-url
+            component: test-component
+            group: test-group
+            integrationKey: '[REDACTED]'
+            severity: test-severity
+            source: test-source
+            summary: test-summary
+            url: http://localhost/test-api-url
+          disableResolveMessage: true

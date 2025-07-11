@@ -1,0 +1,23 @@
+apiVersion: 1
+contactPoints:
+    - orgId: 1
+      name: opsgenie
+      receivers:
+        - uid: opsgenie-uid
+          type: opsgenie
+          settings:
+            apiKey: test-api-key
+            apiUrl: http://localhost
+            autoClose: false
+            description: test-description
+            message: test-message
+            overridePriority: false
+            responders:
+                - id: test-id
+                  type: team
+                - type: user
+                  username: test-user
+                - name: test-schedule
+                  type: schedule
+            sendTagsAs: both
+          disableResolveMessage: false

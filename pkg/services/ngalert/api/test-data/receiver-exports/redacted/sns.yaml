@@ -1,0 +1,23 @@
+apiVersion: 1
+contactPoints:
+    - orgId: 1
+      name: sns
+      receivers:
+        - uid: sns-uid
+          type: sns
+          settings:
+            api_url: https://sns.us-east-1.amazonaws.com
+            attributes:
+                attr1: val1
+            message: message
+            phone_number: 123-456-7890
+            sigv4:
+                access_key: '[REDACTED]'
+                profile: default
+                region: us-east-1
+                role_arn: arn:aws:iam:us-east-1:0123456789:role/my-role
+                secret_key: '[REDACTED]'
+            subject: subject
+            target_arn: arn:aws:sns:us-east-1:0123456789:SNSTopicName
+            topic_arn: arn:aws:sns:us-east-1:0123456789:SNSTopicName
+          disableResolveMessage: true

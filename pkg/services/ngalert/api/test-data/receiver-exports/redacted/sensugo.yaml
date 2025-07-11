@@ -1,0 +1,16 @@
+apiVersion: 1
+contactPoints:
+    - orgId: 1
+      name: sensugo
+      receivers:
+        - uid: sensugo-uid
+          type: sensugo
+          settings:
+            apikey: '[REDACTED]'
+            check: test-check
+            entity: test-entity
+            handler: test-handler
+            message: test-message
+            namespace: test-namespace
+            url: http://localhost
+          disableResolveMessage: true
