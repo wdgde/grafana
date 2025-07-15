@@ -71,6 +71,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps"
 	advisor2 "github.com/grafana/grafana/pkg/registry/apps/advisor"
 	notifications2 "github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
+	"github.com/grafana/grafana/pkg/registry/apps/correlation"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
@@ -696,7 +697,8 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	checkregistryService := checkregistry.ProvideService(service14, pluginstoreService, plugincontextProvider, middlewareHandler, plugincheckerService, repoManager, preinstallImpl, noop, provisionedpluginsNoop, ssosettingsimplService, cfg, pluginerrsStore)
 	advisorAppProvider := advisor2.RegisterApp(checkregistryService, cfg)
 	alertingNotificationsAppProvider := notifications2.RegisterApp(cfg, alertNG)
-	appregistryService, err := appregistry.ProvideRegistryServiceSink(apiserverService, eventualRestConfigProvider, featureToggles, playlistAppProvider, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, cfg)
+	correlationAppProvider := correlation.RegisterApp(cfg)
+	appregistryService, err := appregistry.ProvideRegistryServiceSink(apiserverService, eventualRestConfigProvider, featureToggles, playlistAppProvider, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, correlationAppProvider, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -1239,7 +1241,8 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	checkregistryService := checkregistry.ProvideService(service14, pluginstoreService, plugincontextProvider, middlewareHandler, plugincheckerService, repoManager, preinstallImpl, noop, provisionedpluginsNoop, ssosettingsimplService, cfg, pluginerrsStore)
 	advisorAppProvider := advisor2.RegisterApp(checkregistryService, cfg)
 	alertingNotificationsAppProvider := notifications2.RegisterApp(cfg, alertNG)
-	appregistryService, err := appregistry.ProvideRegistryServiceSink(apiserverService, eventualRestConfigProvider, featureToggles, playlistAppProvider, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, cfg)
+	correlationAppProvider := correlation.RegisterApp(cfg)
+	appregistryService, err := appregistry.ProvideRegistryServiceSink(apiserverService, eventualRestConfigProvider, featureToggles, playlistAppProvider, investigationsAppProvider, advisorAppProvider, alertingNotificationsAppProvider, correlationAppProvider, cfg)
 	if err != nil {
 		return nil, err
 	}
