@@ -183,9 +183,9 @@ const (
 	// Next generation provisioning... and git
 	FlagProvisioning = "provisioning"
 
-	// FlagNanoGit
-	// Use experimental git library for provisioning
-	FlagNanoGit = "nanoGit"
+	// FlagProvisioningSecretsService
+	// Experimental feature to use the secrets service for provisioning instead of the legacy secrets
+	FlagProvisioningSecretsService = "provisioningSecretsService"
 
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
@@ -355,10 +355,6 @@ const (
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
 
-	// FlagSsoSettingsApi
-	// Enables the SSO settings API and the OAuth configuration UIs in Grafana
-	FlagSsoSettingsApi = "ssoSettingsApi"
-
 	// FlagCanvasPanelPanZoom
 	// Allow pan and zoom in canvas panel
 	FlagCanvasPanelPanZoom = "canvasPanelPanZoom"
@@ -382,10 +378,6 @@ const (
 	// FlagRegressionTransformation
 	// Enables regression analysis transformation
 	FlagRegressionTransformation = "regressionTransformation"
-
-	// FlagLokiQueryHints
-	// Enables query hints for Loki
-	FlagLokiQueryHints = "lokiQueryHints"
 
 	// FlagKubernetesFeatureToggles
 	// Use the kubernetes API for feature toggle management in the frontend
@@ -679,10 +671,6 @@ const (
 	// Enables browser crash detection reporting to Faro.
 	FlagCrashDetection = "crashDetection"
 
-	// FlagJaegerBackendMigration
-	// Enables querying the Jaeger data source without the proxy
-	FlagJaegerBackendMigration = "jaegerBackendMigration"
-
 	// FlagAlertingUIOptimizeReducer
 	// Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
 	FlagAlertingUIOptimizeReducer = "alertingUIOptimizeReducer"
@@ -867,6 +855,10 @@ const (
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
 
+	// FlagTempoAlerting
+	// Enables creating alerts from Tempo data source
+	FlagTempoAlerting = "tempoAlerting"
+
 	// FlagPluginsAutoUpdate
 	// Enables auto-updating of users installed plugins
 	FlagPluginsAutoUpdate = "pluginsAutoUpdate"
@@ -886,10 +878,6 @@ const (
 	// FlagAlertingBulkActionsInUI
 	// Enables the alerting bulk actions in the UI
 	FlagAlertingBulkActionsInUI = "alertingBulkActionsInUI"
-
-	// FlagExtensionsReadOnlyProxy
-	// Use proxy-based read-only objects for plugin extensions instead of deep cloning
-	FlagExtensionsReadOnlyProxy = "extensionsReadOnlyProxy"
 
 	// FlagKubernetesAuthzApis
 	// Registers AuthZ /apis endpoint
@@ -926,4 +914,8 @@ const (
 	// FlagEnableAppChromeExtensions
 	// Set this to true to enable all app chrome extensions registered by plugins.
 	FlagEnableAppChromeExtensions = "enableAppChromeExtensions"
+
+	// FlagFoldersAppPlatformAPI
+	// Enables use of app platform API for folders
+	FlagFoldersAppPlatformAPI = "foldersAppPlatformAPI"
 )

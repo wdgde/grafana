@@ -20,6 +20,7 @@ type encryptionStoreImpl struct {
 	dialect sqltemplate.Dialect
 	tracer  trace.Tracer
 	log     log.Logger
+	metrics *DataKeyMetrics
 }
 
 func ProvideDataKeyStorage(
@@ -28,8 +29,7 @@ func ProvideDataKeyStorage(
 	features featuremgmt.FeatureToggles,
 	registerer prometheus.Registerer,
 ) (contracts.DataKeyStorage, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
-		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &encryptionStoreImpl{}, nil
 	}
 
@@ -38,6 +38,7 @@ func ProvideDataKeyStorage(
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),
 		tracer:  tracer,
 		log:     log.New("encryption.store"),
+		metrics: NewDataKeyMetrics(registerer),
 	}
 
 	return store, nil

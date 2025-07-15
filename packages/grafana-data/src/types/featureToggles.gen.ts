@@ -186,6 +186,7 @@ export interface FeatureToggles {
   logsExploreTableVisualisation?: boolean;
   /**
   * Support temporary security credentials in AWS plugins for Grafana Cloud customers
+  * @default true
   */
   awsDatasourcesTempCredentials?: boolean;
   /**
@@ -210,9 +211,9 @@ export interface FeatureToggles {
   */
   provisioning?: boolean;
   /**
-  * Use experimental git library for provisioning
+  * Experimental feature to use the secrets service for provisioning instead of the legacy secrets
   */
-  nanoGit?: boolean;
+  provisioningSecretsService?: boolean;
   /**
   * Start an additional https handler and write kubectl options
   */
@@ -393,11 +394,6 @@ export interface FeatureToggles {
   */
   pdfTables?: boolean;
   /**
-  * Enables the SSO settings API and the OAuth configuration UIs in Grafana
-  * @default true
-  */
-  ssoSettingsApi?: boolean;
-  /**
   * Allow pan and zoom in canvas panel
   */
   canvasPanelPanZoom?: boolean;
@@ -423,11 +419,6 @@ export interface FeatureToggles {
   * Enables regression analysis transformation
   */
   regressionTransformation?: boolean;
-  /**
-  * Enables query hints for Loki
-  * @default true
-  */
-  lokiQueryHints?: boolean;
   /**
   * Use the kubernetes API for feature toggle management in the frontend
   */
@@ -667,6 +658,7 @@ export interface FeatureToggles {
   alertingQueryAndExpressionsStepMode?: boolean;
   /**
   * Enables improved support for OAuth external sessions. After enabling this feature, users might need to re-authenticate themselves.
+  * @default true
   */
   improvedExternalSessionHandling?: boolean;
   /**
@@ -747,10 +739,6 @@ export interface FeatureToggles {
   */
   crashDetection?: boolean;
   /**
-  * Enables querying the Jaeger data source without the proxy
-  */
-  jaegerBackendMigration?: boolean;
-  /**
   * Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
   * @default true
   */
@@ -803,6 +791,7 @@ export interface FeatureToggles {
   k8SFolderMove?: boolean;
   /**
   * Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
+  * @default true
   */
   improvedExternalSessionHandlingSAML?: boolean;
   /**
@@ -954,6 +943,10 @@ export interface FeatureToggles {
   */
   metricsFromProfiles?: boolean;
   /**
+  * Enables creating alerts from Tempo data source
+  */
+  tempoAlerting?: boolean;
+  /**
   * Enables auto-updating of users installed plugins
   */
   pluginsAutoUpdate?: boolean;
@@ -976,10 +969,6 @@ export interface FeatureToggles {
   */
   alertingBulkActionsInUI?: boolean;
   /**
-  * Use proxy-based read-only objects for plugin extensions instead of deep cloning
-  */
-  extensionsReadOnlyProxy?: boolean;
-  /**
   * Registers AuthZ /apis endpoint
   */
   kubernetesAuthzApis?: boolean;
@@ -990,7 +979,7 @@ export interface FeatureToggles {
   restoreDashboards?: boolean;
   /**
   * Skip token rotation if it was already rotated less than 5 seconds ago
-  * @default false
+  * @default true
   */
   skipTokenRotationIfRecent?: boolean;
   /**
@@ -1010,7 +999,7 @@ export interface FeatureToggles {
   preferLibraryPanelTitle?: boolean;
   /**
   * Use fixed-width numbers globally in the UI
-  * @default true
+  * @default false
   */
   tabularNumbers?: boolean;
   /**
@@ -1023,4 +1012,9 @@ export interface FeatureToggles {
   * @default false
   */
   enableAppChromeExtensions?: boolean;
+  /**
+  * Enables use of app platform API for folders
+  * @default false
+  */
+  foldersAppPlatformAPI?: boolean;
 }
