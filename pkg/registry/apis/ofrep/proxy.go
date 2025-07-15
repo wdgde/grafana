@@ -3,7 +3,6 @@ package ofrep
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
@@ -20,26 +19,26 @@ func (b *APIBuilder) proxyAllFlagReq(isAuthedUser bool, w http.ResponseWriter, r
 		return
 	}
 
-	proxy.ModifyResponse = func(resp *http.Response) error {
-		if resp.StatusCode == http.StatusOK && !isAuthedUser {
-			var result map[string]interface{}
-			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-				return err
-			}
-			_ = resp.Body.Close()
-
-			filtered := make(map[string]any)
-			for k, v := range result {
-				if isPublicFlag(k) {
-					filtered[k] = v
-				}
-			}
-
-			writeResponse(http.StatusOK, filtered, b.logger, w)
-		}
-
-		return nil
-	}
+	//proxy.ModifyResponse = func(resp *http.Response) error {
+	//	if resp.StatusCode == http.StatusOK && !isAuthedUser {
+	//		var result map[string]interface{}
+	//		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	//			return err
+	//		}
+	//		_ = resp.Body.Close()
+	//
+	//		filtered := make(map[string]any)
+	//		for k, v := range result {
+	//			if isPublicFlag(k) {
+	//				filtered[k] = v
+	//			}
+	//		}
+	//
+	//		writeResponse(http.StatusOK, filtered, b.logger, w)
+	//	}
+	//
+	//	return nil
+	//}
 
 	proxy.ServeHTTP(w, r)
 }
