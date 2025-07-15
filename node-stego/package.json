@@ -1,0 +1,35 @@
+{
+    "name": "node-stego",
+    "version": "1.0.0",
+    "description": "TypeScript steganography library for embedding and extracting text in images",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch",
+        "test": "npm run build && node dist/test.js",
+        "demo": "npm run build && node demo.js",
+        "example": "node example.js",
+        "decode": "npm run build && node decode-cli.js",
+        "encode": "npm run build && node encode-cli.js"
+    },
+    "keywords": [
+        "steganography",
+        "image",
+        "encryption",
+        "typescript"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "sharp": "^0.33.0"
+    },
+    "devDependencies": {
+        "@types/node": "^20.0.0",
+        "typescript": "^5.0.0"
+    },
+    "browser": {
+        "sharp": false
+    },
+    "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
+}
