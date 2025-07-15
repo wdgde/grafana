@@ -3,10 +3,9 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
 
 import { DashboardTreeSelection } from '../../types';
-
-import { BulkMoveFormData } from './BulkMoveProvisionedResourcesDrawer';
 
 export function buildBreakdownString(
   folderCount: number,
@@ -43,7 +42,7 @@ interface BulkMoveRequest {
     createFile: any;
     deleteFile: any;
   };
-  options: BulkMoveFormData;
+  options: BaseProvisionedFormData;
 }
 
 interface BulkMoveResult {

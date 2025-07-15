@@ -14,27 +14,19 @@ import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { ResourceEditFormSharedFields } from 'app/features/dashboard-scene/components/Provisioned/ResourceEditFormSharedFields';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { generateTimestamp } from 'app/features/dashboard-scene/saving/provisioned/utils/timestamp';
+import { BaseProvisionedFormData } from 'app/features/dashboard-scene/saving/shared';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { WorkflowOption } from 'app/features/provisioning/types';
 
 import { DashboardTreeSelection } from '../../types';
 
 import { DescendantCount } from './DescendantCount';
 import { executeBulkMove } from './utils';
 
-export type BulkMoveFormData = {
-  comment: string;
-  ref: string;
-  workflow?: WorkflowOption;
-  path?: string;
-};
-
 interface FormProps extends BulkMoveProvisionResourceProps {
-  initialValues: BulkMoveFormData;
+  initialValues: BaseProvisionedFormData;
   repository: RepositoryView;
   workflowOptions: Array<{ label: string; value: string }>;
   isGitHub: boolean;
-  folderPath?: string;
 }
 
 interface BulkMoveProvisionResourceProps {
@@ -47,7 +39,6 @@ export function FormContent({
   selectedItems,
   initialValues,
   folderUid,
-  folderPath,
   workflowOptions,
   isGitHub,
   repository,
@@ -60,15 +51,15 @@ export function FormContent({
   const [targetFolderUID, setTargetFolderUID] = useState<string>(folderUid || '');
   const { data: targetFolder } = useGetFolderQuery({ name: targetFolderUID! }, { skip: !targetFolderUID });
 
-  const methods = useForm<BulkMoveFormData>({ defaultValues: initialValues });
+  const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch } = methods;
-  const [workflow] = watch(['ref', 'workflow']);
+  const [workflow] = watch(['workflow']);
 
   const onFolderChange = (folderUid?: string) => {
     setTargetFolderUID(folderUid || '');
   };
 
-  const handleSubmitForm = async (formData: BulkMoveFormData) => {
+  const handleSubmitForm = async (formData: BaseProvisionedFormData) => {
     if (!targetFolder || !repository) {
       return;
     }
@@ -123,7 +114,7 @@ export function FormContent({
             </Field>
 
             <ResourceEditFormSharedFields
-              resourceType="dashboard"
+              resourceType="dashboard" // TODO: Adjust to mix resources
               readOnly={isLoading}
               workflow={workflow}
               workflowOptions={workflowOptions}
@@ -152,11 +143,10 @@ export function BulkMoveProvisionedResourceDrawer({
   selectedItems,
   onClose,
 }: BulkMoveProvisionResourceProps) {
-  const { repository, folder } = useGetResourceRepositoryView({ folderName: folderUid });
+  const { repository } = useGetResourceRepositoryView({ folderName: folderUid });
 
   const workflowOptions = getWorkflowOptions(repository);
   const isGitHub = repository?.type === 'github';
-  const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
   const timestamp = generateTimestamp();
 
   const initialValues = {
@@ -175,7 +165,6 @@ export function BulkMoveProvisionedResourceDrawer({
       selectedItems={selectedItems}
       initialValues={initialValues}
       folderUid={folderUid}
-      folderPath={folderPath}
       workflowOptions={workflowOptions}
       isGitHub={isGitHub}
       onClose={onClose}
