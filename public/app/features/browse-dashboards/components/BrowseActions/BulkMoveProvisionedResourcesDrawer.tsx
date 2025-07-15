@@ -3,11 +3,11 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { t, Trans } from '@grafana/i18n';
 import { Box, Button, Drawer, Field, Stack } from '@grafana/ui';
+import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
   RepositoryView,
   useCreateRepositoryFilesWithPathMutation,
   useDeleteRepositoryFilesWithPathMutation,
-  useGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
@@ -17,16 +17,17 @@ import { generateTimestamp } from 'app/features/dashboard-scene/saving/provision
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { WorkflowOption } from 'app/features/provisioning/types';
 
-import { useGetFolderQuery } from '../../api/browseDashboardsAPI';
 import { DashboardTreeSelection } from '../../types';
 
 import { DescendantCount } from './DescendantCount';
+import { executeBulkMove } from './utils';
 
-interface BulkMoveFormData {
+export type BulkMoveFormData = {
   comment: string;
   ref: string;
   workflow?: WorkflowOption;
-}
+  path?: string;
+};
 
 interface FormProps extends BulkMoveProvisionResourceProps {
   initialValues: BulkMoveFormData;
@@ -57,17 +58,17 @@ export function FormContent({
   const [isLoading, setIsLoading] = useState(false);
 
   const [targetFolderUID, setTargetFolderUID] = useState<string>(folderUid || '');
-  const { data: targetFolder } = useGetFolderQuery(targetFolderUID || '', { skip: !targetFolderUID });
+  const { data: targetFolder } = useGetFolderQuery({ name: targetFolderUID! }, { skip: !targetFolderUID });
 
   const methods = useForm<BulkMoveFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch } = methods;
-  const [ref, workflow] = watch(['ref', 'workflow']);
+  const [workflow] = watch(['ref', 'workflow']);
 
   const onFolderChange = (folderUid?: string) => {
     setTargetFolderUID(folderUid || '');
   };
 
-  const handleSubmitForm = async (data: BulkMoveFormData) => {
+  const handleSubmitForm = async (formData: BulkMoveFormData) => {
     if (!targetFolder || !repository) {
       return;
     }
@@ -75,31 +76,28 @@ export function FormContent({
     setIsLoading(true);
 
     try {
-      // TODO: Implement actual bulk move logic here
-      // This is where you'll implement the actual API calls to:
-      // 1. Get each resource's current data and source path
-      // 2. Delete from source location
-      // 3. Create in target location
+      const folderAnnotations = targetFolder?.metadata.annotations || {};
 
-      console.log('Moving resources to:', targetFolder.title);
-      console.log(
-        'Selected folders:',
-        Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid])
-      );
-      console.log(
-        'Selected dashboards:',
-        Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid])
-      );
-      console.log('Form data:', data);
+      const result = await executeBulkMove({
+        selectedItems,
+        targetFolderPath: folderAnnotations[AnnoKeySourcePath],
+        repository,
+        mutations: { createFile, deleteFile },
+        options: { ...formData },
+      });
 
-      // Simulate work for now
-      // await new Promise(resolve => setTimeout(resolve, 2000));
-
-      console.log('Move completed successfully');
-      onClose();
+      // Handle results
+      if (result.failed.length === 0) {
+        console.log(`Successfully moved all ${result.summary.successCount} dashboards`);
+        onClose();
+      } else {
+        console.log(`Partial success: ${result.summary.successCount} successful, ${result.summary.failedCount} failed`);
+        console.error('Failed moves:', result.failed);
+        // TODO: Show partial success dialog
+      }
     } catch (error) {
-      console.error('Move failed:', error);
-      // TODO: Add proper error handling and user feedback
+      console.error('Bulk move failed:', error);
+      // TODO: Show error notification
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +106,7 @@ export function FormContent({
   const canSubmit = targetFolderUID && !isLoading;
 
   return (
-    <Drawer onClose={onClose} title="Bulk Move Resources">
+    <Drawer onClose={onClose} title={t('browse-dashboards.bulk-move-resources-form.title', 'Bulk Move Resources')}>
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(handleSubmitForm)}>
           <Stack direction="column" gap={2}>
@@ -120,7 +118,7 @@ export function FormContent({
             </Box>
 
             {/* Target folder selection */}
-            <Field label={t('dashboard-settings.general.folder-label', 'Target Folder')}>
+            <Field label={t('browse-dashboards.bulk-move-resources-form.target-folder', 'Target Folder')}>
               <FolderPicker value={targetFolderUID} onChange={onFolderChange} />
             </Field>
 
