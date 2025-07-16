@@ -284,6 +284,10 @@ export interface FeatureToggles {
   */
   formatString?: boolean;
   /**
+  * Routes correlation requests from /api to the /apis endpoint
+  */
+  kubernetesCorrelations?: boolean;
+  /**
   * Routes snapshot requests from /api to the /apis endpoint
   */
   kubernetesSnapshots?: boolean;

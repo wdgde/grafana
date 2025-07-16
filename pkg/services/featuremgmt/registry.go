@@ -471,6 +471,13 @@ var (
 			Expression:   "true", // enabled by default
 		},
 		{
+			Name:            "kubernetesCorrelations",
+			Description:     "Routes correlation requests from /api to the /apis endpoint",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:            "kubernetesSnapshots",
 			Description:     "Routes snapshot requests from /api to the /apis endpoint",
 			Stage:           FeatureStageExperimental,

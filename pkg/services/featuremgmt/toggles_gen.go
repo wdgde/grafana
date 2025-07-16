@@ -251,6 +251,10 @@ const (
 	// Enable format string transformer
 	FlagFormatString = "formatString"
 
+	// FlagKubernetesCorrelations
+	// Routes correlation requests from /api to the /apis endpoint
+	FlagKubernetesCorrelations = "kubernetesCorrelations"
+
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
