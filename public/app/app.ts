@@ -6,6 +6,8 @@ import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'file-saver';
 import 'jquery';
 
+import { OFREPWebProvider } from '@openfeature/ofrep-web-provider';
+import { OpenFeature } from '@openfeature/web-sdk';
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -128,6 +130,33 @@ export class GrafanaApp {
       await preInitTasks();
       // Let iframe container know grafana has started loading
       window.parent.postMessage('GrafanaAppInit', '*');
+
+      // OF -- start
+
+      const ofProvider = new OFREPWebProvider({
+        baseUrl: '/apis/features.grafana.app/v0alpha1/namespaces/' + config.namespace,
+        pollInterval: -1, // disable polling
+        timeoutMs: 10_000,
+      });
+
+      await OpenFeature.setProviderAndWait(ofProvider, {
+        targetingKey: 'default',
+        namespace: config.namespace,
+      });
+
+      const client = OpenFeature.getClient();
+
+      const backupSkipAddLocksFlag = client.getBooleanDetails('backup-skip-add-locks', false);
+      console.log('flag eval result', backupSkipAddLocksFlag);
+
+      // const localePrefFlag = client.getBooleanDetails('localeFormatPreference', false);
+      // console.log('flag eval result', localePrefFlag);
+
+      // const panelTitleSearchFlag = client.getBooleanDetails('panelTitleSearch', true);
+      // console.log('flag eval result', panelTitleSearchFlag);
+
+      // OF -- end
+
       const regionalFormat = config.featureToggles.localeFormatPreference
         ? config.regionalFormat
         : config.bootData.user.language;

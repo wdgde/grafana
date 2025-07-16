@@ -5657,6 +5657,52 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@openfeature/core@npm:^1.8.1":
+  version: 1.8.1
+  resolution: "@openfeature/core@npm:1.8.1"
+  checksum: 10/0d779718705d09a056b3e2a62f9a6b22706374f4caf0bc48ad9232993c9bc44a180d8408861e72dbbc7a423ec7b87444c23ca16e86456b6754cc3de78aa2e688
+  languageName: node
+  linkType: hard
+
+"@openfeature/ofrep-core@npm:^1.0.0":
+  version: 1.0.1
+  resolution: "@openfeature/ofrep-core@npm:1.0.1"
+  peerDependencies:
+    "@openfeature/core": ^1.6.0
+  checksum: 10/8851bd897f6de150f25f3a110b56698fabd67c9f0524fe47d899bcfce28426f872a82483fe9dadd52daa2a19ae3bf51ca7e3fd15abb811fa831751c9ebb41def
+  languageName: node
+  linkType: hard
+
+"@openfeature/ofrep-web-provider@npm:^0.3.3":
+  version: 0.3.3
+  resolution: "@openfeature/ofrep-web-provider@npm:0.3.3"
+  dependencies:
+    "@openfeature/ofrep-core": "npm:^1.0.0"
+  peerDependencies:
+    "@openfeature/web-sdk": ^1.4.0
+  checksum: 10/85f362e3ebaa9d421be91e4d966284e28850649e417d5db81181960b95ac693c9faa4a0bdc84eeb03fa694a8cd1e1f5d9de9bf0fba62f8e2669f9637836f0884
+  languageName: node
+  linkType: hard
+
+"@openfeature/react-sdk@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@openfeature/react-sdk@npm:1.0.0"
+  peerDependencies:
+    "@openfeature/web-sdk": ^1.5.0
+    react: ">=16.8.0"
+  checksum: 10/33806e874613be222aa2589c9f93d233796468d75c59df922f435b44d8988e71f1dce07c01b0a78c55846eac4a75347ac2cd50c2b90fd65a22d708963f5841be
+  languageName: node
+  linkType: hard
+
+"@openfeature/web-sdk@npm:^1.5.0":
+  version: 1.5.0
+  resolution: "@openfeature/web-sdk@npm:1.5.0"
+  peerDependencies:
+    "@openfeature/core": ^1.8.0
+  checksum: 10/29bae8f4c3bdfe55e4f121a98533473752bfb069110f51a23faee18a766e718e3a0cffdacfb665ee4a606f669a7241232bb896310667502eea465889fa49feb0
+  languageName: node
+  linkType: hard
+
 "@opentelemetry/api-logs@npm:0.202.0":
   version: 0.202.0
   resolution: "@opentelemetry/api-logs@npm:0.202.0"
@@ -18179,6 +18225,10 @@ __metadata:
     "@msagl/core": "npm:^1.1.19"
     "@msagl/parser": "npm:^1.1.19"
     "@npmcli/package-json": "npm:^5.2.0"
+    "@openfeature/core": "npm:^1.8.1"
+    "@openfeature/ofrep-web-provider": "npm:^0.3.3"
+    "@openfeature/react-sdk": "npm:^1.0.0"
+    "@openfeature/web-sdk": "npm:^1.5.0"
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@opentelemetry/semantic-conventions": "npm:1.34.0"
