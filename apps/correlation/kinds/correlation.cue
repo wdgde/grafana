@@ -9,6 +9,7 @@ correlation: {
 	}
 	versions: {
 		"v0alpha1": {
+			validation: operations: ["CREATE","UPDATE"]
 			codegen: {
 				frontend: true
 				backend:  true

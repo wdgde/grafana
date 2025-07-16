@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -24,6 +25,14 @@ func New(cfg app.Config) (app.App, error) {
 		ManagedKinds: []simple.AppManagedKind{
 			{
 				Kind: correlationv0alpha1.CorrelationKind(),
+				Validator: &simple.Validator{
+					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
+						// do something here if needed
+						fmt.Println("correlations validate", ctx, req);
+						return nil
+					},
+				},
+				
 			},
 		},
 	}
