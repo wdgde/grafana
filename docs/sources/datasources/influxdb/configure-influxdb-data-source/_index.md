@@ -8,7 +8,7 @@ description: Guide for using InfluxDB in Grafana
 keywords:
   - grafana
   - influxdb
-  - guide
+  - guidesdfvgdsgdfrs
   - flux
 labels:
   products:
