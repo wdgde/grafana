@@ -4,8 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"k8s.io/client-go/dynamic"
-
+	"github.com/grafana/grafana-app-sdk/resource"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
@@ -49,5 +48,16 @@ type SecureValueService interface {
 }
 
 type SecureValueClient interface {
-	Client(ctx context.Context, namespace string) (dynamic.ResourceInterface, error)
+	Client(ctx context.Context, namespace string) (NamespacedClient[*secretv1beta1.SecureValue, *secretv1beta1.SecureValueList], error)
+}
+
+// App SDK does not provide an interface.
+type NamespacedClient[T resource.Object, L resource.ListObject] interface {
+	List(ctx context.Context, opts resource.ListOptions) (L, error)
+	Watch(ctx context.Context, opts resource.WatchOptions) (resource.WatchResponse, error)
+	Get(ctx context.Context, uid string) (T, error)
+	Create(ctx context.Context, obj T, opts resource.CreateOptions) (T, error)
+	Update(ctx context.Context, obj T, opts resource.UpdateOptions) (T, error)
+	Patch(ctx context.Context, uid string, req resource.PatchRequest, opts resource.PatchOptions) (T, error)
+	Delete(ctx context.Context, uid string, opts resource.DeleteOptions) error
 }
