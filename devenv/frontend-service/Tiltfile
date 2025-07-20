@@ -38,6 +38,8 @@ docker_build('grafana-backend', '../..',
   only=[
     "./Makefile",
     "./devenv/frontend-service/build-grafana.sh",
+    "./devenv/frontend-service/provisioning",
+
 
     "./apps",
     "./pkg",
@@ -63,10 +65,14 @@ docker_build('grafana-backend', '../..',
   ],
   live_update = [
     sync('../../public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
+
+    # The provisioning directory is mounted, rather than copied. The destination of this sync is
+    # ignored, but we used it to trigger a restart when it changes
+    sync('./provisioning', '/ignore/provisioning'),
+
     restart_container()
   ]
 )
-
 
 docker_build('grafana-proxy', '.',
   dockerfile='proxy.dockerfile',

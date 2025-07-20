@@ -22,6 +22,7 @@ services:
     volumes:
       - backend-data:/grafana/data
       - ../../public/app/plugins:/grafana/public/app/plugins
+      - ./provisioning:/grafana/conf/provisioning
     environment:
       GF_FEATURE_TOGGLES_ENABLE: multiTenantFrontend
       GF_SERVER_CDN_URL: http://localhost:3010
@@ -41,5 +42,65 @@ services:
       GF_SECURITY_CONTENT_SECURITY_POLICY: false
       GF_SERVER_CDN_URL: http://localhost:3010
 
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-remote-write-receiver'
+    # command:
+    #   - '--config.file=/etc/prometheus/prometheus.yml'
+    #   - '--storage.tsdb.path=/prometheus'
+    #   - '--web.console.libraries=/etc/prometheus/console_libraries'
+    #   - '--web.console.templates=/etc/prometheus/consoles'
+    #   - '--storage.tsdb.retention.time=200h'
+    #   - '--web.enable-lifecycle'
+
+  loki:
+    image: grafana/loki
+    volumes:
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+
+  tempo:
+    image: grafana/tempo
+    volumes:
+      - tempo-data:/tmp/tempo
+    # command:
+    #   - '-config.file=/etc/tempo/tempo.yaml'
+
+  pyroscope:
+    image: grafana/pyroscope
+    ports:
+      - '4040:4040'
+    volumes:
+      - pyroscope-data:/var/lib/pyroscope
+    environment:
+      PYROSCOPE_LOG_LEVEL: debug
+
+  alloy:
+    image: grafana/alloy:latest
+    volumes:
+      - ./config.alloy:/etc/alloy/config.alloy
+      - alloy-data:/var/lib/alloy/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - '12346:12345' # Alloy UI
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    depends_on:
+      - prometheus
+      - loki
+
 volumes:
   backend-data:
+  prometheus-data:
+  loki-data:
+  tempo-data:
+  pyroscope-data:
+  alloy-data:
