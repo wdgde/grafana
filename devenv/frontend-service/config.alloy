@@ -1,0 +1,89 @@
+discovery.docker "tilt" {
+	host = "unix:///var/run/docker.sock"
+
+	filter {
+		name   = "name"
+		values = ["/frontend-service-"]
+	}
+}
+
+livedebugging {
+	enabled = true
+}
+
+discovery.relabel "keep_frontend_services" {
+	targets = discovery.docker.tilt.targets
+
+	rule {
+		source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+		action        = "keep"
+		regex         = "frontend-service"
+	}
+
+	rule {
+		source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+		// regex = "/(.*)"
+		target_label = "service_name"
+	}
+}
+
+loki.source.docker "default" {
+	host          = "unix:///var/run/docker.sock"
+	targets       = discovery.docker.tilt.targets
+	relabel_rules = discovery.relabel.keep_frontend_services.rules
+	labels        = {"app" = "docker"}
+	forward_to    = [loki.write.publish_logs.receiver]
+}
+
+//
+// Job: Alloy self-monitoring
+prometheus.exporter.self "alloy_metrics" { }
+
+prometheus.scrape "self_metrics" {
+	targets         = prometheus.exporter.self.alloy_metrics.targets
+	scrape_interval = "15s"
+	forward_to      = [prometheus.relabel.self_metrics.receiver]
+}
+
+prometheus.relabel "self_metrics" {
+	rule {
+		target_label = "job"
+		replacement  = "alloy"
+		action       = "replace"
+	}
+
+	forward_to = [prometheus.remote_write.publish_metrics.receiver]
+}
+
+logging {
+	level    = "info"
+	format   = "json"
+	write_to = [loki.write.publish_logs.receiver]
+}
+
+//
+// Job: Grafana backend
+prometheus.scrape "grafana_backend" {
+	targets = [{
+		__scheme__  = "http",
+		__address__ = "backend:3000",
+		job         = "grafana-backend",
+	}]
+	scrape_interval = "15s"
+	forward_to      = [prometheus.remote_write.publish_metrics.receiver]
+}
+
+//
+// 'Outputs' that send stuff to the databases
+//
+loki.write "publish_logs" {
+	endpoint {
+		url = "http://loki:3100/loki/api/v1/push"
+	}
+}
+
+prometheus.remote_write "publish_metrics" {
+	endpoint {
+		url = "http://prometheus:9090/api/v1/write"
+	}
+}
