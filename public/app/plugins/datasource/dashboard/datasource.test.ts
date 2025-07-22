@@ -12,7 +12,7 @@ import {
   AdHocVariableFilter,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { setPluginImportUtils, config } from '@grafana/runtime';
 import {
   SafeSerializableSceneObject,
   SceneDataNode,
@@ -178,23 +178,14 @@ describe('DashboardDatasource', () => {
 
     // Test AdHoc filtering via the Public API first, to ensure Integration
     describe('Integration (Public API)', () => {
-      const originalConfig = jest.requireActual('@grafana/runtime').config;
+      const originalToggleValue = config.featureToggles.dashboardDsAdHocFiltering;
 
       beforeEach(() => {
-        jest.doMock('@grafana/runtime', () => ({
-          ...jest.requireActual('@grafana/runtime'),
-          config: {
-            ...originalConfig,
-            featureToggles: {
-              ...originalConfig.featureToggles,
-              dashboardDsAdHocFiltering: true,
-            },
-          },
-        }));
+        config.featureToggles.dashboardDsAdHocFiltering = true;
       });
 
       afterEach(() => {
-        jest.resetModules();
+        config.featureToggles.dashboardDsAdHocFiltering = originalToggleValue;
       });
 
       it('should apply basic filtering end-to-end through public query method', async () => {
@@ -235,16 +226,7 @@ describe('DashboardDatasource', () => {
 
       it('should respect feature toggle and not filter when disabled', async () => {
         // Temporarily disable the feature toggle for this test
-        jest.doMock('@grafana/runtime', () => ({
-          ...jest.requireActual('@grafana/runtime'),
-          config: {
-            ...originalConfig,
-            featureToggles: {
-              ...originalConfig.featureToggles,
-              dashboardDsAdHocFiltering: false,
-            },
-          },
-        }));
+        config.featureToggles.dashboardDsAdHocFiltering = false;
 
         const testFrame = createTestFrame([
           { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
