@@ -6,6 +6,7 @@ import (
 	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource/manifest"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
@@ -33,6 +34,9 @@ var WireSet = wire.NewSet(
 	plugincontext.ProvideService,
 	wire.Bind(new(datasource.PluginContextWrapper), new(*plugincontext.Provider)),
 	datasource.ProvideDefaultPluginConfigs,
+
+	// Manifest extension factory
+	manifest.ProvideOpenAPIExtensionProvider,
 
 	// Secrets
 	secret.RegisterDependencies,
