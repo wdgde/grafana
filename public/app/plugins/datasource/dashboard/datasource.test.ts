@@ -176,7 +176,7 @@ describe('DashboardDatasource', () => {
       };
     }
 
-    // 🔺 INTEGRATION TESTS (Public API) - Test Pyramid Top
+    // Test AdHoc filtering via the Public API first, to ensure Integration
     describe('Integration (Public API)', () => {
       const originalConfig = jest.requireActual('@grafana/runtime').config;
 
@@ -213,7 +213,6 @@ describe('DashboardDatasource', () => {
                     series: [testFrame],
                     state: LoadingState.Done,
                     timeRange: getDefaultTimeRange(),
-                    structureRev: 11,
                   },
                 }),
               }),
@@ -262,7 +261,6 @@ describe('DashboardDatasource', () => {
                     series: [testFrame],
                     state: LoadingState.Done,
                     timeRange: getDefaultTimeRange(),
-                    structureRev: 11,
                   },
                 }),
               }),
@@ -300,7 +298,6 @@ describe('DashboardDatasource', () => {
                     series: [testFrame],
                     state: LoadingState.Done,
                     timeRange: getDefaultTimeRange(),
-                    structureRev: 11,
                   },
                 }),
               }),
@@ -325,8 +322,11 @@ describe('DashboardDatasource', () => {
       });
     });
 
-    // 🔻 UNIT TESTS (Private Method) - Test Pyramid Base
-    describe('Algorithm (Private Method)', () => {
+    // Now test AdHoc filtering with unit-tests to test all aspects of behaviour.
+    // Here we test a private method, which allows for smaller, simpler,
+    // faster tests.
+    // This is the bottom of the 'Test Pyramid'
+    describe('Algorithm (but by testing a Private Method)', () => {
       const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
 
       // Type-safe interface for accessing private methods in tests
@@ -597,7 +597,6 @@ function setup(query: DashboardQuery, requestId?: string) {
         series: [arrayToDataFrame([1, 2, 3])],
         state: LoadingState.Done,
         timeRange: getDefaultTimeRange(),
-        structureRev: 11,
       },
     }),
     transformations: [{ id: 'reduce', options: {} }],
