@@ -20,11 +20,16 @@ var _ builder.APIGroupMutation = (*IdentityAccessManagementAPIBuilder)(nil)
 // Used wire to identify the storage backend for core roles.
 type CoreRoleStorageBackend interface{ resource.StorageBackend }
 
+// ResourcePermissionStorageBackend uses the resource.StorageBackend interface to provide storage for resource permissions.
+// Used wire to identify the storage backend for resource permissions.
+type ResourcePermissionStorageBackend interface{ resource.StorageBackend }
+
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
 	// Stores
-	store            legacy.LegacyIdentityStore
-	coreRolesStorage CoreRoleStorageBackend
+	store                      legacy.LegacyIdentityStore
+	coreRolesStorage           CoreRoleStorageBackend
+	resourcePermissionsStorage ResourcePermissionStorageBackend
 
 	// Access Control
 	authorizer authorizer.Authorizer
