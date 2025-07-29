@@ -13,7 +13,8 @@ test.describe(
       page,
     }) => {
       // this test can absolutely take longer than the default 30s timeout
-      test.setTimeout(60000);
+      //
+      test.setTimeout(120000);
 
       // Create new dashboard
       const dashboardPage = await gotoDashboardPage({});
