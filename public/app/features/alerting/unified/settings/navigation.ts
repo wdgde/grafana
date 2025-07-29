@@ -2,6 +2,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { useSelector } from 'app/types/store';
 
 import { useSettingsExtensionsNav } from './extensions';
@@ -14,6 +15,9 @@ export function useSettingsPageNav() {
 
   const extensionTabs = useSettingsExtensionsNav();
 
+  const supportsRuleRecovery =
+    Boolean(config.featureToggles.alertRuleRestore) && Boolean(config.featureToggles.alertingRuleRecoverDeleted);
+
   // All available tabs including the main alertmanager tab
   const allTabs: NavModelItem[] = [
     {
@@ -24,8 +28,20 @@ export function useSettingsPageNav() {
       icon: 'cloud',
       parentItem: settingsNav,
     },
-    ...extensionTabs,
   ];
+
+  if (supportsRuleRecovery) {
+    allTabs.push({
+      id: 'recently-deleted',
+      text: t('alerting.settings.tabs.recently-deleted', 'Recently deleted'),
+      url: '/alerting/recently-deleted',
+      active: location.pathname === '/alerting/recently-deleted',
+      icon: 'trash-alt',
+      parentItem: settingsNav,
+    });
+  }
+
+  allTabs.push(...extensionTabs);
 
   // Create pageNav that represents the Settings page with tabs as children
   const pageNav: NavModelItem = {

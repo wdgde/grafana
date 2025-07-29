@@ -32,7 +32,7 @@ function AlertmanagerSettingsContent() {
       actions={[
         <WithReturnButton
           key="add-alertmanager"
-          title={t('alerting.settings-content.title-alerting-settings', 'Alerting settings')}
+          title={t('alerting.settings-content.title-alerting-settings', 'Alerting configuration')}
           component={
             <LinkButton href="/connections/datasources/alertmanager" icon="plus" variant="primary">
               <Trans i18nKey="alerting.settings-content.add-new-alertmanager">Add new Alertmanager</Trans>

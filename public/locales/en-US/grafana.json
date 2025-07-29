@@ -2666,14 +2666,15 @@
     },
     "settings": {
       "tabs": {
-        "alert-managers": "Alert managers"
+        "alert-managers": "Alert managers",
+        "recently-deleted": "Recently deleted"
       }
     },
     "settings-content": {
       "add-new-alertmanager": "Add new Alertmanager",
       "builtin-alertmanager": "Built-in Alertmanager",
       "other-alertmanagers": "Other Alertmanagers",
-      "title-alerting-settings": "Alerting settings"
+      "title-alerting-settings": "Alerting configuration"
     },
     "silence-details": {
       "affected-alerts": "Affected alerts",
@@ -9873,7 +9874,7 @@
     },
     "alerting-admin": {
       "subtitle": "Manage Alertmanager configurations and enable receiving Grafana-managed alerts",
-      "title": "Settings"
+      "title": "Configuration"
     },
     "alerting-am-routes": {
       "subtitle": "Determine how alerts are routed to contact points",

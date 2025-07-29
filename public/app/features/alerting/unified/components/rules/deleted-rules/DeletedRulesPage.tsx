@@ -3,6 +3,7 @@ import { Alert } from '@grafana/ui';
 
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../../api/featureDiscoveryApi';
+import { useSettingsPageNav } from '../../../settings/navigation';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { withPageErrorBoundary } from '../../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../../AlertingPageWrapper';
@@ -10,6 +11,8 @@ import { AlertingPageWrapper } from '../../AlertingPageWrapper';
 import { DeletedRules } from './DeletedRules';
 
 function DeletedrulesPage() {
+  const { navId, pageNav } = useSettingsPageNav();
+
   const {
     currentData = [],
     isLoading,
@@ -20,7 +23,7 @@ function DeletedrulesPage() {
   });
 
   return (
-    <AlertingPageWrapper navId="alerts/recently-deleted" isLoading={isLoading}>
+    <AlertingPageWrapper navId={navId} isLoading={isLoading} pageNav={pageNav}>
       <>
         {error && (
           <Alert title={t('alerting.deleted-rules.errorloading', 'Failed to load alert deleted rules')}>
