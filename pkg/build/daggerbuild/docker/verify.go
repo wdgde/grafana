@@ -37,10 +37,13 @@ func Verify(
 		WithMountedTemp("/var/lib/grafana/plugins", dagger.ContainerWithMountedTempOpts{}).
 		Import(image).
 		WithEnvVariable("GF_LOG_LEVEL", "error").
-		WithExposedPort(3000)
+		WithExposedPort(3000).
+		AsService(dagger.ContainerAsServiceOpts{
+			Args: []string{"grafana-server"},
+		})
 
 		// TODO: Add LICENSE to containers and implement validation
-	container, err := e2e.ValidatePackage(ctx, d, service.AsService(), src, yarnCache, nodeVersion)
+	container, err := e2e.ValidatePackage(ctx, d, service, src, yarnCache, nodeVersion)
 	if err != nil {
 		return err
 	}
