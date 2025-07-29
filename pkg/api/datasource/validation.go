@@ -18,7 +18,6 @@ var logger = log.New("datasource")
 var requiredURL = map[string]bool{
 	datasources.DS_GRAPHITE:          true,
 	datasources.DS_INFLUXDB:          true,
-	datasources.DS_INFLUXDB_08:       true,
 	datasources.DS_ES:                true,
 	datasources.DS_PROMETHEUS:        true,
 	datasources.DS_AMAZON_PROMETHEUS: true,

@@ -530,17 +530,6 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 				dsDTO.WithCredentials = ds.WithCredentials
 			}
 
-			if ds.Type == datasources.DS_INFLUXDB_08 {
-				password, err := hs.DataSourcesService.DecryptedPassword(c.Req.Context(), ds)
-				if err != nil {
-					return nil, err
-				}
-
-				dsDTO.Username = ds.User
-				dsDTO.Password = password
-				dsDTO.URL = url + "/db/" + ds.Database
-			}
-
 			if ds.Type == datasources.DS_INFLUXDB {
 				password, err := hs.DataSourcesService.DecryptedPassword(c.Req.Context(), ds)
 				if err != nil {

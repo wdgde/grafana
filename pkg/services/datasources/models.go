@@ -21,7 +21,6 @@ const (
 	DS_ES_OPENSEARCH     = "grafana-opensearch-datasource"
 	DS_GRAPHITE          = "graphite"
 	DS_INFLUXDB          = "influxdb"
-	DS_INFLUXDB_08       = "influxdb_08"
 	DS_JAEGER            = "jaeger"
 	DS_LOKI              = "loki"
 	DS_MSSQL             = "mssql"

@@ -178,17 +178,6 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	ctxLogger := logger.FromContext(req.Context())
 
 	switch proxy.ds.Type {
-	case datasources.DS_INFLUXDB_08:
-		password, err := proxy.dataSourcesService.DecryptedPassword(req.Context(), proxy.ds)
-		if err != nil {
-			ctxLogger.Error("Error interpolating proxy url", "error", err)
-			return
-		}
-
-		req.URL.RawPath = util.JoinURLFragments(proxy.targetUrl.Path, "db/"+proxy.ds.Database+"/"+proxy.proxyPath)
-		reqQueryVals.Add("u", proxy.ds.User)
-		reqQueryVals.Add("p", password)
-		req.URL.RawQuery = reqQueryVals.Encode()
 	case datasources.DS_INFLUXDB:
 		password, err := proxy.dataSourcesService.DecryptedPassword(req.Context(), proxy.ds)
 		if err != nil {

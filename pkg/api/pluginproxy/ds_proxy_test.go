@@ -469,26 +469,6 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		})
 	})
 
-	t.Run("When proxying InfluxDB", func(t *testing.T) {
-		ds := &datasources.DataSource{
-			Type:     datasources.DS_INFLUXDB_08,
-			URL:      "http://influxdb:8083",
-			Database: "site",
-			User:     "user",
-		}
-
-		ctx := &contextmodel.ReqContext{}
-		var routes []*plugins.Route
-		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "")
-		require.NoError(t, err)
-
-		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
-		require.NoError(t, err)
-
-		proxy.director(req)
-		assert.Equal(t, "/db/site/", req.URL.Path)
-	})
-
 	t.Run("When proxying a data source with no keepCookies specified", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(`{"keepCookies": []}`))
 		require.NoError(t, err)
@@ -656,8 +636,6 @@ func TestIntegrationDataSourceProxy_routeRule(t *testing.T) {
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 
 		tests := []*testCase{
-			createAuthTest(t, secretsStore, datasources.DS_INFLUXDB_08, "http://localhost:9090", authTypePassword, authCheckQuery),
-			createAuthTest(t, secretsStore, datasources.DS_INFLUXDB_08, "http://localhost:9090", authTypePassword, authCheckQuery),
 			createAuthTest(t, secretsStore, datasources.DS_INFLUXDB, "http://localhost:9090", authTypePassword, authCheckHeader),
 			createAuthTest(t, secretsStore, datasources.DS_INFLUXDB, "http://localhost:9090", authTypePassword, authCheckHeader),
 			createAuthTest(t, secretsStore, datasources.DS_INFLUXDB, "http://localhost:9090", authTypeBasic, authCheckHeader),
