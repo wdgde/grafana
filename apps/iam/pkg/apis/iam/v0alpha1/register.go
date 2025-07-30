@@ -23,7 +23,8 @@ var CoreRoleInfo = utils.NewResourceInfo(GROUP, VERSION,
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Title", Type: "string", Format: "string", Description: "Core role name"}, // Not sure this is actually needed
+			{Name: "Group", Type: "string", Format: "group", Description: "Core role group"},
+			{Name: "Title", Type: "string", Format: "string", Description: "Core role name"},
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
@@ -32,6 +33,7 @@ var CoreRoleInfo = utils.NewResourceInfo(GROUP, VERSION,
 				if core != nil {
 					return []interface{}{
 						core.Name,
+						core.Spec.Group,
 						core.Spec.Title,
 						core.CreationTimestamp.UTC().Format(time.RFC3339),
 					}, nil
@@ -68,6 +70,34 @@ var ResourcePermissionInfo = utils.NewResourceInfo(GROUP, VERSION,
 	},
 )
 
+var RoleInfo = utils.NewResourceInfo(GROUP, VERSION,
+	"roles", "role", "Role",
+	func() runtime.Object { return &Role{} },
+	func() runtime.Object { return &RoleList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Group", Type: "string", Format: "group", Description: "Role group"},
+			{Name: "Title", Type: "string", Format: "string", Description: "Role name"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			role, ok := obj.(*Role)
+			if ok {
+				if role != nil {
+					return []interface{}{
+						role.Name,
+						role.Spec.Group,
+						role.Spec.Title,
+						role.CreationTimestamp.UTC().Format(time.RFC3339),
+					}, nil
+				}
+			}
+			return nil, fmt.Errorf("expected role")
+		},
+	},
+)
+
 var (
 	SchemeBuilder      runtime.SchemeBuilder
 	localSchemeBuilder = &SchemeBuilder
@@ -86,6 +116,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&CoreRoleList{},
 		&ResourcePermission{},
 		&ResourcePermissionList{},
+		&Role{},
+		&RoleList{},
 
 		// What is this about?
 		&metav1.PartialObjectMetadata{},

@@ -51,6 +51,7 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	coreRolesStorage CoreRoleStorageBackend,
 	resourcePermissionsStorage ResourcePermissionStorageBackend,
+	rolesStorage RoleStorageBackend,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	store := legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql))
 	legacyAccessClient := newLegacyAccessClient(ac, store)
@@ -59,8 +60,9 @@ func RegisterAPIService(
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                      store,
 		coreRolesStorage:           coreRolesStorage,
-		sso:                        ssoService,
 		resourcePermissionsStorage: resourcePermissionsStorage,
+		rolesStorage:               rolesStorage,
+		sso:                        ssoService,
 		authorizer:                 authorizer,
 		legacyAccessClient:         legacyAccessClient,
 		accessClient:               accessClient,
@@ -159,17 +161,23 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	if b.enableAuthZApis {
 		// v0alpha1
-		store, err := NewLocalStore(iamv0.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
+		coreRoleStore, err := NewLocalStore(iamv0.CoreRoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.coreRolesStorage)
 		if err != nil {
 			return err
 		}
-		storage[iamv0.CoreRoleInfo.StoragePath()] = store
+		storage[iamv0.CoreRoleInfo.StoragePath()] = coreRoleStore
 
 		resourcePermissionStore, err := NewLocalStore(iamv0.ResourcePermissionInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.resourcePermissionsStorage)
 		if err != nil {
 			return err
 		}
 		storage[iamv0.ResourcePermissionInfo.StoragePath()] = resourcePermissionStore
+
+		roleStore, err := NewLocalStore(iamv0.RoleInfo, apiGroupInfo.Scheme, opts.OptsGetter, b.reg, b.accessClient, b.rolesStorage)
+		if err != nil {
+			return err
+		}
+		storage[iamv0.RoleInfo.StoragePath()] = roleStore
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[legacyiamv0.VERSION] = storage
