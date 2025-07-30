@@ -86,7 +86,7 @@
         .fs-hidden {
           display: none;
         }
- 
+
         .fs-spinner {
           animation: spin 1500ms linear infinite;
           width: 32px;
@@ -100,7 +100,7 @@
         .fs-spinner-arc {
           stroke: #F55F3E;
         }
-        
+
         .fs-loader-text {
           opacity: 0;
           font-size: 16px;
@@ -200,7 +200,7 @@
         async function fetchBootData() {
           const resp = await fetch("/bootdata");
           const textResponse = await resp.text();
-          
+
           let rawBootData;
           try {
             rawBootData = JSON.parse(textResponse);
@@ -212,7 +212,7 @@
           if (resp.status === 503 && rawBootData.code === 'Loading') {
             return;
           }
-          
+
           if (!resp.ok) {
             throw new Error("Unexpected response body: " + textResponse);
           }
