@@ -236,10 +236,13 @@ func (service *AlertRuleService) GetAlertRuleWithFolderFullpath(ctx context.Cont
 	}, nil
 }
 
-// CreateAlertRule creates a new alert rule. This function will ignore any
-// interval that is set in the rule struct and use the already existing group
-// interval or the default one.
+// CreateAlertRule creates a new alert rule. For normal rule groups, this function will ignore any
+// interval that is set in the rule struct and use the already existing group interval or the default one.
 func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user identity.Requester, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
+	if models.IsNoGroupRuleGroup(rule.RuleGroup) {
+		return models.AlertRule{}, fmt.Errorf("%w: rules must have a valid group", models.ErrAlertRuleFailedValidation)
+	}
+
 	if rule.UID == "" {
 		rule.UID = util.GenerateShortUID()
 	} else if err := util.ValidateUID(rule.UID); err != nil {
@@ -456,6 +459,11 @@ func (service *AlertRuleService) UpdateRuleGroup(ctx context.Context, user ident
 func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, user identity.Requester, group models.AlertRuleGroup, provenance models.Provenance) error {
 	if err := models.ValidateRuleGroupInterval(group.Interval, service.baseIntervalSeconds); err != nil {
 		return err
+	}
+
+	// If the rule group is reserved for no-group rules, we cannot have multiple rules in it.
+	if models.IsNoGroupRuleGroup(group.Title) && len(group.Rules) > 1 {
+		return fmt.Errorf("rule group %s is reserved for no-group rules and cannot be used for rule groups with multiple rules", group.Title)
 	}
 
 	for _, rule := range group.Rules {

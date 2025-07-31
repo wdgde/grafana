@@ -32,6 +32,7 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagInvestigationsBackend,
 			featuremgmt.FlagGrafanaAdvisor,
+			featuremgmt.FlagKubernetesAlertingRules,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // all datasources
 		},
 	})
@@ -62,7 +63,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		require.NoError(t, err, "requesting OpenAPI v2")
 		require.Equal(t, "Grafana API Server", v2.Info.Title)
 	})
-
 	dir := "openapi_snapshots"
 
 	var groups = []schema.GroupVersion{{
@@ -94,6 +94,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Version: "v0alpha1",
 	}, {
 		Group:   "notifications.alerting.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "rules.alerting.grafana.app",
 		Version: "v0alpha1",
 	}}
 	for _, gv := range groups {
