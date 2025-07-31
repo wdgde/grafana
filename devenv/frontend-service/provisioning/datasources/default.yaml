@@ -1,0 +1,11 @@
+apiVersion: 1
+
+prune: true
+
+datasources:
+  - name: gdev Testdata
+    uid: gdev-testdata # Many dev-dashboards use this UID
+    type: testdata
+  - name: Testdata 2
+    uid: PD8C576611E62080A # Many dev-dashboards use this UID
+    type: testdata

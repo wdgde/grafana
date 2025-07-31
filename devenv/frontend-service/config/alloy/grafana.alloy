@@ -1,0 +1,50 @@
+//
+// Job: Grafana backend
+prometheus.scrape "grafana_backend" {
+	targets = [{
+		__scheme__  = "http",
+		__address__ = "backend-api:3000",
+		job         = "grafana-backend",
+	}]
+	scrape_interval = "15s"
+	forward_to      = [prometheus.relabel.publish_metrics.receiver]
+}
+
+prometheus.scrape "frontend_service" {
+	targets = [{
+		__scheme__  = "http",
+		__address__ = "frontend-service:3000",
+		job         = "frontend-service",
+	}]
+	scrape_interval = "15s"
+	forward_to      = [prometheus.relabel.publish_metrics.receiver]
+}
+
+
+//
+// Traces
+otelcol.receiver.otlp "grafana_dev" {
+  output {
+    metrics = []
+    logs    = []
+    traces  = [otelcol.processor.transform.publish_traces.input]
+  }
+
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+}
+
+
+//
+// Profiling
+pyroscope.scrape "grafana_dev" {
+  targets = [
+    {"__address__" = "backend-api:6060", "service_name"="backend-api"},
+		{"__address__" = "frontend-service:6060", "service_name"="frontend-service"},
+  ]
+
+	scrape_interval = "15s"
+
+  forward_to = [pyroscope.relabel.publish_profiles.receiver]
+}

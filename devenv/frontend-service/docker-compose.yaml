@@ -6,6 +6,8 @@ services:
     build:
       context: .
       dockerfile: proxy.dockerfile
+    labels:
+      - "alloy.logs=true"
     volumes:
       - ../../public/build:/cdn/public/build
       - ../../public/fonts:/cdn/public/fonts
@@ -13,15 +15,14 @@ services:
       - '3000:80' # Gateway
       - '3010:81' # CDN
 
-  backend:
+  backend-api:
     image: grafana-fs-dev
     build:
       context: ../..
       dockerfile: devenv/frontend-service/grafana-fs-dev.dockerfile
     entrypoint: ['bin/grafana', 'server']
-    volumes:
-      - backend-data:/grafana/data
     environment:
+      OTEL_SERVICE_NAME: backend-api
       GF_SERVER_CDN_URL: http://localhost:3010
       GF_FEATURE_TOGGLES_ENABLE: multiTenantFrontend
       GF_DATABASE_TYPE: postgres
@@ -29,6 +30,21 @@ services:
       GF_DATABASE_NAME: grafana
       GF_DATABASE_USER: grafana
       GF_DATABASE_PASSWORD: grafana
+      GF_SERVER_ROUTER_LOGGING: true
+      GF_LOG_LEVEL: info
+      GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS: "alloy:4317"
+      GF_DIAGNOSTICS_PROFILING_ENABLED: true
+      GF_DIAGNOSTICS_PROFILING_ADDR: "0.0.0.0"
+      GF_DIAGNOSTICS_PROFILING_PORT: 6060
+      GF_DIAGNOSTICS_PROFILING_BLOCK_RATE: 1
+      GF_DIAGNOSTICS_PROFILING_MUTEX_RATE: 0
+    volumes:
+      - backend-data:/grafana/data
+      - ./provisioning/datasources:/grafana/conf/provisioning/datasources
+      - ./provisioning/dashboards:/grafana/conf/provisioning/dashboards
+      - ../dev-dashboards:/grafana/conf/dev-dashboards
+    labels:
+      - "alloy.logs=true"
     ports:
       - '3011:3000'
 
@@ -38,13 +54,24 @@ services:
       context: ../..
       dockerfile: devenv/frontend-service/grafana-fs-dev.dockerfile
     entrypoint: ['bin/grafana', 'server', 'target']
-    ports:
-      - '3012:3000'
     environment:
+      OTEL_SERVICE_NAME: frontend-service
       GF_DEFAULT_APP_MODE: development
       GF_DEFAULT_TARGET: frontend-server
       GF_SECURITY_CONTENT_SECURITY_POLICY: false
       GF_SERVER_CDN_URL: http://localhost:3010
+      GF_LOG_LEVEL: info
+      GF_SERVER_ROUTER_LOGGING: true
+      GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS: "alloy:4317"
+      GF_DIAGNOSTICS_PROFILING_ENABLED: true
+      GF_DIAGNOSTICS_PROFILING_ADDR: "0.0.0.0"
+      GF_DIAGNOSTICS_PROFILING_PORT: 6060
+      GF_DIAGNOSTICS_PROFILING_BLOCK_RATE: 1
+      GF_DIAGNOSTICS_PROFILING_MUTEX_RATE: 0
+    labels:
+      - "alloy.logs=true"
+    ports:
+      - '3012:3000'
 
   postgres:
     image: postgres:16.1-alpine3.19
@@ -54,7 +81,84 @@ services:
       POSTGRES_DB: grafana
     volumes:
       - postgres-data:/var/lib/postgresql/data
+  
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-remote-write-receiver'
+    # command:
+    #   - '--config.file=/etc/prometheus/prometheus.yml'
+    #   - '--storage.tsdb.path=/prometheus'
+    #   - '--web.console.libraries=/etc/prometheus/console_libraries'
+    #   - '--web.console.templates=/etc/prometheus/consoles'
+    #   - '--storage.tsdb.retention.time=200h'
+    #   - '--web.enable-lifecycle'
+
+  loki:
+    image: grafana/loki
+    volumes:
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+
+  tempo-init:
+    image: grafana/tempo
+    user: root
+    entrypoint:
+      - "chown"
+      - "10001:10001"
+      - "/var/tempo"
+    volumes:
+      - tempo-data:/var/tempo
+
+  tempo:
+    image: grafana/tempo
+    volumes:
+      - tempo-data:/var/lib/tempo
+      - ./config/tempo.yaml:/etc/tempo/tempo.yaml
+    command: [ "-config.file=/etc/tempo/tempo.yaml" ]
+    # entrypoint: ["ls", "-lah", "/var/lib/tempo"]
+
+    depends_on:
+      tempo-init:
+        condition: service_completed_successfully
+
+  pyroscope:
+    image: grafana/pyroscope
+    ports:
+      - '4040:4040'
+    volumes:
+      - pyroscope-data:/var/lib/pyroscope
+    environment:
+      PYROSCOPE_LOG_LEVEL: debug
+
+  alloy:
+    image: grafana/alloy:latest
+    volumes:
+      - ./config/alloy:/alloy-config
+      - alloy-data:/var/lib/alloy/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - '12346:12345' # Alloy UI
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /alloy-config
+    depends_on:
+      - prometheus
+      - loki
+
+
 
 volumes:
   backend-data:
   postgres-data:
+  prometheus-data:
+  loki-data:
+  tempo-data:
+  pyroscope-data:
+  alloy-data:
