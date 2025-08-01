@@ -2,7 +2,11 @@
 
 package sqlite
 
-import "modernc.org/sqlite"
+import (
+	"database/sql"
+
+	"modernc.org/sqlite"
+)
 
 //
 // FIXME (@zserge)
@@ -12,6 +16,11 @@ import "modernc.org/sqlite"
 //
 
 type Driver = sqlite.Driver
+
+func init() {
+	// alias driver under a different name to stay compatible with the mattn/sqlite3 driver
+	sql.Register("sqlite3", &Driver{})
+}
 
 func IsBusyOrLocked(err error) bool {
 	return false // FIXME
