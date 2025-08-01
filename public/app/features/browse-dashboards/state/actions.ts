@@ -7,7 +7,7 @@ import { DashboardViewItemWithUIItems, UIDashboardViewItem } from '../types';
 
 import { findItem } from './utils';
 
-interface FetchNextChildrenPageArgs {
+export interface FetchNextChildrenPageArgs {
   parentUID: string | undefined;
 
   // Allow UI items to be excluded (they're always excluded) for convenience for callers
@@ -15,19 +15,19 @@ interface FetchNextChildrenPageArgs {
   pageSize: number;
 }
 
-interface FetchNextChildrenPageResult {
+export interface FetchNextChildrenPageResult {
   children: DashboardViewItem[];
   kind: 'folder' | 'dashboard';
   page: number;
   lastPageOfKind: boolean;
 }
 
-interface RefetchChildrenArgs {
+export interface RefetchChildrenArgs {
   parentUID: string | undefined;
   pageSize: number;
 }
 
-interface RefetchChildrenResult {
+export interface RefetchChildrenResult {
   children: DashboardViewItem[];
   kind: 'folder' | 'dashboard';
   page: number;

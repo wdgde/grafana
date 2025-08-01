@@ -16,12 +16,12 @@ import { HttpRequestMethod } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultLightTextColor } from '../element';
 import { Align, TextConfig, TextData } from '../types';
 
-interface ButtonData extends Omit<TextData, 'valign'> {
+export interface ButtonData extends Omit<TextData, 'valign'> {
   api?: APIEditorConfig;
   style?: ButtonStyleConfig;
 }
 
-interface ButtonConfig extends Omit<TextConfig, 'valign'> {
+export interface ButtonConfig extends Omit<TextConfig, 'valign'> {
   api?: APIEditorConfig;
   style?: ButtonStyleConfig;
 }

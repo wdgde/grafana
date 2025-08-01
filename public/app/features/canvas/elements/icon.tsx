@@ -20,7 +20,7 @@ export interface IconConfig {
   stroke?: LineConfig;
 }
 
-interface IconData {
+export interface IconData {
   path: string;
   fill: string;
   strokeColor?: string;

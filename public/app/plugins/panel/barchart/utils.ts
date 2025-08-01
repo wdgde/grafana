@@ -161,7 +161,18 @@ export interface PrepConfigOpts {
   theme: GrafanaTheme2;
 }
 
-export const prepConfig = ({ series, totalSeries, color, orientation, options, timeZone, theme }: PrepConfigOpts) => {
+export const prepConfig = ({
+  series,
+  totalSeries,
+  color,
+  orientation,
+  options,
+  timeZone,
+  theme,
+}: PrepConfigOpts): {
+  builder: UPlotConfigBuilder;
+  prepData: (series: DataFrame[], color?: Field | null) => any;
+} => {
   let {
     showValue,
     groupWidth,

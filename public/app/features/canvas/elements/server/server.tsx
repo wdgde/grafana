@@ -15,7 +15,7 @@ import { ServerSingle } from './types/single';
 import { ServerStack } from './types/stack';
 import { ServerTerminal } from './types/terminal';
 
-interface ServerConfig {
+export interface ServerConfig {
   blinkRate?: ScalarDimensionConfig;
   statusColor?: ColorDimensionConfig;
   bulbColor?: ColorDimensionConfig;

@@ -1,4 +1,4 @@
-interface RequestState {
+export interface RequestState {
   error?: unknown;
 
   isUninitialized: boolean;

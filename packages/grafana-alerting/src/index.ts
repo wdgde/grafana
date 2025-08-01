@@ -8,4 +8,6 @@
  */
 
 // This is a dummy export so typescript doesn't error importing an "empty module"
-export const index = {};
+// export const index = {};
+export { History } from './grafana/history/components/History';
+// export { CentralAlertHistoryScene } from '../../../public/app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistoryScene';

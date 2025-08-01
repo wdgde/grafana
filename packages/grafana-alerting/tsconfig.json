@@ -5,7 +5,11 @@
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "rootDirs": ["."],
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "paths": {
+      "app/*": ["../../public/app/*"],
+      "@grafana/schema/dist/esm/*": ["../grafana-schema/src/*"]
+    }
   },
   "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",

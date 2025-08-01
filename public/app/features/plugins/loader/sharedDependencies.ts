@@ -45,7 +45,7 @@ const jQueryFlotDeps = [
   'jquery.flot',
 ].reduce((acc, flotDep) => ({ ...acc, [flotDep]: { fakeDep: 1 } }), {});
 
-export const sharedDependenciesMap = {
+export const sharedDependenciesMap: Record<string, System.Module> = {
   '@emotion/css': () => import('@emotion/css'),
   '@emotion/react': () => import('@emotion/react'),
   '@grafana/data': grafanaData,

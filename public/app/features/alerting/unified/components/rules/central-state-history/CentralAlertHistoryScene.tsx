@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -39,7 +39,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { LogMessages, logInfo } from '../../../Analytics';
+// import { LogMessages, logInfo } from '../../../Analytics';
 
 import { alertStateHistoryDatasource, useRegisterHistoryRuntimeDataSource } from './CentralHistoryRuntimeDataSource';
 import { HistoryEventsListObject } from './EventListSceneObject';
@@ -68,9 +68,9 @@ export const StateFilterValues = {
 export const CentralAlertHistoryScene = () => {
   //track the loading of the central alert state history
 
-  useEffect(() => {
-    logInfo(LogMessages.loadedCentralAlertStateHistory);
-  }, []);
+  // useEffect(() => {
+  //   logInfo(LogMessages.loadedCentralAlertStateHistory);
+  // }, []);
 
   useRegisterHistoryRuntimeDataSource(); // register the runtime datasource for the history api.
 

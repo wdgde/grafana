@@ -66,7 +66,7 @@ export class GeneralSettingsEditView
     return this.getDashboardControls().state.refreshPicker;
   }
 
-  public getCursorSync() {
+  public getCursorSync(): behaviors.CursorSync | undefined {
     return dashboardSceneGraph.getCursorSync(this._dashboard);
   }
 

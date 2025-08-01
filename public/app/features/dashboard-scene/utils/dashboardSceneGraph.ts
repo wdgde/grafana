@@ -70,7 +70,7 @@ function getAllSelectedObjects(scene: SceneObject): SceneObject[] {
   );
 }
 
-export function getCursorSync(scene: DashboardScene) {
+export function getCursorSync(scene: DashboardScene): behaviors.CursorSync | undefined {
   const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
 
   if (cursorSync instanceof behaviors.CursorSync) {

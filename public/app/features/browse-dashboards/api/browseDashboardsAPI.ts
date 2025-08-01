@@ -26,11 +26,11 @@ import { DashboardTreeSelection } from '../types';
 import { isProvisionedDashboard, isProvisionedFolder } from './isProvisioned';
 import { PAGE_SIZE } from './services';
 
-interface DeleteItemsArgs {
+export interface DeleteItemsArgs {
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
 }
 
-interface MoveItemsArgs extends DeleteItemsArgs {
+export interface MoveItemsArgs extends DeleteItemsArgs {
   destinationUID: string;
 }
 
@@ -41,14 +41,14 @@ export interface ImportInputs {
   pluginId?: string;
 }
 
-interface ImportOptions {
+export interface ImportOptions {
   dashboard: Dashboard;
   overwrite: boolean;
   inputs: ImportInputs[];
   folderUid: string;
 }
 
-interface RestoreDashboardArgs {
+export interface RestoreDashboardArgs {
   dashboard: Resource<Dashboard | DashboardV2Spec>;
 }
 
