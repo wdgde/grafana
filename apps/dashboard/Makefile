@@ -31,11 +31,12 @@ post-generate-cleanup: ## Clean up the generated code
 	@rm ./pkg/apis/dashboard/v0alpha1/dashboard_object_gen.go.tmp
 	@mv ./pkg/apis/dashboard/v0alpha1/dashboard_object_gen.go.tmp2 ./pkg/apis/dashboard/v0alpha1/dashboard_object_gen.go
 
-	# Remove auto-generated DeepCopy and DeepCopyInto methods for Spec for v1alpha1.
-	@sed -e '/\/\/ DeepCopy creates a full deep copy of Spec/,+5d' ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go > ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go.tmp
-	@sed -e '/\/\/ DeepCopyInto deep copies Spec into another Spec object/,+3d' ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go.tmp > ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go.tmp2
-	@rm ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go.tmp
-	@mv ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go.tmp2 ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go
+	# Copy dashboard/v1beta1 spec so we can use it for schema validation
+	@echo "// This file is managed by grafana-app-sdk - DO NOT EDIT MANUALLY" > ./pkg/apis/dashboard/v1beta1/dashboard_spec.cue
+	@echo "// Source: apps/dashboard/kinds/v1beta1/dashboard_spec.cue" >> ./pkg/apis/dashboard/v1beta1/dashboard_spec.cue
+	@echo "// To sync changes, run: make generate in apps/dashboard" >> ./pkg/apis/dashboard/v1beta1/dashboard_spec.cue
+	@echo "" >> ./pkg/apis/dashboard/v1beta1/dashboard_spec.cue
+	@cat ./kinds/v1beta1/dashboard_spec.cue >> ./pkg/apis/dashboard/v1beta1/dashboard_spec.cue
 
 	# Copy dashboard/v2alpha1 spec so we can use it for schema validation
 	@echo "// This file is managed by grafana-app-sdk - DO NOT EDIT MANUALLY" > ./pkg/apis/dashboard/v2alpha1/dashboard_spec.cue
