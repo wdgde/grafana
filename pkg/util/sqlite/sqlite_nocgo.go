@@ -3,6 +3,7 @@
 package sqlite
 
 import (
+	"database/sql"
 	"errors"
 
 	"modernc.org/sqlite"
@@ -28,6 +29,11 @@ var (
 	TestErrBusy                      = errors.New("database is busy (simulated)")
 	TestErrLocked                    = errors.New("database is locked (simulated)")
 )
+
+func init() {
+	// alias the driver name to match the CGo driver
+	sql.Register("sqlite3", &Driver{})
+}
 
 func IsBusyOrLocked(err error) bool {
 	var sqliteErr *sqlite.Error
