@@ -1,4 +1,3 @@
-import EventEmitter from 'eventemitter3';
 import { Unsubscribable, Observable, Subscriber } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
@@ -13,11 +12,13 @@ import {
   EventFilterOptions,
 } from './types';
 
+const EventEmitter = require('eventemitter3');
+
 /**
  * @alpha
  */
 export class EventBusSrv implements EventBus, LegacyEmitter {
-  private emitter: EventEmitter;
+  private emitter: typeof EventEmitter;
   private subscribers = new Map<Function, Subscriber<BusEvent>>();
 
   constructor() {

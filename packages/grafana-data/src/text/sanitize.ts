@@ -1,6 +1,7 @@
-import { sanitizeUrl as braintreeSanitizeUrl } from '@braintree/sanitize-url';
 import DOMPurify from 'dompurify';
 import * as xss from 'xss';
+
+const { sanitizeUrl: braintreeSanitizeUrl } = require('@braintree/sanitize-url');
 
 const XSSWL = Object.keys(xss.whiteList).reduce<xss.IWhiteList>((acc, element) => {
   acc[element] = xss.whiteList[element]?.concat(['class', 'style']);

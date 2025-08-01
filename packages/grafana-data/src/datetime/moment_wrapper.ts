@@ -1,7 +1,9 @@
-import moment, { Moment, MomentInput, DurationInputArg1, DurationInputArg2 } from 'moment';
-import { tz } from 'moment-timezone';
+import type { Moment, MomentInput, DurationInputArg1, DurationInputArg2 } from 'moment';
 
 import { TimeZone } from '../types/time';
+
+const moment = require('moment');
+const { tz } = require('moment-timezone');
 /* eslint-disable id-blacklist, no-restricted-imports */
 export interface DateTimeBuiltinFormat {
   __momentBuiltinFormatBrand: any;
@@ -145,7 +147,7 @@ export const dateTimeForTimeZone = (
 };
 
 export const getWeekdayIndex = (day: string) => {
-  return moment.weekdays().findIndex((wd) => wd.toLowerCase() === day.toLowerCase());
+  return moment.weekdays().findIndex((wd: string) => wd.toLowerCase() === day.toLowerCase());
 };
 
 export const getWeekdayIndexByEnglishName = (day: string) =>
