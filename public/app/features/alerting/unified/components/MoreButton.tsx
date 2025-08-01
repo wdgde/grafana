@@ -3,7 +3,7 @@ import { Ref, forwardRef } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { Button, ButtonProps, Icon, Stack } from '@grafana/ui';
 
-const MoreButton = forwardRef(function MoreButton(
+const MoreButton: React.ForwardRefExoticComponent<ButtonProps & { title?: string }> = forwardRef(function MoreButton(
   props: ButtonProps & { title?: string },
   ref: Ref<HTMLButtonElement>
 ) {

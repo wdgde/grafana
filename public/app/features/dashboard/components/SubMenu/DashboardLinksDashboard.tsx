@@ -174,7 +174,10 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-export const DashboardLinkButton = forwardRef<unknown, ButtonLinkProps>(({ className, ...otherProps }, ref) => {
+export const DashboardLinkButton: React.ForwardRefExoticComponent<ButtonLinkProps> = forwardRef<
+  unknown,
+  ButtonLinkProps
+>(({ className, ...otherProps }, ref) => {
   const styles = useStyles2(getStyles);
   const Component = otherProps.href ? LinkButton : Button;
   return (

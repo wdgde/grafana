@@ -28,9 +28,11 @@ export const LogMessages = {
   noAlertRuleVersionsFound: 'no alert rule versions found',
 };
 
-const { logInfo, logError, logMeasurement, logWarning } = createMonitoringLogger('features.alerting', {
+const logger = createMonitoringLogger('features.alerting', {
   module: 'Alerting',
 });
+
+const { logInfo, logError, logMeasurement, logWarning }: any = logger;
 
 export { logError, logInfo, logMeasurement, logWarning };
 

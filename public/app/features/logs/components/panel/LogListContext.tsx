@@ -108,7 +108,7 @@ export const LogListContext = createContext<LogListContextData>({
   openAssistantByLog: () => {},
 });
 
-export const useLogListContextData = (key: keyof LogListContextData) => {
+export const useLogListContextData = (key: keyof LogListContextData): LogListContextData[keyof LogListContextData] => {
   const data: LogListContextData = useContext(LogListContext);
   return data[key];
 };

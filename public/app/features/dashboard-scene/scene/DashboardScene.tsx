@@ -715,7 +715,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.serializer.apiVersion = apiVersion;
   }
 
-  public getTrackingInformation() {
+  public getTrackingInformation(): ReturnType<typeof this.serializer.getTrackingInformation> {
     return this.serializer.getTrackingInformation(this);
   }
 

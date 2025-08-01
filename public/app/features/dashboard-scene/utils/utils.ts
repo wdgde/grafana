@@ -518,4 +518,4 @@ export function hasLibraryPanelsInV1Dashboard(dashboard: Dashboard | undefined):
   });
 }
 
-export const dashboardLog = createLogger('Dashboard');
+export const dashboardLog: ReturnType<typeof createLogger> = createLogger('Dashboard');

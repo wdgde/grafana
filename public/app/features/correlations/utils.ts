@@ -144,4 +144,5 @@ export const generateDefaultLabel = async (sourcePane: ExploreItemState, targetP
   });
 };
 
-export const correlationsLogger = createMonitoringLogger('features.correlations');
+export const correlationsLogger: ReturnType<typeof createMonitoringLogger> =
+  createMonitoringLogger('features.correlations');

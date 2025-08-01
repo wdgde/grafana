@@ -84,4 +84,4 @@ export function buildPluginSectionNav(currentUrl: string, pluginNavSection?: Nav
   return { main: copiedPluginNavSection, node: activePage ?? copiedPluginNavSection };
 }
 
-export const pluginsLogger = createMonitoringLogger('features.plugins');
+export const pluginsLogger: ReturnType<typeof createMonitoringLogger> = createMonitoringLogger('features.plugins');
