@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
-	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -64,7 +63,7 @@ func (f *AlertmanagerApiHandler) handleRouteGetAMStatus(ctx *contextmodel.ReqCon
 				Status: util.Pointer("ready"),
 			},
 		}
-		return response.JSON(200, status)
+		return response.JSON(http.StatusOK, status)
 	}
 
 	s, err := f.getService(ctx)
@@ -117,18 +116,19 @@ func (f *AlertmanagerApiHandler) handleRouteDeleteSilence(ctx *contextmodel.ReqC
 func (f *AlertmanagerApiHandler) handleRouteGetAlertingConfig(ctx *contextmodel.ReqContext, dsUID string) response.Response {
 	if isExtra, identifier := f.isExtraConfig(ctx); isExtra {
 		ctx.Req.Header.Set(configIdentifierHeader, identifier)
+		ctx.Req.Header.Set("Accept", "application/yaml")
 
 		conversionResp := f.ConvertSvc.RouteConvertPrometheusGetAlertmanagerConfig(ctx)
-		if conversionResp.Status() != 200 {
+		if conversionResp.Status() != http.StatusOK {
 			return conversionResp
 		}
 
-		var gettableUserConfig apimodels.GettableUserConfig
-		if err := yaml.Unmarshal(conversionResp.Body(), &gettableUserConfig); err != nil {
-			return response.Error(500, "Failed to parse alertmanager config", err)
+		config, err := yamlExtractor(&apimodels.GettableUserConfig{})(conversionResp.(*response.NormalResponse))
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to parse alertmanager config", err)
 		}
 
-		return response.JSON(200, gettableUserConfig)
+		return response.JSON(http.StatusOK, config)
 	}
 
 	s, err := f.getService(ctx)
