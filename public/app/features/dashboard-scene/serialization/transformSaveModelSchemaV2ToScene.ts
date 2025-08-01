@@ -162,6 +162,8 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     .get(dashboard.layout.kind)
     .deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
 
+  debugger;
+
   //createLayoutManager(dashboard);
 
   const dashboardScene = new DashboardScene(

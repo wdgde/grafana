@@ -21,7 +21,7 @@ import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from 
 
 const DEFAULT_DATASOURCE = 'default';
 
-export function createVariablesForDashboard(oldModel: DashboardModel) {
+export function createVariablesForDashboard(oldModel: DashboardModel, extraVariables: SceneVariable[] = []) {
   const variableObjects = oldModel.templating.list
     .map((v) => {
       try {
@@ -40,7 +40,7 @@ export function createVariablesForDashboard(oldModel: DashboardModel) {
   }
 
   return new SceneVariableSet({
-    variables: variableObjects,
+    variables: [...variableObjects, ...extraVariables],
   });
 }
 

@@ -1,7 +1,7 @@
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { sceneGraph } from '@grafana/scenes';
+import { config, getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
+import { sceneGraph, SceneVariable } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { BASE_URL } from 'app/api/clients/provisioning/v0alpha1/baseAPI';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
@@ -18,6 +18,7 @@ import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/das
 import { isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
 import { ProvisioningPreview } from 'app/features/provisioning/types';
@@ -70,6 +71,7 @@ export interface LoadDashboardOptions {
   slug?: string;
   type?: string;
   urlFolderUid?: string;
+  variables?: SceneVariable[];
 }
 
 export type HomeDashboardDTO = DashboardDTO & {
@@ -318,6 +320,33 @@ abstract class DashboardScenePageStateManagerBase<T>
       return null;
     }
 
+    // ---- PRELOADING DATASOURCES -------------------------------------------
+    // Preloading these here, as this is an async function already.
+    // @ts-ignore
+    const dashboardModel = new DashboardModel(rsp.dashboard, rsp.meta);
+    const datasourceIds = new Set(
+      dashboardModel.panels
+        .filter((panel) => panel.type !== 'row')
+        .map((panel) => panel.datasource || panel.targets.find((t) => t.datasource !== null)?.datasource)
+        .filter((datasourceRef) => datasourceRef !== null && datasourceRef !== undefined)
+        .filter((datasourceRef) =>
+          datasourceRef.type ? config.datasources[datasourceRef.type]?.preload === true : false
+        )
+    );
+    const dashboardDatasources = await Promise.all(Array.from(datasourceIds).map((id) => getDataSourceSrv().get(id)));
+    const variables: SceneVariable[] = [];
+    for (const ds of dashboardDatasources) {
+      if (ds.getDefaultVariables) {
+        const dsVariables = ds.getDefaultVariables();
+        if (dsVariables && dsVariables.length) {
+          variables.push(...dsVariables);
+        }
+      }
+    }
+    console.log({ dashboardDatasources, variables });
+    options.variables = variables;
+    // -----------------------------------------------
+
     return this.transformResponseToScene(rsp, options);
   }
 
@@ -384,7 +413,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     }
 
     if (rsp?.dashboard) {
-      const scene = transformSaveModelToScene(rsp);
+      const scene = transformSaveModelToScene(rsp, options.variables);
 
       // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
       if (options.uid) {

@@ -1,7 +1,7 @@
 import { uniqueId } from 'lodash';
 
 import { DataFrameDTO, DataFrameJSON } from '@grafana/data';
-import { config, logMeasurement, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv, logMeasurement, reportInteraction } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
@@ -19,6 +19,7 @@ import {
   UserActionEvent,
   SceneInteractionProfileEvent,
   SceneObjectState,
+  SceneVariable,
 } from '@grafana/scenes';
 import { isWeekStart } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -67,11 +68,11 @@ export interface SaveModelToSceneOptions {
   isEmbedded?: boolean;
 }
 
-export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
+export function transformSaveModelToScene(rsp: DashboardDTO, extraVariables?: SceneVariable[]): DashboardScene {
   // Just to have migrations run
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
 
-  const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard);
+  const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard, extraVariables);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
 
   const apiVersion = config.featureToggles.kubernetesDashboards
@@ -244,7 +245,11 @@ function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]
   return rowItem;
 }
 
-export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel, dto: DashboardDataDTO) {
+export function createDashboardSceneFromDashboardModel(
+  oldModel: DashboardModel,
+  dto: DashboardDataDTO,
+  extraVariables?: SceneVariable[]
+) {
   let variables: SceneVariableSet | undefined;
   let annotationLayers: SceneDataLayerProvider[] = [];
   let alertStatesLayer: AlertStatesDataLayer | undefined;
@@ -254,7 +259,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   if (oldModel.meta.isSnapshot) {
     variables = createVariablesForSnapshot(oldModel);
   } else {
-    variables = createVariablesForDashboard(oldModel);
+    variables = createVariablesForDashboard(oldModel, extraVariables);
   }
 
   if (oldModel.annotations?.list?.length && !oldModel.isSnapshot()) {

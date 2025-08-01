@@ -5,6 +5,8 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 
 export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | undefined {
+  console.log('createPanelDataProvider', { panel });
+
   // Skip setting query runner for panels without queries
   if (!panel.targets?.length) {
     return undefined;

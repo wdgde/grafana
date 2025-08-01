@@ -17,10 +17,11 @@ import { PanelData } from './panel';
 import { GrafanaPlugin, PluginMeta } from './plugin';
 import { DataQuery } from './query';
 import { Scope } from './scopes';
-import { AdHocVariableFilter } from './templateVars';
+import { AdHocVariableFilter, CustomVariableModel } from './templateVars';
 import { RawTimeRange, TimeRange } from './time';
 import { UserStorage } from './userStorage';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
+import { SceneVariable } from '@grafana/scenes';
 
 export interface DataSourcePluginOptionsEditorProps<
   JSONData extends DataSourceJsonData = DataSourceJsonData,
@@ -320,6 +321,11 @@ abstract class DataSourceApi<
    * Get tag values for adhoc filters
    */
   getTagValues?(options: DataSourceGetTagValuesOptions<TQuery>): Promise<GetTagResponse> | Promise<MetricFindValue[]>;
+
+  /**
+   * Get default variables that will be added to the dashboard
+   */
+  getDefaultVariables?(): SceneVariable[];
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
@@ -714,6 +720,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   jsonData: T;
   username?: string;
   password?: string; // when access is direct, for some legacy datasources
+  preload?: boolean;
   /**
    *  @deprecated -- use jsonData to store information related to database.
    *  This field should only be used by Elasticsearch and Influxdb.
