@@ -6,7 +6,7 @@ import (
 
 const (
 	namespace = "grafana_secrets_manager"
-	subsystem = "data_key_storage"
+	subsystem = "storage"
 )
 
 // DataKeyMetrics is a struct that contains all the metrics for all operations of encryption storage.
@@ -24,42 +24,42 @@ func newDataKeyMetrics() *DataKeyMetrics {
 		CreateDataKeyDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Name:      "create_data_key_duration_seconds",
+			Name:      "data_key_create_duration_seconds",
 			Help:      "Duration of create data key operations",
 			Buckets:   prometheus.DefBuckets,
 		}),
 		GetDataKeyDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Name:      "get_data_key_duration_seconds",
+			Name:      "data_key_get_duration_seconds",
 			Help:      "Duration of get data key operations",
 			Buckets:   prometheus.DefBuckets,
 		}),
 		GetCurrentDataKeyDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Name:      "get_current_data_key_duration_seconds",
+			Name:      "data_key_get_current_duration_seconds",
 			Help:      "Duration of get current data key operations",
 			Buckets:   prometheus.DefBuckets,
 		}),
 		ListDataKeysDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Name:      "list_data_keys_duration_seconds",
+			Name:      "data_keys_list_duration_seconds",
 			Help:      "Duration of list data keys operations",
 			Buckets:   prometheus.DefBuckets,
 		}),
 		DisableDataKeysDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Name:      "disable_data_keys_duration_seconds",
+			Name:      "data_keys_disable_duration_seconds",
 			Help:      "Duration of disable data keys operations",
 			Buckets:   prometheus.DefBuckets,
 		}),
 		DeleteDataKeyDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Name:      "delete_data_key_duration_seconds",
+			Name:      "data_key_delete_duration_seconds",
 			Help:      "Duration of delete data key operations",
 			Buckets:   prometheus.DefBuckets,
 		}),

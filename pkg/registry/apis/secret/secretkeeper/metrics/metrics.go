@@ -6,7 +6,7 @@ import (
 
 const (
 	namespace = "grafana_secrets_manager"
-	subsystem = "keeper"
+	subsystem = "service"
 )
 
 // KeeperMetrics is a struct that contains all the metrics for an implementation of all keepers.
@@ -22,28 +22,28 @@ func newKeeperMetrics() *KeeperMetrics {
 		StoreDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Name:      "store_duration_seconds",
+			Name:      "keeper_store_duration_seconds",
 			Help:      "Duration of keeper store operations",
 			Buckets:   prometheus.DefBuckets,
 		}, []string{"keeper_type"}),
 		UpdateDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Name:      "update_duration_seconds",
+			Name:      "keeper_update_duration_seconds",
 			Help:      "Duration of keeper update operations",
 			Buckets:   prometheus.DefBuckets,
 		}, []string{"keeper_type"}),
 		ExposeDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Name:      "expose_duration_seconds",
+			Name:      "keeper_expose_duration_seconds",
 			Help:      "Duration of keeper expose operations",
 			Buckets:   prometheus.DefBuckets,
 		}, []string{"keeper_type"}),
 		DeleteDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: namespace,
 			Subsystem: subsystem,
-			Name:      "delete_duration_seconds",
+			Name:      "keeper_delete_duration_seconds",
 			Help:      "Duration of keeper delete operations",
 			Buckets:   prometheus.DefBuckets,
 		}, []string{"keeper_type"}),
