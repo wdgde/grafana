@@ -35,7 +35,15 @@ var appManifestData = app.ManifestData{
 					Plural:     "Collections",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaCollectionv0alpha1,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaCollectionv0alpha1,
 				},
 			},
 		},

@@ -4,14 +4,15 @@ import (
 	"context"
 	"slices"
 
-	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"k8s.io/client-go/rest"
 
+	"github.com/grafana/grafana-app-sdk/app"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apps/advisor"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
+	"github.com/grafana/grafana/pkg/registry/apps/collection"
 	"github.com/grafana/grafana/pkg/registry/apps/investigations"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -25,8 +26,9 @@ import (
 // This is the pattern that should be used to provide app installers in the app registry.
 func ProvideAppInstallers(
 	playlistAppInstaller *playlist.PlaylistAppInstaller,
+	collectionAppInstaller *collection.CollectionAppInstaller,
 ) []appsdkapiserver.AppInstaller {
-	return []appsdkapiserver.AppInstaller{playlistAppInstaller}
+	return []appsdkapiserver.AppInstaller{playlistAppInstaller, collectionAppInstaller}
 }
 
 var (

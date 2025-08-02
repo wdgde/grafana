@@ -4,6 +4,12 @@ collectionv0alpha1: {
 	kind:   "Collection"
 	plural: "collections"
 	scope:  "Namespaced"
+	validation: {
+		operations: [
+			"CREATE",
+			"UPDATE",
+		]
+	}
 	schema: {
 		#Item: {
 			group: string

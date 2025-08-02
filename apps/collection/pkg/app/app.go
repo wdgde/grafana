@@ -36,13 +36,13 @@ func New(cfg app.Config) (app.App, error) {
 		ManagedKinds: []simple.AppManagedKind{
 			{
 				Kind: collectionv0alpha1.CollectionKind(),
-				Validator: &simple.Validator{
-					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
-						// do something here if needed
+				// Validator: &simple.Validator{
+				// 	ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
+				// 		// do something here if needed
 
-						return nil
-					},
-				},
+				// 		return nil
+				// 	},
+				// },
 			},
 		},
 	}
