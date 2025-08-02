@@ -32,7 +32,7 @@ var appManifestData = app.ManifestData{
 			Kinds: []app.ManifestVersionKind{
 				{
 					Kind:       "Stars",
-					Plural:     "Starss",
+					Plural:     "Stars",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{

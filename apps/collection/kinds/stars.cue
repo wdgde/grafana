@@ -2,7 +2,7 @@ package collection
 
 starsv0alpha1: {
 	kind:   "Stars"
-	// pluralName: "Stars"
+	pluralName: "Stars"
 	scope:  "Namespaced"
 	validation: {
 		operations: [

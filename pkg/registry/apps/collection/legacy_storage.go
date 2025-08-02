@@ -31,7 +31,7 @@ type legacyStorage struct {
 }
 
 func (s *legacyStorage) New() runtime.Object {
-	return collection.CollectionKind().ZeroValue()
+	return collection.StarsKind().ZeroValue()
 }
 
 func (s *legacyStorage) Destroy() {}
@@ -41,11 +41,11 @@ func (s *legacyStorage) NamespaceScoped() bool {
 }
 
 func (s *legacyStorage) GetSingularName() string {
-	return strings.ToLower(collection.CollectionKind().Kind())
+	return strings.ToLower(collection.StarsKind().Kind())
 }
 
 func (s *legacyStorage) NewList() runtime.Object {
-	return collection.CollectionKind().ZeroListValue()
+	return collection.StarsKind().ZeroListValue()
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -58,7 +58,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	// 	return nil, err
 	// }
 
-	list := &collection.CollectionList{}
+	list := &collection.StarsList{}
 	// for idx := range res {
 	// 	list.Items = append(list.Items, *convertToK8sResource(&res[idx], s.namespacer))
 	// }

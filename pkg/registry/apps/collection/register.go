@@ -59,9 +59,9 @@ func RegisterApp(
 // GetLegacyStorage returns the legacy storage for the collection app.
 func (p *CollectionAppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {
 	gvr := schema.GroupVersionResource{
-		Group:    collectionv0alpha1.CollectionKind().Group(),
-		Version:  collectionv0alpha1.CollectionKind().Version(),
-		Resource: collectionv0alpha1.CollectionKind().Plural(),
+		Group:    collectionv0alpha1.StarsKind().Group(),
+		Version:  collectionv0alpha1.StarsKind().Version(),
+		Resource: collectionv0alpha1.StarsKind().Plural(),
 	}
 	if requested.String() != gvr.String() {
 		return nil
@@ -78,13 +78,13 @@ func (p *CollectionAppInstaller) GetLegacyStorage(requested schema.GroupVersionR
 				{Name: "Created At", Type: "date"},
 			},
 			Reader: func(obj any) ([]any, error) {
-				m, ok := obj.(*collectionv0alpha1.Collection)
+				m, ok := obj.(*collectionv0alpha1.Stars)
 				if !ok {
 					return nil, fmt.Errorf("expected collection")
 				}
 				return []any{
 					m.Name,
-					m.Spec.Title,
+					"???",
 					m.CreationTimestamp.UTC().Format(time.RFC3339),
 				}, nil
 			},

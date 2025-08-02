@@ -11,7 +11,7 @@ import (
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaStars = resource.NewSimpleSchema("collection.grafana.app", "v0alpha1", &Stars{}, &StarsList{}, resource.WithKind("Stars"),
-		resource.WithPlural("starss"), resource.WithScope(resource.NamespacedScope))
+		resource.WithPlural("stars"), resource.WithScope(resource.NamespacedScope))
 	kindStars = resource.Kind{
 		Schema: schemaStars,
 		Codecs: map[resource.KindEncoding]resource.Codec{
