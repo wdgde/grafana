@@ -13,9 +13,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	playlist "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
+	collection "github.com/grafana/grafana/apps/collection/pkg/apis/collection/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 )
 
 var (
@@ -30,13 +29,12 @@ var (
 )
 
 type legacyStorage struct {
-	service        playlistsvc.Service
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
 }
 
 func (s *legacyStorage) New() runtime.Object {
-	return playlist.PlaylistKind().ZeroValue()
+	return collection.PlaylistKind().ZeroValue()
 }
 
 func (s *legacyStorage) Destroy() {}
@@ -46,11 +44,11 @@ func (s *legacyStorage) NamespaceScoped() bool {
 }
 
 func (s *legacyStorage) GetSingularName() string {
-	return strings.ToLower(playlist.PlaylistKind().Kind())
+	return strings.ToLower(collection.PlaylistKind().Kind())
 }
 
 func (s *legacyStorage) NewList() runtime.Object {
-	return playlist.PlaylistKind().ZeroListValue()
+	return collection.PlaylistKind().ZeroListValue()
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -68,7 +66,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	list := &playlist.PlaylistList{}
+	list := &collection.PlaylistList{}
 	for idx := range res {
 		list.Items = append(list.Items, *convertToK8sResource(&res[idx], s.namespacer))
 	}
@@ -81,15 +79,15 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		return nil, err
 	}
 
-	dto, err := s.service.Get(ctx, &playlistsvc.GetPlaylistByUidQuery{
+	dto, err := s.service.Get(ctx, &collectionsvc.GetPlaylistByUidQuery{
 		UID:   name,
 		OrgId: info.OrgID,
 	})
 	if err != nil || dto == nil {
-		if errors.Is(err, playlistsvc.ErrPlaylistNotFound) || err == nil {
+		if errors.Is(err, collectionsvc.ErrPlaylistNotFound) || err == nil {
 			err = k8serrors.NewNotFound(schema.GroupResource{
-				Group:    playlist.PlaylistKind().Group(),
-				Resource: playlist.PlaylistKind().Plural(),
+				Group:    collection.PlaylistKind().Group(),
+				Resource: collection.PlaylistKind().Plural(),
 			}, name)
 		}
 		return nil, err
@@ -108,15 +106,15 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	p, ok := obj.(*playlist.Playlist)
+	p, ok := obj.(*collection.Playlist)
 	if !ok {
-		return nil, fmt.Errorf("expected playlist?")
+		return nil, fmt.Errorf("expected collection?")
 	}
 	cmd, err := convertToLegacyUpdateCommand(p, info.OrgID)
 	if err != nil {
 		return nil, err
 	}
-	out, err := s.service.Create(ctx, &playlistsvc.CreatePlaylistCommand{
+	out, err := s.service.Create(ctx, &collectionsvc.CreatePlaylistCommand{
 		UID:      p.Name,
 		Name:     cmd.Name,
 		Interval: cmd.Interval,
@@ -152,9 +150,9 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if err != nil {
 		return old, created, err
 	}
-	p, ok := obj.(*playlist.Playlist)
+	p, ok := obj.(*collection.Playlist)
 	if !ok {
-		return nil, created, fmt.Errorf("expected playlist after update")
+		return nil, created, fmt.Errorf("expected collection after update")
 	}
 
 	cmd, err := convertToLegacyUpdateCommand(p, info.OrgID)
@@ -180,11 +178,11 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if err != nil {
 		return nil, false, err
 	}
-	p, ok := v.(*playlist.Playlist)
+	p, ok := v.(*collection.Playlist)
 	if !ok {
-		return v, false, fmt.Errorf("expected a playlist response from Get")
+		return v, false, fmt.Errorf("expected a collection response from Get")
 	}
-	err = s.service.Delete(ctx, &playlistsvc.DeletePlaylistCommand{
+	err = s.service.Delete(ctx, &collectionsvc.DeletePlaylistCommand{
 		UID:   name,
 		OrgId: info.OrgID,
 	})
@@ -193,5 +191,5 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 
 // CollectionDeleter
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("DeleteCollection for playlists not implemented")
+	return nil, fmt.Errorf("DeleteCollection for collections not implemented")
 }

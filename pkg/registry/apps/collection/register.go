@@ -11,42 +11,36 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
-	"github.com/grafana/grafana/apps/playlist/pkg/apis"
-	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
-	playlistapp "github.com/grafana/grafana/apps/playlist/pkg/app"
+	"github.com/grafana/grafana/apps/collection/pkg/apis"
+	collectionv0alpha1 "github.com/grafana/grafana/apps/collection/pkg/apis/collection/v0alpha1"
+	collectionapp "github.com/grafana/grafana/apps/collection/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
-	_ appsdkapiserver.AppInstaller       = (*PlaylistAppInstaller)(nil)
-	_ appinstaller.LegacyStorageProvider = (*PlaylistAppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller       = (*CollectionAppInstaller)(nil)
+	_ appinstaller.LegacyStorageProvider = (*CollectionAppInstaller)(nil)
 )
 
-type PlaylistAppInstaller struct {
+type CollectionAppInstaller struct {
 	appsdkapiserver.AppInstaller
-	cfg     *setting.Cfg
-	service playlistsvc.Service
+	cfg *setting.Cfg
 }
 
-func RegisterAppInstaller(
-	p playlistsvc.Service,
+func RegisterApp(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-) (*PlaylistAppInstaller, error) {
-	installer := &PlaylistAppInstaller{
-		cfg:     cfg,
-		service: p,
+) (*CollectionAppInstaller, error) {
+	installer := &CollectionAppInstaller{
+		cfg: cfg,
 	}
-	specificConfig := any(&playlistapp.PlaylistConfig{
-		EnableReconcilers: features.IsEnabledGlobally(featuremgmt.FlagPlaylistsReconciler),
-	})
-	provider := simple.NewAppProvider(apis.LocalManifest(), specificConfig, playlistapp.New)
+	specificConfig := any(&collectionapp.CollectionConfig{})
+	provider := simple.NewAppProvider(apis.LocalManifest(), specificConfig, collectionapp.New)
 
 	appConfig := app.Config{
 		KubeConfig:     restclient.Config{}, // this will be overridden by the installer's InitializeApp method
@@ -62,18 +56,17 @@ func RegisterAppInstaller(
 	return installer, nil
 }
 
-// GetLegacyStorage returns the legacy storage for the playlist app.
-func (p *PlaylistAppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {
+// GetLegacyStorage returns the legacy storage for the collection app.
+func (p *CollectionAppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {
 	gvr := schema.GroupVersionResource{
-		Group:    playlistv0alpha1.PlaylistKind().Group(),
-		Version:  playlistv0alpha1.PlaylistKind().Version(),
-		Resource: playlistv0alpha1.PlaylistKind().Plural(),
+		Group:    collectionv0alpha1.CollectionKind().Group(),
+		Version:  collectionv0alpha1.CollectionKind().Version(),
+		Resource: collectionv0alpha1.CollectionKind().Plural(),
 	}
 	if requested.String() != gvr.String() {
 		return nil
 	}
 	legacyStore := &legacyStorage{
-		service:    p.service,
 		namespacer: request.GetNamespaceMapper(p.cfg),
 	}
 	legacyStore.tableConverter = utils.NewTableConverter(
@@ -81,14 +74,14 @@ func (p *PlaylistAppInstaller) GetLegacyStorage(requested schema.GroupVersionRes
 		utils.TableColumns{
 			Definition: []metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
-				{Name: "Title", Type: "string", Format: "string", Description: "The playlist name"},
-				{Name: "Interval", Type: "string", Format: "string", Description: "How often the playlist will update"},
+				{Name: "Title", Type: "string", Format: "string", Description: "The collection name"},
+				{Name: "Interval", Type: "string", Format: "string", Description: "How often the collection will update"},
 				{Name: "Created At", Type: "date"},
 			},
 			Reader: func(obj any) ([]interface{}, error) {
-				m, ok := obj.(*playlistv0alpha1.Playlist)
+				m, ok := obj.(*collectionv0alpha1.Collection)
 				if !ok {
-					return nil, fmt.Errorf("expected playlist")
+					return nil, fmt.Errorf("expected collection")
 				}
 				return []interface{}{
 					m.Name,
