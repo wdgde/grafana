@@ -75,7 +75,6 @@ func (p *CollectionAppInstaller) GetLegacyStorage(requested schema.GroupVersionR
 			Definition: []metav1.TableColumnDefinition{
 				{Name: "Name", Type: "string", Format: "name"},
 				{Name: "Title", Type: "string", Format: "string", Description: "The collection name"},
-				{Name: "Interval", Type: "string", Format: "string", Description: "How often the collection will update"},
 				{Name: "Created At", Type: "date"},
 			},
 			Reader: func(obj any) ([]interface{}, error) {
@@ -86,7 +85,6 @@ func (p *CollectionAppInstaller) GetLegacyStorage(requested schema.GroupVersionR
 				return []interface{}{
 					m.Name,
 					m.Spec.Title,
-					m.Spec.Interval,
 					m.CreationTimestamp.UTC().Format(time.RFC3339),
 				}, nil
 			},
