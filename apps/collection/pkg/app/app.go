@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
@@ -35,7 +34,7 @@ func New(cfg app.Config) (app.App, error) {
 		},
 		ManagedKinds: []simple.AppManagedKind{
 			{
-				Kind: collectionv0alpha1.CollectionKind(),
+				Kind: collectionv0alpha1.StarsKind(),
 				Validator: &simple.Validator{
 					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
 						// do something here if needed
@@ -58,14 +57,4 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	return a, nil
-}
-
-func GetKinds() map[schema.GroupVersion][]resource.Kind {
-	gv := schema.GroupVersion{
-		Group:   collectionv0alpha1.CollectionKind().Group(),
-		Version: collectionv0alpha1.CollectionKind().Version(),
-	}
-	return map[schema.GroupVersion][]resource.Kind{
-		gv: {collectionv0alpha1.CollectionKind()},
-	}
 }

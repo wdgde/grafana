@@ -10,7 +10,7 @@ manifest: {
 				go: {enabled: true}
 			}
 			kinds: [
-				collectionv0alpha1,
+				starsv0alpha1,
 			]
 		}
 	}

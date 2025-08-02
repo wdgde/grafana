@@ -15,22 +15,22 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type Collection struct {
+type Stars struct {
 	metav1.TypeMeta   `json:",inline" yaml:",inline"`
 	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
 
-	// Spec is the spec of the Collection
-	Spec CollectionSpec `json:"spec" yaml:"spec"`
+	// Spec is the spec of the Stars
+	Spec StarsSpec `json:"spec" yaml:"spec"`
 
-	Status CollectionStatus `json:"status" yaml:"status"`
+	Status StarsStatus `json:"status" yaml:"status"`
 }
 
-func (o *Collection) GetSpec() any {
+func (o *Stars) GetSpec() any {
 	return o.Spec
 }
 
-func (o *Collection) SetSpec(spec any) error {
-	cast, ok := spec.(CollectionSpec)
+func (o *Stars) SetSpec(spec any) error {
+	cast, ok := spec.(StarsSpec)
 	if !ok {
 		return fmt.Errorf("cannot set spec type %#v, not of type Spec", spec)
 	}
@@ -38,13 +38,13 @@ func (o *Collection) SetSpec(spec any) error {
 	return nil
 }
 
-func (o *Collection) GetSubresources() map[string]any {
+func (o *Stars) GetSubresources() map[string]any {
 	return map[string]any{
 		"status": o.Status,
 	}
 }
 
-func (o *Collection) GetSubresource(name string) (any, bool) {
+func (o *Stars) GetSubresource(name string) (any, bool) {
 	switch name {
 	case "status":
 		return o.Status, true
@@ -53,12 +53,12 @@ func (o *Collection) GetSubresource(name string) (any, bool) {
 	}
 }
 
-func (o *Collection) SetSubresource(name string, value any) error {
+func (o *Stars) SetSubresource(name string, value any) error {
 	switch name {
 	case "status":
-		cast, ok := value.(CollectionStatus)
+		cast, ok := value.(StarsStatus)
 		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type CollectionStatus", value)
+			return fmt.Errorf("cannot set status type %#v, not of type StarsStatus", value)
 		}
 		o.Status = cast
 		return nil
@@ -67,7 +67,7 @@ func (o *Collection) SetSubresource(name string, value any) error {
 	}
 }
 
-func (o *Collection) GetStaticMetadata() resource.StaticMetadata {
+func (o *Stars) GetStaticMetadata() resource.StaticMetadata {
 	gvk := o.GroupVersionKind()
 	return resource.StaticMetadata{
 		Name:      o.ObjectMeta.Name,
@@ -78,7 +78,7 @@ func (o *Collection) GetStaticMetadata() resource.StaticMetadata {
 	}
 }
 
-func (o *Collection) SetStaticMetadata(metadata resource.StaticMetadata) {
+func (o *Stars) SetStaticMetadata(metadata resource.StaticMetadata) {
 	o.Name = metadata.Name
 	o.Namespace = metadata.Namespace
 	o.SetGroupVersionKind(schema.GroupVersionKind{
@@ -88,7 +88,7 @@ func (o *Collection) SetStaticMetadata(metadata resource.StaticMetadata) {
 	})
 }
 
-func (o *Collection) GetCommonMetadata() resource.CommonMetadata {
+func (o *Stars) GetCommonMetadata() resource.CommonMetadata {
 	dt := o.DeletionTimestamp
 	var deletionTimestamp *time.Time
 	if dt != nil {
@@ -120,7 +120,7 @@ func (o *Collection) GetCommonMetadata() resource.CommonMetadata {
 	}
 }
 
-func (o *Collection) SetCommonMetadata(metadata resource.CommonMetadata) {
+func (o *Stars) SetCommonMetadata(metadata resource.CommonMetadata) {
 	o.UID = types.UID(metadata.UID)
 	o.ResourceVersion = metadata.ResourceVersion
 	o.Generation = metadata.Generation
@@ -165,7 +165,7 @@ func (o *Collection) SetCommonMetadata(metadata resource.CommonMetadata) {
 	}
 }
 
-func (o *Collection) GetCreatedBy() string {
+func (o *Stars) GetCreatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -173,7 +173,7 @@ func (o *Collection) GetCreatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/createdBy"]
 }
 
-func (o *Collection) SetCreatedBy(createdBy string) {
+func (o *Stars) SetCreatedBy(createdBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -181,7 +181,7 @@ func (o *Collection) SetCreatedBy(createdBy string) {
 	o.ObjectMeta.Annotations["grafana.com/createdBy"] = createdBy
 }
 
-func (o *Collection) GetUpdateTimestamp() time.Time {
+func (o *Stars) GetUpdateTimestamp() time.Time {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -190,7 +190,7 @@ func (o *Collection) GetUpdateTimestamp() time.Time {
 	return parsed
 }
 
-func (o *Collection) SetUpdateTimestamp(updateTimestamp time.Time) {
+func (o *Stars) SetUpdateTimestamp(updateTimestamp time.Time) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -198,7 +198,7 @@ func (o *Collection) SetUpdateTimestamp(updateTimestamp time.Time) {
 	o.ObjectMeta.Annotations["grafana.com/updateTimestamp"] = updateTimestamp.Format(time.RFC3339)
 }
 
-func (o *Collection) GetUpdatedBy() string {
+func (o *Stars) GetUpdatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -206,7 +206,7 @@ func (o *Collection) GetUpdatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/updatedBy"]
 }
 
-func (o *Collection) SetUpdatedBy(updatedBy string) {
+func (o *Stars) SetUpdatedBy(updatedBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -214,21 +214,21 @@ func (o *Collection) SetUpdatedBy(updatedBy string) {
 	o.ObjectMeta.Annotations["grafana.com/updatedBy"] = updatedBy
 }
 
-func (o *Collection) Copy() resource.Object {
+func (o *Stars) Copy() resource.Object {
 	return resource.CopyObject(o)
 }
 
-func (o *Collection) DeepCopyObject() runtime.Object {
+func (o *Stars) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *Collection) DeepCopy() *Collection {
-	cpy := &Collection{}
+func (o *Stars) DeepCopy() *Stars {
+	cpy := &Stars{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *Collection) DeepCopyInto(dst *Collection) {
+func (o *Stars) DeepCopyInto(dst *Stars) {
 	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
@@ -237,34 +237,34 @@ func (o *Collection) DeepCopyInto(dst *Collection) {
 }
 
 // Interface compliance compile-time check
-var _ resource.Object = &Collection{}
+var _ resource.Object = &Stars{}
 
 // +k8s:openapi-gen=true
-type CollectionList struct {
+type StarsList struct {
 	metav1.TypeMeta `json:",inline" yaml:",inline"`
 	metav1.ListMeta `json:"metadata" yaml:"metadata"`
-	Items           []Collection `json:"items" yaml:"items"`
+	Items           []Stars `json:"items" yaml:"items"`
 }
 
-func (o *CollectionList) DeepCopyObject() runtime.Object {
+func (o *StarsList) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *CollectionList) Copy() resource.ListObject {
-	cpy := &CollectionList{
+func (o *StarsList) Copy() resource.ListObject {
+	cpy := &StarsList{
 		TypeMeta: o.TypeMeta,
-		Items:    make([]Collection, len(o.Items)),
+		Items:    make([]Stars, len(o.Items)),
 	}
 	o.ListMeta.DeepCopyInto(&cpy.ListMeta)
 	for i := 0; i < len(o.Items); i++ {
-		if item, ok := o.Items[i].Copy().(*Collection); ok {
+		if item, ok := o.Items[i].Copy().(*Stars); ok {
 			cpy.Items[i] = *item
 		}
 	}
 	return cpy
 }
 
-func (o *CollectionList) GetItems() []resource.Object {
+func (o *StarsList) GetItems() []resource.Object {
 	items := make([]resource.Object, len(o.Items))
 	for i := 0; i < len(o.Items); i++ {
 		items[i] = &o.Items[i]
@@ -272,48 +272,48 @@ func (o *CollectionList) GetItems() []resource.Object {
 	return items
 }
 
-func (o *CollectionList) SetItems(items []resource.Object) {
-	o.Items = make([]Collection, len(items))
+func (o *StarsList) SetItems(items []resource.Object) {
+	o.Items = make([]Stars, len(items))
 	for i := 0; i < len(items); i++ {
-		o.Items[i] = *items[i].(*Collection)
+		o.Items[i] = *items[i].(*Stars)
 	}
 }
 
-func (o *CollectionList) DeepCopy() *CollectionList {
-	cpy := &CollectionList{}
+func (o *StarsList) DeepCopy() *StarsList {
+	cpy := &StarsList{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *CollectionList) DeepCopyInto(dst *CollectionList) {
+func (o *StarsList) DeepCopyInto(dst *StarsList) {
 	resource.CopyObjectInto(dst, o)
 }
 
 // Interface compliance compile-time check
-var _ resource.ListObject = &CollectionList{}
+var _ resource.ListObject = &StarsList{}
 
 // Copy methods for all subresource types
 
 // DeepCopy creates a full deep copy of Spec
-func (s *CollectionSpec) DeepCopy() *CollectionSpec {
-	cpy := &CollectionSpec{}
+func (s *StarsSpec) DeepCopy() *StarsSpec {
+	cpy := &StarsSpec{}
 	s.DeepCopyInto(cpy)
 	return cpy
 }
 
 // DeepCopyInto deep copies Spec into another Spec object
-func (s *CollectionSpec) DeepCopyInto(dst *CollectionSpec) {
+func (s *StarsSpec) DeepCopyInto(dst *StarsSpec) {
 	resource.CopyObjectInto(dst, s)
 }
 
-// DeepCopy creates a full deep copy of CollectionStatus
-func (s *CollectionStatus) DeepCopy() *CollectionStatus {
-	cpy := &CollectionStatus{}
+// DeepCopy creates a full deep copy of StarsStatus
+func (s *StarsStatus) DeepCopy() *StarsStatus {
+	cpy := &StarsStatus{}
 	s.DeepCopyInto(cpy)
 	return cpy
 }
 
-// DeepCopyInto deep copies CollectionStatus into another CollectionStatus object
-func (s *CollectionStatus) DeepCopyInto(dst *CollectionStatus) {
+// DeepCopyInto deep copies StarsStatus into another StarsStatus object
+func (s *StarsStatus) DeepCopyInto(dst *StarsStatus) {
 	resource.CopyObjectInto(dst, s)
 }

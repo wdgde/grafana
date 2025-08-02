@@ -17,9 +17,9 @@ import (
 )
 
 var (
-	rawSchemaCollectionv0alpha1     = []byte(`{"spec":{"properties":{"description":{"type":"string"},"items":{"items":{"properties":{"group":{"type":"string"},"kind":{"type":"string"},"name":{"type":"string"}},"required":["group","kind","name"],"type":"object"},"type":"array"},"title":{"type":"string"}},"required":["title","description","items"],"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
-	versionSchemaCollectionv0alpha1 app.VersionSchema
-	_                               = json.Unmarshal(rawSchemaCollectionv0alpha1, &versionSchemaCollectionv0alpha1)
+	rawSchemaStarsv0alpha1     = []byte(`{"spec":{"properties":{"resource":{"items":{"properties":{"group":{"type":"string"},"kind":{"type":"string"},"names":{"description":"The set of resources","items":{"type":"string"},"type":"array"}},"required":["group","kind","names"],"type":"object"},"type":"array"}},"required":["resource"],"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	versionSchemaStarsv0alpha1 app.VersionSchema
+	_                          = json.Unmarshal(rawSchemaStarsv0alpha1, &versionSchemaStarsv0alpha1)
 )
 
 var appManifestData = app.ManifestData{
@@ -31,8 +31,8 @@ var appManifestData = app.ManifestData{
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
-					Kind:       "Collection",
-					Plural:     "Collections",
+					Kind:       "Stars",
+					Plural:     "Starss",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
@@ -43,7 +43,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					Schema: &versionSchemaCollectionv0alpha1,
+					Schema: &versionSchemaStarsv0alpha1,
 				},
 			},
 		},
@@ -59,7 +59,7 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
-	"Collection/v0alpha1": v0alpha1.CollectionKind(),
+	"Stars/v0alpha1": v0alpha1.StarsKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.

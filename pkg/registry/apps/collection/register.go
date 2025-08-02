@@ -77,12 +77,12 @@ func (p *CollectionAppInstaller) GetLegacyStorage(requested schema.GroupVersionR
 				{Name: "Title", Type: "string", Format: "string", Description: "The collection name"},
 				{Name: "Created At", Type: "date"},
 			},
-			Reader: func(obj any) ([]interface{}, error) {
+			Reader: func(obj any) ([]any, error) {
 				m, ok := obj.(*collectionv0alpha1.Collection)
 				if !ok {
 					return nil, fmt.Errorf("expected collection")
 				}
-				return []interface{}{
+				return []any{
 					m.Name,
 					m.Spec.Title,
 					m.CreationTimestamp.UTC().Format(time.RFC3339),

@@ -3,42 +3,42 @@
 package v0alpha1
 
 // +k8s:openapi-gen=true
-type CollectionstatusOperatorState struct {
+type StarsstatusOperatorState struct {
 	// lastEvaluation is the ResourceVersion last evaluated
 	LastEvaluation string `json:"lastEvaluation"`
 	// state describes the state of the lastEvaluation.
 	// It is limited to three possible states for machine evaluation.
-	State CollectionStatusOperatorStateState `json:"state"`
+	State StarsStatusOperatorStateState `json:"state"`
 	// descriptiveState is an optional more descriptive state field which has no requirements on format
 	DescriptiveState *string `json:"descriptiveState,omitempty"`
 	// details contains any extra information that is operator-specific
 	Details map[string]interface{} `json:"details,omitempty"`
 }
 
-// NewCollectionstatusOperatorState creates a new CollectionstatusOperatorState object.
-func NewCollectionstatusOperatorState() *CollectionstatusOperatorState {
-	return &CollectionstatusOperatorState{}
+// NewStarsstatusOperatorState creates a new StarsstatusOperatorState object.
+func NewStarsstatusOperatorState() *StarsstatusOperatorState {
+	return &StarsstatusOperatorState{}
 }
 
 // +k8s:openapi-gen=true
-type CollectionStatus struct {
+type StarsStatus struct {
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
-	OperatorStates map[string]CollectionstatusOperatorState `json:"operatorStates,omitempty"`
+	OperatorStates map[string]StarsstatusOperatorState `json:"operatorStates,omitempty"`
 	// additionalFields is reserved for future use
 	AdditionalFields map[string]interface{} `json:"additionalFields,omitempty"`
 }
 
-// NewCollectionStatus creates a new CollectionStatus object.
-func NewCollectionStatus() *CollectionStatus {
-	return &CollectionStatus{}
+// NewStarsStatus creates a new StarsStatus object.
+func NewStarsStatus() *StarsStatus {
+	return &StarsStatus{}
 }
 
 // +k8s:openapi-gen=true
-type CollectionStatusOperatorStateState string
+type StarsStatusOperatorStateState string
 
 const (
-	CollectionStatusOperatorStateStateSuccess    CollectionStatusOperatorStateState = "success"
-	CollectionStatusOperatorStateStateInProgress CollectionStatusOperatorStateState = "in_progress"
-	CollectionStatusOperatorStateStateFailed     CollectionStatusOperatorStateState = "failed"
+	StarsStatusOperatorStateStateSuccess    StarsStatusOperatorStateState = "success"
+	StarsStatusOperatorStateStateInProgress StarsStatusOperatorStateState = "in_progress"
+	StarsStatusOperatorStateStateFailed     StarsStatusOperatorStateState = "failed"
 )

@@ -11,18 +11,18 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
-// CollectionJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding
-type CollectionJSONCodec struct{}
+// StarsJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding
+type StarsJSONCodec struct{}
 
 // Read reads JSON-encoded bytes from `reader` and unmarshals them into `into`
-func (*CollectionJSONCodec) Read(reader io.Reader, into resource.Object) error {
+func (*StarsJSONCodec) Read(reader io.Reader, into resource.Object) error {
 	return json.NewDecoder(reader).Decode(into)
 }
 
 // Write writes JSON-encoded bytes into `writer` marshaled from `from`
-func (*CollectionJSONCodec) Write(writer io.Writer, from resource.Object) error {
+func (*StarsJSONCodec) Write(writer io.Writer, from resource.Object) error {
 	return json.NewEncoder(writer).Encode(from)
 }
 
 // Interface compliance checks
-var _ resource.Codec = &CollectionJSONCodec{}
+var _ resource.Codec = &StarsJSONCodec{}

@@ -1,8 +1,8 @@
 package collection
 
-collectionv0alpha1: {
-	kind:   "Collection"
-	plural: "collections"
+starsv0alpha1: {
+	kind:   "Stars"
+	// pluralName: "Stars"
 	scope:  "Namespaced"
 	validation: {
 		operations: [
@@ -11,15 +11,15 @@ collectionv0alpha1: {
 		]
 	}
 	schema: {
-		#Item: {
+		#Resource: {
 			group: string
 			kind: string
-			name: string 
+
+			// The set of resources
+			names: [...string]
 		}
 		spec: {
-			title:    string
-			description: string
-			items: [...#Item]
+			resource: [...#Resource]
 		}
 	}
 }
