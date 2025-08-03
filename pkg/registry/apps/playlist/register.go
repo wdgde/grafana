@@ -6,6 +6,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	genericrest "k8s.io/apiserver/pkg/registry/rest"
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -15,7 +16,6 @@ import (
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	playlistapp "github.com/grafana/grafana/apps/playlist/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -63,7 +63,7 @@ func RegisterAppInstaller(
 }
 
 // GetLegacyStorage returns the legacy storage for the playlist app.
-func (p *PlaylistAppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {
+func (p *PlaylistAppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) genericrest.Storage {
 	gvr := schema.GroupVersionResource{
 		Group:    playlistv0alpha1.PlaylistKind().Group(),
 		Version:  playlistv0alpha1.PlaylistKind().Version(),

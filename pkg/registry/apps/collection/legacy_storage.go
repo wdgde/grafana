@@ -3,14 +3,20 @@ package collection
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	authlib "github.com/grafana/authlib/types"
+
 	collection "github.com/grafana/grafana/apps/collection/pkg/apis/collection/v0alpha1"
+	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	"github.com/grafana/grafana/pkg/registry/apps/collection/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
@@ -20,14 +26,15 @@ var (
 	_ rest.Getter               = (*legacyStorage)(nil)
 	_ rest.Lister               = (*legacyStorage)(nil)
 	_ rest.Storage              = (*legacyStorage)(nil)
-	_ rest.Creater              = (*legacyStorage)(nil)
-	_ rest.Updater              = (*legacyStorage)(nil)
-	_ rest.GracefulDeleter      = (*legacyStorage)(nil)
+	// _ rest.Creater              = (*legacyStorage)(nil)
+	// _ rest.Updater              = (*legacyStorage)(nil)
+	// _ rest.GracefulDeleter      = (*legacyStorage)(nil)
 )
 
 type legacyStorage struct {
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
+	sql            *legacy.LegacyStarSQL
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -53,108 +60,66 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	// orgId, err := request.OrgIDForList(ctx)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	ns, err := request.NamespaceInfoFrom(ctx, false)
+	if err != nil {
+		return nil, err
+	}
+
+	if ns.Value == "" {
+		// TODO -- make sure the user can list across *all* namespaces
+		return nil, fmt.Errorf("TODO... get stars for all orgs")
+	}
 
 	list := &collection.StarsList{}
-	// for idx := range res {
-	// 	list.Items = append(list.Items, *convertToK8sResource(&res[idx], s.namespacer))
-	// }
+	found, rv, err := s.sql.GetStars(ctx, ns.OrgID, "")
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range found {
+		list.Items = append(list.Items, asResource(s.namespacer(v.OrgID), &v))
+	}
+	if rv > 0 {
+		list.ResourceVersion = strconv.FormatInt(rv, 10)
+	}
 	return list, nil
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	// info, err := request.NamespaceInfoFrom(ctx, true)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, fmt.Errorf("todo")
+	ut, uid, err := authlib.ParseTypeID(name)
+	if err != nil {
+		return nil, fmt.Errorf("invalid name %w", err)
+	}
+	if ut != authlib.TypeUser {
+		return nil, fmt.Errorf("expecting name with prefix: %s", authlib.TypeUser)
+	}
+
+	found, _, err := s.sql.GetStars(ctx, info.OrgID, uid)
+	if err != nil || len(found) == 0 {
+		return nil, err
+	}
+	obj := asResource(info.Value, &found[0])
+	return &obj, nil
 }
 
-func (s *legacyStorage) Create(ctx context.Context,
-	obj runtime.Object,
-	createValidation rest.ValidateObjectFunc,
-	options *metav1.CreateOptions,
-) (runtime.Object, error) {
-	// info, err := request.NamespaceInfoFrom(ctx, true)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// p, ok := obj.(*collection.Playlist)
-	// if !ok {
-	// 	return nil, fmt.Errorf("expected collection?")
-	// }
-	// cmd, err := convertToLegacyUpdateCommand(p, info.OrgID)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// out, err := s.service.Create(ctx, &collectionsvc.CreatePlaylistCommand{
-	// 	UID:      p.Name,
-	// 	Name:     cmd.Name,
-	// 	Interval: cmd.Interval,
-	// 	Items:    cmd.Items,
-	// 	OrgId:    cmd.OrgId,
-	// })
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// return s.Get(ctx, out.UID, nil)
-	return nil, fmt.Errorf("TODO")
-}
-
-func (s *legacyStorage) Update(ctx context.Context,
-	name string,
-	objInfo rest.UpdatedObjectInfo,
-	createValidation rest.ValidateObjectFunc,
-	updateValidation rest.ValidateObjectUpdateFunc,
-	forceAllowCreate bool,
-	options *metav1.UpdateOptions,
-) (runtime.Object, bool, error) {
-	// info, err := request.NamespaceInfoFrom(ctx, true)
-	// if err != nil {
-	// 	return nil, false, err
-	// }
-
-	// created := false
-	// old, err := s.Get(ctx, name, nil)
-	// if err != nil {
-	// 	return old, created, err
-	// }
-
-	// obj, err := objInfo.UpdatedObject(ctx, old)
-	// if err != nil {
-	// 	return old, created, err
-	// }
-	// p, ok := obj.(*collection.Playlist)
-	// if !ok {
-	// 	return nil, created, fmt.Errorf("expected collection after update")
-	// }
-
-	// cmd, err := convertToLegacyUpdateCommand(p, info.OrgID)
-	// if err != nil {
-	// 	return old, created, err
-	// }
-	// _, err = s.service.Update(ctx, cmd)
-	// if err != nil {
-	// 	return nil, false, err
-	// }
-
-	// r, err := s.Get(ctx, name, nil)
-	// return r, created, err
-
-	return nil, false, fmt.Errorf("TODO")
-}
-
-// GracefulDeleter
-func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return nil, false, fmt.Errorf("TODO")
-}
-
-// CollectionDeleter
-func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("DeleteCollection for collections not implemented")
+func asResource(ns string, v *legacy.DashboardStars) collection.Stars {
+	return collection.Stars{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              fmt.Sprintf("user:%s", v.UserUID),
+			Namespace:         ns,
+			ResourceVersion:   strconv.FormatInt(v.Last, 10),
+			CreationTimestamp: metav1.NewTime(time.UnixMilli(v.First)),
+		},
+		Spec: collection.StarsSpec{
+			Resource: []collection.StarsResource{{
+				Group: dashboardsV1.APIGroup,
+				Kind:  "Dashboard",
+				Names: v.Dashboards,
+			}},
+		},
+	}
 }

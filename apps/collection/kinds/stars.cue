@@ -16,6 +16,7 @@ starsv0alpha1: {
 			kind: string
 
 			// The set of resources
+			// TODO: mark this as a Set<string> (not sure how yet)
 			names: [...string]
 		}
 		spec: {

@@ -6,27 +6,30 @@ import (
 	"maps"
 	"time"
 
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstore "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/kube-openapi/pkg/common"
 
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	"github.com/grafana/grafana-app-sdk/logging"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 type LegacyStorageGetterFunc func(schema.GroupVersionResource) grafanarest.Storage
 
 type LegacyStorageProvider interface {
-	GetLegacyStorage(schema.GroupVersionResource) grafanarest.Storage
+	// When the legacy storage implements grafanarest.Storage, it will be wrapped with a DualWriter
+	// If the Storage is only read-only, it will be registered *without* DualWrite options
+	GetLegacyStorage(schema.GroupVersionResource) rest.Storage
 }
 
 type AuthorizerProvider interface {

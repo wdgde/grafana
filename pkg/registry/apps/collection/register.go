@@ -8,6 +8,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	restclient "k8s.io/client-go/rest"
 
+	"k8s.io/apiserver/pkg/registry/rest"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
@@ -15,11 +17,13 @@ import (
 	collectionv0alpha1 "github.com/grafana/grafana/apps/collection/pkg/apis/collection/v0alpha1"
 	collectionapp "github.com/grafana/grafana/apps/collection/pkg/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry/apps/collection/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 var (
@@ -29,15 +33,19 @@ var (
 
 type CollectionAppInstaller struct {
 	appsdkapiserver.AppInstaller
-	cfg *setting.Cfg
+
+	namespacer request.NamespaceMapper
+	db         legacysql.LegacyDatabaseProvider
 }
 
 func RegisterApp(
-	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	cfg *setting.Cfg,
+	db db.DB,
 ) (*CollectionAppInstaller, error) {
 	installer := &CollectionAppInstaller{
-		cfg: cfg,
+		namespacer: request.GetNamespaceMapper(cfg),
+		db:         legacysql.NewDatabaseProvider(db),
 	}
 	specificConfig := any(&collectionapp.CollectionConfig{})
 	provider := simple.NewAppProvider(apis.LocalManifest(), specificConfig, collectionapp.New)
@@ -57,7 +65,7 @@ func RegisterApp(
 }
 
 // GetLegacyStorage returns the legacy storage for the collection app.
-func (p *CollectionAppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {
+func (p *CollectionAppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) rest.Storage {
 	gvr := schema.GroupVersionResource{
 		Group:    collectionv0alpha1.StarsKind().Group(),
 		Version:  collectionv0alpha1.StarsKind().Version(),
@@ -67,7 +75,8 @@ func (p *CollectionAppInstaller) GetLegacyStorage(requested schema.GroupVersionR
 		return nil
 	}
 	legacyStore := &legacyStorage{
-		namespacer: request.GetNamespaceMapper(p.cfg),
+		namespacer: p.namespacer,
+		sql:        &legacy.LegacyStarSQL{DB: p.db},
 	}
 	legacyStore.tableConverter = utils.NewTableConverter(
 		gvr.GroupResource(),

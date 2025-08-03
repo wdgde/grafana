@@ -7,6 +7,7 @@ type StarsResource struct {
 	Group string `json:"group"`
 	Kind  string `json:"kind"`
 	// The set of resources
+	// TODO: mark this as a Set<string> (not sure how yet)
 	Names []string `json:"names"`
 }
 

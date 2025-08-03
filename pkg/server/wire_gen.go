@@ -689,7 +689,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	if err != nil {
 		return nil, err
 	}
-	collectionAppInstaller, err := collection.RegisterApp(cfg, featureToggles)
+	collectionAppInstaller, err := collection.RegisterApp(featureToggles, cfg, sqlStore)
 	if err != nil {
 		return nil, err
 	}
@@ -1254,7 +1254,7 @@ func InitializeForTest(t sqlutil.ITestDB, testingT interface {
 	if err != nil {
 		return nil, err
 	}
-	collectionAppInstaller, err := collection.RegisterApp(cfg, featureToggles)
+	collectionAppInstaller, err := collection.RegisterApp(featureToggles, cfg, sqlStore)
 	if err != nil {
 		return nil, err
 	}

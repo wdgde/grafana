@@ -43,7 +43,6 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 	log := logging.FromContext(s.ctx)
 	for v, storageMap := range apiGroupInfo.VersionedResourcesStorageMap {
 		for storagePath, restStorage := range storageMap {
-			legacyProvider, dualWriteSupported := s.installer.(LegacyStorageProvider)
 			resource, err := getResourceFromStoragePath(storagePath)
 			if err != nil {
 				return err
@@ -58,26 +57,44 @@ func (s *serverWrapper) InstallAPIGroup(apiGroupInfo *genericapiserver.APIGroupI
 				delete(apiGroupInfo.VersionedResourcesStorageMap[v], storagePath)
 				continue
 			}
-			storage := s.configureStorage(gr, dualWriteSupported, restStorage)
-			if unifiedStorage, ok := storage.(grafanarest.Storage); ok && dualWriteSupported {
-				log.Debug("Configuring dual writer for storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
-				dw, err := NewDualWriter(
-					s.ctx,
-					gr,
-					s.storageOpts,
-					legacyProvider.GetLegacyStorage(gr.WithVersion(v)),
-					unifiedStorage,
-					s.kvStore,
-					s.lock,
-					s.namespaceMapper,
-					s.dualWriteService,
-					s.dualWriterMetrics,
-					s.builderMetrics,
-				)
-				if err != nil {
-					return err
+
+			var storage genericrest.Storage
+			legacyProvider, _ := s.installer.(LegacyStorageProvider)
+			if legacyProvider != nil {
+				storage = legacyProvider.GetLegacyStorage(gr.WithVersion(v))
+				if storage == nil {
+					return fmt.Errorf("legacy provider must return a storage implementation")
 				}
-				storage = dw
+				legacyStorage, dualWriteSupported := storage.(grafanarest.Storage)
+				if dualWriteSupported {
+					tmp := s.configureStorage(gr, true, restStorage)
+					if unifiedStorage, ok := tmp.(grafanarest.Storage); ok {
+						log.Debug("Configuring dual writer for storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
+						storage, err = NewDualWriter(
+							s.ctx,
+							gr,
+							s.storageOpts,
+							legacyStorage,
+							unifiedStorage,
+							s.kvStore,
+							s.lock,
+							s.namespaceMapper,
+							s.dualWriteService,
+							s.dualWriterMetrics,
+							s.builderMetrics,
+						)
+						if err != nil {
+							return err
+						}
+					} else {
+						// ERROR?
+						log.Warn("keeping legacy storage (does not implement XXX)", "resource", gr.String(), "version", v, "storagePath", storagePath)
+					}
+				} else {
+					log.Debug("Using legacy storage", "resource", gr.String(), "version", v, "storagePath", storagePath)
+				}
+			} else {
+				storage = s.configureStorage(gr, false, restStorage)
 			}
 			apiGroupInfo.VersionedResourcesStorageMap[v][storagePath] = storage
 		}
