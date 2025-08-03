@@ -41,6 +41,12 @@ func TestStarsQueries(t *testing.T) {
 					Data: getQuery("abc", 3),
 				},
 			},
+			sqlQueryRV: {
+				{
+					Name: "get",
+					Data: getQuery("", 0),
+				},
+			},
 		},
 	})
 }

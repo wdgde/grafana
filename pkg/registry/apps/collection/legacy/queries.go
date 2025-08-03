@@ -27,6 +27,7 @@ func mustTemplate(filename string) *template.Template {
 // Templates.
 var (
 	sqlQueryStars = mustTemplate("query_stars.sql")
+	sqlQueryRV    = mustTemplate("query_rv.sql")
 )
 
 type sqlQuery struct {

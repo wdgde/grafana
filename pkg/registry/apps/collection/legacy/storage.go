@@ -1,4 +1,4 @@
-package collection
+package legacy
 
 import (
 	"context"
@@ -10,14 +10,16 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
-
 	collection "github.com/grafana/grafana/apps/collection/pkg/apis/collection/v0alpha1"
+	collectionv0alpha1 "github.com/grafana/grafana/apps/collection/pkg/apis/collection/v0alpha1"
 	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	"github.com/grafana/grafana/pkg/registry/apps/collection/legacy"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 var (
@@ -31,10 +33,40 @@ var (
 	// _ rest.GracefulDeleter      = (*legacyStorage)(nil)
 )
 
+func NewLegacyStorage(namespacer request.NamespaceMapper, db legacysql.LegacyDatabaseProvider) *legacyStorage {
+	return &legacyStorage{
+		namespacer: namespacer,
+		sql:        &legacyStarSQL{db: db},
+		tableConverter: utils.NewTableConverter(
+			schema.GroupResource{
+				Group:    collectionv0alpha1.APIGroup,
+				Resource: collectionv0alpha1.StarsKind().Plural(),
+			},
+			utils.TableColumns{
+				Definition: []metav1.TableColumnDefinition{
+					{Name: "Name", Type: "string", Format: "name"},
+					{Name: "Title", Type: "string", Format: "string", Description: "The collection name"},
+					{Name: "Created At", Type: "date"},
+				},
+				Reader: func(obj any) ([]any, error) {
+					m, ok := obj.(*collectionv0alpha1.Stars)
+					if !ok {
+						return nil, fmt.Errorf("expected collection")
+					}
+					return []any{
+						m.Name,
+						"???",
+						m.CreationTimestamp.UTC().Format(time.RFC3339),
+					}, nil
+				},
+			}),
+	}
+}
+
 type legacyStorage struct {
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
-	sql            *legacy.LegacyStarSQL
+	sql            *legacyStarSQL
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -106,7 +138,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	return &obj, nil
 }
 
-func asResource(ns string, v *legacy.DashboardStars) collection.Stars {
+func asResource(ns string, v *dashboardStars) collection.Stars {
 	return collection.Stars{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              fmt.Sprintf("user:%s", v.UserUID),

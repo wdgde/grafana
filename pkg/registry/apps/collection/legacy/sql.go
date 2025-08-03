@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-type DashboardStars struct {
+type dashboardStars struct {
 	OrgID   int64
 	UserUID string
 	First   int64
@@ -18,42 +18,34 @@ type DashboardStars struct {
 	Dashboards []string
 }
 
-// NOTE: this does not support paging
-type LegacyStarSQL struct {
-	DB legacysql.LegacyDatabaseProvider
+type legacyStarSQL struct {
+	db legacysql.LegacyDatabaseProvider
 }
 
-func (s *LegacyStarSQL) GetStars(ctx context.Context, orgId int64, user string) ([]DashboardStars, int64, error) {
-	rv := int64(0)
-
-	sql, err := s.DB(ctx)
+// NOTE: this does not support paging -- lets check if that will be a problem in cloud
+func (s *legacyStarSQL) GetStars(ctx context.Context, orgId int64, user string) ([]dashboardStars, int64, error) {
+	sql, err := s.db(ctx)
 	if err != nil {
-		return nil, rv, err
+		return nil, 0, err
 	}
 
 	req := newQueryReq(sql, user, orgId)
 
-	tmpl := sqlQueryStars
-	rawQuery, err := sqltemplate.Execute(tmpl, req)
+	q, err := sqltemplate.Execute(sqlQueryStars, req)
 	if err != nil {
-		return nil, 0, fmt.Errorf("execute template %q: %w", tmpl.Name(), err)
+		return nil, 0, fmt.Errorf("execute template %q: %w", sqlQueryStars.Name(), err)
 	}
-	q := rawQuery
-	// if false {
-	// 	 pretty := sqltemplate.RemoveEmptyLines(rawQuery)
-	//	 fmt.Printf("DASHBOARD QUERY: %s [%+v] // %+v\n", pretty, req.GetArgs(), query)
-	// }
 
-	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	sess := sql.DB.GetSqlxSession()
+	rows, err := sess.Query(ctx, q, req.GetArgs()...)
 	defer func() {
 		if rows != nil {
 			_ = rows.Close()
 		}
 	}()
 
-	stars := []DashboardStars{}
-
-	current := &DashboardStars{}
+	stars := []dashboardStars{}
+	current := &dashboardStars{}
 	var orgID int64
 	var userUID string
 	var dashboardUID string
@@ -69,7 +61,7 @@ func (s *LegacyStarSQL) GetStars(ctx context.Context, orgId int64, user string) 
 			if current.UserUID != "" {
 				stars = append(stars, *current)
 			}
-			current = &DashboardStars{
+			current = &dashboardStars{
 				OrgID:   orgID,
 				UserUID: userUID,
 			}
@@ -89,5 +81,15 @@ func (s *LegacyStarSQL) GetStars(ctx context.Context, orgId int64, user string) 
 		stars = append(stars, *current)
 	}
 
-	return stars, rv, nil
+	// Find the RV unless it is a user query
+	if userUID == "" {
+		req.Reset()
+		q, err = sqltemplate.Execute(sqlQueryRV, req)
+		if err != nil {
+			return nil, 0, fmt.Errorf("execute template %q: %w", sqlQueryRV.Name(), err)
+		}
+		err = sess.Select(ctx, &updated, q)
+	}
+
+	return stars, updated.UnixMilli(), err
 }
