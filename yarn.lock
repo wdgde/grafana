@@ -3037,6 +3037,7 @@ __metadata:
     "@faker-js/faker": "npm:^9.8.0"
     "@grafana/test-utils": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
+    "@rollup/plugin-alias": "npm:^5.1.1"
     "@rollup/plugin-commonjs": "npm:^28.0.0"
     "@rollup/plugin-json": "npm:6.1.0"
     "@rtk-query/codegen-openapi": "npm:^2.0.0"
@@ -3055,6 +3056,8 @@ __metadata:
     rollup: "npm:^4.22.4"
     rollup-plugin-esbuild: "npm:6.2.1"
     rollup-plugin-node-externals: "npm:^8.0.0"
+    rollup-plugin-tsconfig-paths: "npm:^1.5.2"
+    rollup-plugin-typescript-paths: "npm:^1.5.0"
     type-fest: "npm:^4.40.0"
     typescript: "npm:5.8.3"
   peerDependencies:
@@ -6780,6 +6783,18 @@ __metadata:
   version: 1.19.1
   resolution: "@remix-run/router@npm:1.19.1"
   checksum: 10/2800c2f6567a982fe942aacc4cb5b170e7cc89bd455960e3bea2424161ff7dac32d01886322d88dd19b88d1bea711f39566d17f02b73eeb74999affb471f8f52
+  languageName: node
+  linkType: hard
+
+"@rollup/plugin-alias@npm:^5.1.1":
+  version: 5.1.1
+  resolution: "@rollup/plugin-alias@npm:5.1.1"
+  peerDependencies:
+    rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
+  peerDependenciesMeta:
+    rollup:
+      optional: true
+  checksum: 10/1f1ab178aa2726c81e2ae1709f73b3688491f14655b97c54d43bea35ac3f783f8855d701d1e5eac234e3ffe89fef56ce975726b036a97049fefa9b514686e55c
   languageName: node
   linkType: hard
 
@@ -28463,6 +28478,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"rollup-plugin-tsconfig-paths@npm:^1.5.2":
+  version: 1.5.2
+  resolution: "rollup-plugin-tsconfig-paths@npm:1.5.2"
+  dependencies:
+    typescript-paths: "npm:^1.5.1"
+  peerDependencies:
+    rollup: ^2 || ^3 || ^4
+  checksum: 10/11e9cb8b096edc0dd17deba660213ec3047ea06790ff034984a3a6687acb0bd910a10ca825184f01a838a5c934021e8858e043c8668d0bf1fde389bf50240b78
+  languageName: node
+  linkType: hard
+
+"rollup-plugin-typescript-paths@npm:^1.5.0":
+  version: 1.5.0
+  resolution: "rollup-plugin-typescript-paths@npm:1.5.0"
+  peerDependencies:
+    typescript: ">=3.4"
+  checksum: 10/ac0631452c2ec54a004e15eac1de843c9cb392b50159ae942413829a54e933d64a21f1f03822e0e2c5539fe332233fa55351045edb42d124663a5502d558d923
+  languageName: node
+  linkType: hard
+
 "rollup@npm:^4.22.4":
   version: 4.46.1
   resolution: "rollup@npm:4.46.1"
@@ -31592,6 +31627,15 @@ __metadata:
   dependencies:
     ts-toolbelt: "npm:^9.6.0"
   checksum: 10/b865c8f97df911b82b51b3cb4afa9b52b971d344dd79d203cd118e424a03761aebfea538c643f6283f700a3b4000d07d2168e353691b5caff076542bad78e420
+  languageName: node
+  linkType: hard
+
+"typescript-paths@npm:^1.5.1":
+  version: 1.5.1
+  resolution: "typescript-paths@npm:1.5.1"
+  peerDependencies:
+    typescript: ^4.7.2 || ^5
+  checksum: 10/755aecb40a1015152c31f1b3b8e587330aca05e8dfb7e4e48df28add152c9cc257a16df98c58f31724d9b210199f56feb2710db3e7da948ab6f607d32fb6a572
   languageName: node
   linkType: hard
 

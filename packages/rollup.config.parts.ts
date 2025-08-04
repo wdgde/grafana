@@ -14,7 +14,7 @@ export const entryPoint = 'src/index.ts';
 // Externalising and resolving modules should happen before transformation.
 export const plugins = [
   nodeExternals({ deps: true, packagePath: './package.json' }),
-  nodeResolve(),
+  nodeResolve({ extensions: ['.mjs', '.js', '.json', '.node', 'ts', 'tsx'] }),
   esbuild({
     target: 'es2018',
     tsconfig: 'tsconfig.build.json',

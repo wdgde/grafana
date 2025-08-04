@@ -13,7 +13,13 @@
   },
   "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",
-  "include": ["typings/jest", "../../public/app/types/*.d.ts", "../grafana-ui/src/types/*.d.ts", "src/**/*.ts*"],
+  "include": [
+    "typings/jest",
+    "../../public/app/types/*.d.ts",
+    "../grafana-ui/src/types/*.d.ts",
+    "src/**/*.ts*",
+    "../../public/app/**/*.ts*"
+  ],
   "ts-node": {
     "compilerOptions": {
       "module": "NodeNext",
