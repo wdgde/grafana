@@ -11,7 +11,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/go-openapi/strfmt"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 	"github.com/grafana/alerting/definition"
 	alertingModels "github.com/grafana/alerting/models"
@@ -21,7 +24,9 @@ import (
 	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
 	amgeneral "github.com/prometheus/alertmanager/api/v2/client/general"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
+	common_config "github.com/prometheus/common/config"
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -269,7 +274,7 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 		return fmt.Errorf("unable to build configuration: %w", err)
 	}
 	// Send the configuration only if we need to.
-	if !am.shouldSendConfig(ctx, payload.Hash) {
+	if !am.shouldSendConfig(ctx, payload) {
 		return nil
 	}
 
@@ -682,8 +687,8 @@ func (am *Alertmanager) getFullState(ctx context.Context) (string, error) {
 
 // shouldSendConfig compares the remote Alertmanager configuration with our local one.
 // It returns true if the configurations are different.
-func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash string) bool {
-	if hash == "" { // empty hash means that something went wrong while calculating it. In this case, always send the config.
+func (am *Alertmanager) shouldSendConfig(ctx context.Context, newCfg remoteClient.UserGrafanaConfig) bool {
+	if newCfg.Hash == "" { // empty hash means that something went wrong while calculating it. In this case, always send the config.
 		return true
 	}
 	rc, err := am.mimirClient.GetGrafanaAlertmanagerConfig(ctx)
@@ -692,8 +697,23 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash string) bool 
 		am.log.Warn("Unable to get the remote Alertmanager configuration for comparison, sending the configuration without comparing", "err", err)
 		return true
 	}
-	if rc.Hash != hash {
-		am.log.Debug("Hash of the remote Alertmanager configuration is different, sending the configuration", "remote", rc.Hash, "local", hash)
+	if rc.Hash != newCfg.Hash {
+		am.log.Debug("Hash of the remote Alertmanager configuration is different, sending the configuration", "remote", rc.Hash, "local", newCfg.Hash)
+		cOpt := []cmp.Option{
+			cmpopts.IgnoreUnexported(apimodels.PostableUserConfig{}, apimodels.Route{}, labels.Matcher{}, common_config.ProxyConfig{}, time.Location{}),
+		}
+		diff := cmp.Diff(rc, newCfg, cOpt...)
+		am.log.Debug("Configuration difference", "diff", diff)
+		fmts := spew.ConfigState{
+			Indent:                  " ",
+			SortKeys:                true,
+			DisableMethods:          true,
+			SpewKeys:                true,
+			DisablePointerAddresses: true,
+			DisableCapacities:       true,
+		}
+		am.log.Debug("Remote config", "config", fmts.Sprintf("%#v", rc))
+		am.log.Debug("Local config", "config", fmts.Sprintf("%#v", newCfg))
 		return true
 	}
 	return false
