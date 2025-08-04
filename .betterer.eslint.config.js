@@ -35,7 +35,7 @@ module.exports = [
       'data/',
       'deployment_tools_config.json',
       'devenv',
-      'e2e/test-plugins',
+      'e2e-playwright/test-plugins',
       'e2e/tmp',
       'packages/grafana-ui/src/components/Icon/iconBundle.ts',
       'pkg',
@@ -104,11 +104,10 @@ module.exports = [
       '**/__mocks__/**',
       '**/public/test/**',
       '**/mocks.{ts,tsx}',
+      '**/mocks/**/*.{ts,tsx}',
       '**/spec/**/*.{ts,tsx}',
     ],
-    rules: {
-      '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
-    },
+    rules: { '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }] },
   },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
@@ -142,13 +141,32 @@ module.exports = [
           message:
             'Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.',
         },
+        {
+          selector: 'CallExpression[callee.type="MemberExpression"][callee.property.name="localeCompare"]',
+          message:
+            'Using localeCompare() can cause performance issues when sorting large datasets. Consider using Intl.Collator for better performance when sorting arrays, or add an eslint-disable comment if sorting a small, known dataset.',
+        },
       ],
     },
   },
+  { files: ['public/app/**/*.{ts,tsx}'], rules: { 'no-barrel-files/no-barrel-files': 'error' } },
   {
-    files: ['public/app/**/*.{ts,tsx}'],
+    // custom rule for Table to avoid performance regressions
+    files: ['packages/grafana-ui/src/components/Table/TableNG/Cells/**/*.{ts,tsx}'],
     rules: {
-      'no-barrel-files/no-barrel-files': 'error',
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/themes/ThemeContext'],
+              importNames: ['useStyles2', 'useTheme2'],
+              message:
+                'Do not use "useStyles2" or "useTheme2" in a cell directly. Instead, provide styles to cells via `getDefaultCellStyles` or `getCellSpecificStyles`.',
+            },
+          ],
+        },
+      ],
     },
   },
 ];

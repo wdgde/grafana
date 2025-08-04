@@ -1,4 +1,3 @@
-import { Property } from 'csstype';
 import { SyntheticEvent } from 'react';
 import { Column } from 'react-data-grid';
 
@@ -10,7 +9,6 @@ import {
   TimeRange,
   FieldConfigSource,
   ActionModel,
-  InterpolateFunction,
   FieldType,
   DataFrameWithValue,
   SelectableValue,
@@ -19,6 +17,8 @@ import { TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellOptions } from '../types';
+
+import { TextAlign } from './utils';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
@@ -30,12 +30,9 @@ export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: 
 export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
 
-export type GetActionsFunction = (
-  frame: DataFrame,
-  field: Field,
-  rowIndex: number,
-  replaceVariables?: InterpolateFunction
-) => ActionModel[];
+export type GetActionsFunction = (frame: DataFrame, field: Field, rowIndex: number) => ActionModel[];
+
+export type GetActionsFunctionLocal = (field: Field, rowIndex: number) => ActionModel[];
 
 export type TableFieldOptionsType = Omit<TableFieldOptions, 'cellOptions'> & {
   cellOptions: TableCellOptions;
@@ -126,6 +123,7 @@ export interface BaseTableProps {
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
   structureRev?: number;
+  transparent?: boolean;
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
@@ -133,16 +131,16 @@ export interface BaseTableProps {
   initialRowIndex?: number;
   fieldConfig?: FieldConfigSource;
   getActions?: GetActionsFunction;
-  replaceVariables?: InterpolateFunction;
   // Used solely for testing as RTL can't correctly render the table otherwise
   enableVirtualization?: boolean;
+  // for MarkdownCell, this flag disables sanitization of HTML content. Configured via config.ini.
+  disableSanitizeHtml?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
 export interface TableNGProps extends BaseTableProps {}
 
 export interface TableCellRendererProps {
-  actions?: ActionModel[];
   rowIdx: number;
   frame: DataFrame;
   timeRange?: TimeRange;
@@ -155,7 +153,8 @@ export interface TableCellRendererProps {
   theme: GrafanaTheme2;
   cellInspect: boolean;
   showFilters: boolean;
-  justifyContent: Property.JustifyContent;
+  getActions?: GetActionsFunctionLocal;
+  disableSanitizeHtml?: boolean;
 }
 
 export type ContextMenuProps = {
@@ -181,14 +180,12 @@ export interface TableCellActionsProps {
 
 /* ------------------------- Specialized Cell Props ------------------------- */
 export interface RowExpanderNGProps {
-  height: number;
   onCellExpand: (e: SyntheticEvent) => void;
   isExpanded?: boolean;
 }
 
 export interface SparklineCellProps {
   field: Field;
-  justifyContent: Property.JustifyContent;
   rowIdx: number;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
@@ -196,7 +193,7 @@ export interface SparklineCellProps {
   width: number;
 }
 
-export interface BarGaugeCellProps extends ActionCellProps {
+export interface BarGaugeCellProps {
   field: Field;
   height: number;
   rowIdx: number;
@@ -205,19 +202,10 @@ export interface BarGaugeCellProps extends ActionCellProps {
   width: number;
 }
 
-export interface ImageCellProps extends ActionCellProps {
+export interface ImageCellProps {
   cellOptions: TableCellOptions;
   field: Field;
-  height: number;
-  justifyContent: Property.JustifyContent;
   value: TableCellValue;
-  rowIdx: number;
-}
-
-export interface JSONCellProps extends ActionCellProps {
-  justifyContent: Property.JustifyContent;
-  value: TableCellValue;
-  field: Field;
   rowIdx: number;
 }
 
@@ -228,12 +216,7 @@ export interface DataLinksCellProps {
 
 export interface GeoCellProps {
   value: TableCellValue;
-  justifyContent: Property.JustifyContent;
   height: number;
-}
-
-export interface ActionCellProps {
-  actions?: ActionModel[];
 }
 
 export interface CellColors {
@@ -242,13 +225,37 @@ export interface CellColors {
   bgHoverColor?: string;
 }
 
-export interface AutoCellProps extends ActionCellProps {
-  value: TableCellValue;
+export interface AutoCellProps {
   field: Field;
-  justifyContent: Property.JustifyContent;
+  value: TableCellValue;
   rowIdx: number;
-  cellOptions: TableCellOptions;
 }
+
+export interface MarkdownCellProps {
+  field: Field;
+  rowIdx: number;
+  disableSanitizeHtml?: boolean;
+}
+
+export interface ActionCellProps {
+  field: Field;
+  rowIdx: number;
+  getActions: GetActionsFunctionLocal;
+}
+
+export interface PillCellProps {
+  theme: GrafanaTheme2;
+  field: Field;
+  rowIdx: number;
+}
+
+export interface TableCellStyleOptions {
+  textWrap: boolean;
+  textAlign: TextAlign;
+  shouldOverflow: boolean;
+}
+
+export type TableCellStyles = (theme: GrafanaTheme2, options: TableCellStyleOptions) => string;
 
 // Comparator for sorting table values
 export type Comparator = (a: TableCellValue, b: TableCellValue) => number;
@@ -262,4 +269,31 @@ export type ColumnTypes = Record<string, FieldType>;
 export interface ScrollPosition {
   x: number;
   y: number;
+}
+
+export interface TypographyCtx {
+  ctx: CanvasRenderingContext2D;
+  fontFamily: string;
+  letterSpacing: number;
+  avgCharWidth: number;
+  estimateLines: LineCounter;
+  wrappedCount: LineCounter;
+}
+
+export type LineCounter = (value: unknown, width: number, field: Field, rowIdx: number) => number;
+export interface LineCounterEntry {
+  /**
+   * given a values and the available width, returns the line count for that value
+   */
+  counter: LineCounter;
+  /**
+   * if getting an accurate line count is expensive, you can provide an estimate method
+   * which will be used when looping over the row. the counter method will only be invoked
+   * for the cell which is the maximum line count for the row.
+   */
+  estimate?: LineCounter;
+  /**
+   * indicates which field indexes of the visible fields this line counter applies to.
+   */
+  fieldIdxs: number[];
 }
