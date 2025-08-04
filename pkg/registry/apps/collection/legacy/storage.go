@@ -28,8 +28,8 @@ var (
 	_ rest.Getter               = (*legacyStorage)(nil)
 	_ rest.Lister               = (*legacyStorage)(nil)
 	_ rest.Storage              = (*legacyStorage)(nil)
-	// _ rest.Creater              = (*legacyStorage)(nil)
-	// _ rest.Updater              = (*legacyStorage)(nil)
+	_ rest.Creater              = (*legacyStorage)(nil)
+	_ rest.Updater              = (*legacyStorage)(nil)
 	// _ rest.GracefulDeleter      = (*legacyStorage)(nil)
 )
 
@@ -136,6 +136,59 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	}
 	obj := asResource(info.Value, &found[0])
 	return &obj, nil
+}
+
+func (s *legacyStorage) Create(ctx context.Context,
+	obj runtime.Object,
+	createValidation rest.ValidateObjectFunc,
+	options *metav1.CreateOptions,
+) (runtime.Object, error) {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+
+	stars, ok := obj.(*collectionv0alpha1.Stars)
+	if !ok {
+		return nil, fmt.Errorf("expected stars")
+	}
+
+	fmt.Printf("CREATE: %+v // %+v\n", stars, info)
+
+	return nil, fmt.Errorf("TODO...")
+}
+
+func (s *legacyStorage) Update(ctx context.Context,
+	name string,
+	objInfo rest.UpdatedObjectInfo,
+	createValidation rest.ValidateObjectFunc,
+	updateValidation rest.ValidateObjectUpdateFunc,
+	forceAllowCreate bool,
+	options *metav1.UpdateOptions,
+) (runtime.Object, bool, error) {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	old, err := s.Get(ctx, name, nil)
+	if err != nil {
+		return nil, false, err
+	}
+
+	obj, err := objInfo.UpdatedObject(ctx, old)
+	if err != nil {
+		return nil, false, err
+	}
+
+	stars, ok := obj.(*collectionv0alpha1.Stars)
+	if !ok {
+		return nil, false, fmt.Errorf("expected stars")
+	}
+
+	fmt.Printf("UPDATE: %+v // %+v\n", stars, info)
+
+	return nil, false, fmt.Errorf("TODO...")
 }
 
 func asResource(ns string, v *dashboardStars) collection.Stars {
