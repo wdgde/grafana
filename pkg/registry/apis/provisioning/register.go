@@ -709,7 +709,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				}
 			}()
 
-			repoController, err := controller.NewRepositoryController(
+			/*repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
 				repoInformer,
 				b, // repoGetter
@@ -725,6 +725,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
+			*/
 			return nil
 		},
 	}

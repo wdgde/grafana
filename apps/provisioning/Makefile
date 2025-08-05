@@ -6,7 +6,7 @@ generate: install-app-sdk update-app-sdk
 
 .PHONY: build
 build: generate
-	go build -o bin/provisioning ./cmd/operator
+	go build -o bin/provisioning ./cmd/controller
 
 # .PHONY: build/operator
 # build/operator: build
