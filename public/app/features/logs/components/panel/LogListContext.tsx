@@ -62,7 +62,7 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   setShowTime: (showTime: boolean) => void;
   setShowUniqueLabels: (showUniqueLabels: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
-  setWrapLogMessage: (showTime: boolean) => void;
+  setWrapLogMessage: (wrapLogMessage: boolean) => void;
   showDetails: LogListModel[];
   toggleDetails: (log: LogListModel) => void;
   isAssistantAvailable: boolean;
