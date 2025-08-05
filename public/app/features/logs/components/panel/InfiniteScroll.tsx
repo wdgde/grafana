@@ -11,6 +11,7 @@ import { canScrollBottom, canScrollTop, getVisibleRange, ScrollDirection, should
 
 import { getStyles, LogLine } from './LogLine';
 import { LogLineMessage } from './LogLineMessage';
+import { ShowTimeType } from './LogListContext';
 import { LogListModel } from './processing';
 import { LogLineVirtualization } from './virtualization';
 
@@ -31,7 +32,7 @@ interface Props {
   onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
   scrollElement: HTMLDivElement | null;
   setInitialScrollPosition: () => void;
-  showTime: boolean;
+  showTime: ShowTimeType;
   sortOrder: LogsSortOrder;
   timeRange: TimeRange;
   timeZone: string;

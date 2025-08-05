@@ -4,6 +4,7 @@ import { BusEventWithPayload, GrafanaTheme2 } from '@grafana/data';
 
 import { LOG_LINE_DETAILS_HEIGHT, LogLineDetailsMode } from './LogLineDetails';
 import { LogListFontSize } from './LogList';
+import { showTimeEnabled, ShowTimeType } from './LogListContext';
 import { LogListModel } from './processing';
 
 export const LOG_LIST_MIN_WIDTH = 35 * 8;
@@ -176,7 +177,7 @@ export class LogLineVirtualization {
     };
   };
 
-  calculateFieldDimensions = (logs: LogListModel[], displayedFields: string[] = []) => {
+  calculateFieldDimensions = (logs: LogListModel[], displayedFields: string[] = [], timestampType: ShowTimeType) => {
     if (!logs.length) {
       return [];
     }
@@ -184,7 +185,8 @@ export class LogLineVirtualization {
     let levelWidth = 0;
     const fieldWidths: Record<string, number> = {};
     for (let i = 0; i < logs.length; i++) {
-      let width = this.measureTextWidth(logs[i].timestamp);
+      const timestamp = timestampType === 'ns' ? logs[i].timestampNs : logs[i].timestamp;
+      let width = this.measureTextWidth(timestamp);
       if (width > timestampWidth) {
         timestampWidth = Math.round(width);
       }
@@ -237,7 +239,7 @@ export interface DisplayOptions {
   hasSampledLogs?: boolean;
   showDetails: LogListModel[];
   showDuplicates: boolean;
-  showTime: boolean;
+  showTime: ShowTimeType;
   wrap: boolean;
 }
 
@@ -284,7 +286,7 @@ export function getLogLineSize(
   if (hasSampledLogs) {
     optionsWidth += virtualization.getGridSize() * 2 + iconsGap;
   }
-  if (showTime) {
+  if (showTimeEnabled(showTime)) {
     optionsWidth += gap;
     textToMeasure += logs[index].timestamp;
   }

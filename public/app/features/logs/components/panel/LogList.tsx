@@ -27,7 +27,13 @@ import { InfiniteScrollMode, InfiniteScroll, LoadMoreLogsType } from './Infinite
 import { getGridTemplateColumns } from './LogLine';
 import { LogLineDetails, LogLineDetailsMode } from './LogLineDetails';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
-import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
+import {
+  LogListContextProvider,
+  LogListState,
+  showTimeEnabled,
+  ShowTimeType,
+  useLogListContext,
+} from './LogListContext';
 import { LogListControls } from './LogListControls';
 import { LOG_LIST_SEARCH_HEIGHT, LogListSearch } from './LogListSearch';
 import { LogListSearchContextProvider, useLogListSearchContext } from './LogListSearchContext';
@@ -77,7 +83,7 @@ export interface Props {
   pinnedLogs?: string[];
   setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
-  showTime: boolean;
+  showTime: ShowTimeType;
   sortOrder: LogsSortOrder;
   timeRange: TimeRange;
   timeZone: string;
@@ -257,8 +263,8 @@ const LogListComponent = ({
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const virtualization = useMemo(() => new LogLineVirtualization(theme, fontSize), [theme, fontSize]);
   const dimensions = useMemo(
-    () => (wrapLogMessage ? [] : virtualization.calculateFieldDimensions(processedLogs, displayedFields)),
-    [displayedFields, processedLogs, virtualization, wrapLogMessage]
+    () => (wrapLogMessage ? [] : virtualization.calculateFieldDimensions(processedLogs, displayedFields, showTime)),
+    [displayedFields, processedLogs, showTime, virtualization, wrapLogMessage]
   );
   const styles = useStyles2(getStyles, dimensions, displayedFields, { showTime });
   const widthContainer = wrapperRef.current ?? containerElement;
@@ -504,9 +510,9 @@ function getStyles(
   theme: GrafanaTheme2,
   dimensions: LogFieldDimension[],
   displayedFields: string[],
-  { showTime }: { showTime: boolean }
+  { showTime }: { showTime: ShowTimeType }
 ) {
-  const columns = showTime ? dimensions : dimensions.filter((_, index) => index > 0);
+  const columns = showTimeEnabled(showTime) ? dimensions : dimensions.filter((_, index) => index > 0);
   return {
     logList: css({
       '& .unwrapped-log-line': {

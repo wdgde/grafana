@@ -33,6 +33,7 @@ import { LoadingIndicator } from '../LoadingIndicator';
 
 import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { LogList } from './LogList';
+import { getShowTimePreference } from './LogListContext';
 import { LogListModel } from './processing';
 import { ScrollToLogsEvent } from './virtualization';
 
@@ -282,7 +283,7 @@ export const LogLineContext = memo(
                 onClickHideField={onClickHideField}
                 onClickShowField={onClickShowField}
                 showControls
-                showTime={logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.showTime`, true) : true}
+                showTime={getShowTimePreference(logOptionsStorageKey)}
                 sortOrder={sortOrder}
                 syntaxHighlighting={syntaxHighlighting}
                 timeRange={timeRange}

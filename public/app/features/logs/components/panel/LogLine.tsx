@@ -12,7 +12,13 @@ import { LogMessageAnsi } from '../LogMessageAnsi';
 
 import { InlineLogLineDetails } from './LogLineDetails';
 import { LogLineMenu } from './LogLineMenu';
-import { useLogIsPermalinked, useLogIsPinned, useLogListContext } from './LogListContext';
+import {
+  showTimeEnabled,
+  ShowTimeType,
+  useLogIsPermalinked,
+  useLogIsPinned,
+  useLogListContext,
+} from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';
 import { LogListModel } from './processing';
 import {
@@ -28,7 +34,7 @@ export interface Props {
   index: number;
   log: LogListModel;
   logs: LogListModel[];
-  showTime: boolean;
+  showTime: ShowTimeType;
   style: CSSProperties;
   styles: LogLineStyles;
   onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
@@ -251,7 +257,7 @@ LogLineComponent.displayName = 'LogLineComponent';
 interface LogProps {
   displayedFields: string[];
   log: LogListModel;
-  showTime: boolean;
+  showTime: ShowTimeType;
   styles: LogLineStyles;
   wrapLogMessage: boolean;
 }
@@ -259,7 +265,11 @@ interface LogProps {
 const Log = memo(({ displayedFields, log, showTime, styles, wrapLogMessage }: LogProps) => {
   return (
     <>
-      {showTime && <span className={`${styles.timestamp} level-${log.logLevel} field`}>{log.timestamp}</span>}
+      {showTimeEnabled(showTime) && (
+        <span className={`${styles.timestamp} level-${log.logLevel} field`}>
+          {showTime === 'ns' ? log.timestampNs : log.timestamp}
+        </span>
+      )}
       {
         // When logs are unwrapped, we want an empty column space to align with other log lines.
       }

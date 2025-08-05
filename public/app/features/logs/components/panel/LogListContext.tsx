@@ -36,6 +36,9 @@ import { LogListFontSize } from './LogList';
 import { LogListModel } from './processing';
 import { LOG_LIST_MIN_WIDTH } from './virtualization';
 
+export type LogsTimestampType = 'ms' | 'ns' | 'none';
+export type ShowTimeType = boolean | LogsTimestampType;
+
 export interface LogListContextData extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls'> {
   closeDetails: () => void;
   detailsDisplayed: (log: LogListModel) => boolean;
@@ -59,7 +62,7 @@ export interface LogListContextData extends Omit<Props, 'containerElement' | 'lo
   setPinnedLogs: (pinnedlogs: string[]) => void;
   setPrettifyJSON: (prettifyJSON: boolean) => void;
   setSyntaxHighlighting: (syntaxHighlighting: boolean) => void;
-  setShowTime: (showTime: boolean) => void;
+  setShowTime: (showTime: ShowTimeType) => void;
   setShowUniqueLabels: (showUniqueLabels: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
   setWrapLogMessage: (wrapLogMessage: boolean) => void;
@@ -180,7 +183,7 @@ export interface Props {
   setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
   showUniqueLabels?: boolean;
-  showTime: boolean;
+  showTime: ShowTimeType;
   sortOrder: LogsSortOrder;
   syntaxHighlighting?: boolean;
   wrapLogMessage: boolean;
@@ -436,7 +439,7 @@ ${log.entry.replaceAll('`', '\\`')}
   );
 
   const setShowTime = useCallback(
-    (showTime: boolean) => {
+    (showTime: ShowTimeType) => {
       setLogListState({ ...logListState, showTime });
       onLogOptionsChange?.('showTime', showTime);
       if (logOptionsStorageKey) {
@@ -685,3 +688,24 @@ const reportInteractionOnce = (interactionName: string, properties?: Record<stri
   sessionStorage.setItem(key, '1');
   reportInteraction(interactionName, properties);
 };
+
+export function showTimeEnabled(showTime: ShowTimeType) {
+  return showTime === true || showTime !== 'none';
+}
+
+export function getShowTimePreference(logOptionsStorageKey?: string) {
+  if (!logOptionsStorageKey) {
+    return 'ms';
+  }
+  const storedOption = store.get(`${logOptionsStorageKey}.showTime`);
+  switch (storedOption) {
+    case 'ms':
+    case 'ns':
+    case 'none':
+      return storedOption;
+    case 'true':
+      return 'ms';
+    default:
+      return 'none';
+  }
+}

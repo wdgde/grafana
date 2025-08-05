@@ -4,6 +4,7 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { createLogLine } from '../mocks/logRow';
 
 import { LOG_LINE_DETAILS_HEIGHT } from './LogLineDetails';
+import { ShowTimeType } from './LogListContext';
 import { LogListModel, PreProcessOptions } from './processing';
 import { LogLineVirtualization, getLogLineSize, DisplayOptions, FIELD_GAP_MULTIPLIER } from './virtualization';
 
@@ -122,7 +123,7 @@ describe('Virtualization', () => {
       expect(size).toBe((virtualization.getTruncationLineCount() + 1) * LINE_HEIGHT + DETAILS_HEIGHT);
     });
 
-    test.each([true, false])('Measures a log line with controls %s and displayed time %s', (showTime: boolean) => {
+    test.each([true, false])('Measures a log line with controls %s and displayed time %s', (showTime: ShowTimeType) => {
       const size = getLogLineSize(virtualization, [log], container, [], { ...defaultOptions, wrap: true, showTime }, 0);
       expect(size).toBe(SINGLE_LINE_HEIGHT);
     });
@@ -282,7 +283,7 @@ describe('Virtualization', () => {
 
   describe('calculateFieldDimensions', () => {
     test('Measures displayed fields including the log line body', () => {
-      expect(virtualization.calculateFieldDimensions([log], ['place', LOG_LINE_BODY_FIELD_NAME])).toEqual([
+      expect(virtualization.calculateFieldDimensions([log], ['place', LOG_LINE_BODY_FIELD_NAME], 'ms')).toEqual([
         {
           field: 'timestamp',
           width: 23,

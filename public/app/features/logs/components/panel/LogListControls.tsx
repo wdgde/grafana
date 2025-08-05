@@ -11,7 +11,7 @@ import { Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
 import { LogsVisualisationType } from '../../../explore/Logs/Logs';
 import { DownloadFormat } from '../../utils';
 
-import { useLogListContext } from './LogListContext';
+import { showTimeEnabled, ShowTimeType, useLogListContext } from './LogListContext';
 import { useLogListSearchContext } from './LogListSearchContext';
 import { ScrollToLogsEvent } from './virtualization';
 
@@ -111,11 +111,23 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
     setFontSize(newSize);
   }, [fontSize, setFontSize]);
 
+  /**
+   * none -> ms -> ns -> none -> ...
+   */
   const onShowTimestampsClick = useCallback(() => {
+    let nextShowTime: ShowTimeType;
+    if (showTime === true || showTime === 'ms') {
+      nextShowTime = 'ns';
+    } else if (showTime === 'ns') {
+      nextShowTime = 'none';
+    } else {
+      nextShowTime = 'ms';
+    }
+
     reportInteraction('logs_log_list_controls_show_time_clicked', {
-      show_time: !showTime,
+      show_time: nextShowTime,
     });
-    setShowTime(!showTime);
+    setShowTime(nextShowTime);
   }, [setShowTime, showTime]);
 
   const onShowUniqueLabelsClick = useCallback(() => {
@@ -281,15 +293,11 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
               </Dropdown>
               <div className={styles.divider} />
               <IconButton
-                name="clock-nine"
-                aria-pressed={showTime}
-                className={showTime ? styles.controlButtonActive : styles.controlButton}
+                name={showTime === 'ns' ? 'stopwatch' : 'clock-nine'}
+                aria-pressed={showTimeEnabled(showTime)}
+                className={showTimeEnabled(showTime) ? styles.controlButtonActive : styles.controlButton}
                 onClick={onShowTimestampsClick}
-                tooltip={
-                  showTime
-                    ? t('logs.logs-controls.hide-timestamps', 'Hide timestamps')
-                    : t('logs.logs-controls.show-timestamps', 'Show timestamps')
-                }
+                tooltip={showTimeTooltip(showTime)}
                 size="lg"
               />
               {/* When this is used in a Plugin context, app is unknown */}
@@ -512,3 +520,15 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+/**
+ * ms -> ns -> none -> ms -> ns -> ...
+ */
+function showTimeTooltip(showTime: ShowTimeType) {
+  if (showTime === true || showTime === 'ms') {
+    return t('logs.logs-controls.show-ns-timestamps', 'Show nanosecond timestamps');
+  } else if (showTime === 'ns') {
+    return t('logs.logs-controls.hide-timestamps', 'Hide timestamps');
+  }
+  return t('logs.logs-controls.show-timestamps', 'Show timestamps');
+}

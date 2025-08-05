@@ -158,6 +158,11 @@ export class LogListModel implements LogRowModel {
     return checkLogsSampled(this);
   }
 
+  get timestampNs(): string {
+    const ns = this.timeEpochNs.substring(this.timeEpochMs.toString().length);
+    return this.timestamp + ns;
+  }
+
   getDisplayedFieldValue(fieldName: string, stripAnsi = false): string {
     if (fieldName === LOG_LINE_BODY_FIELD_NAME) {
       return stripAnsi ? ansicolor.strip(this.body) : this.body;
