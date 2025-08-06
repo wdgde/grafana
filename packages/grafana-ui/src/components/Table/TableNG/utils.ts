@@ -814,7 +814,7 @@ export const getDisplayName = (field: Field): string => {
  * returns only fields that are not nested tables and not explicitly hidden
  */
 export function getVisibleFields(fields: Field[]): Field[] {
-  return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hidden !== true);
+  return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hideFrom?.viz !== true);
 }
 
 /**

@@ -368,4 +368,10 @@ describe('migrateTextWrapToFieldLevel', () => {
 
   // needs to delete the wrapTexts from the existing cellOptions
   it.todo('migrates field override config.custom.cellOptions.wrapTexts to a field override config.custom.wrapTexts');
+
+  it.todo('does not overwrite field overrides for cellOptions which do not have wrapText set');
+});
+
+describe('migrateHiddenFields', () => {
+  it.todo('migrates fields with config.custom.hidden=true to config.custom.hideFrom.viz=true');
 });
