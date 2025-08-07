@@ -25,8 +25,14 @@ import (
 // This is the pattern that should be used to provide app installers in the app registry.
 func ProvideAppInstallers(
 	playlistAppInstaller *playlist.PlaylistAppInstaller,
+	alertingNotificationAppInstaller *notifications.AlertingNotificationsAppInstaller,
 ) []appsdkapiserver.AppInstaller {
-	return []appsdkapiserver.AppInstaller{playlistAppInstaller}
+	installers := make([]appsdkapiserver.AppInstaller, 0, 2)
+	installers = append(installers, playlistAppInstaller)
+	if alertingNotificationAppInstaller != nil {
+		installers = append(installers, alertingNotificationAppInstaller)
+	}
+	return installers
 }
 
 var (
@@ -46,7 +52,6 @@ func ProvideBuilderRunners(
 	features featuremgmt.FeatureToggles,
 	investigationAppProvider *investigations.InvestigationsAppProvider,
 	advisorAppProvider *advisor.AdvisorAppProvider,
-	alertingNotificationsAppProvider *notifications.AlertingNotificationsAppProvider,
 	grafanaCfg *setting.Cfg,
 ) (*Service, error) {
 	cfgWrapper := func(ctx context.Context) (*rest.Config, error) {
@@ -73,9 +78,6 @@ func ProvideBuilderRunners(
 	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) &&
 		!slices.Contains(grafanaCfg.DisablePlugins, "grafana-advisor-app") {
 		providers = append(providers, advisorAppProvider)
-	}
-	if alertingNotificationsAppProvider != nil {
-		providers = append(providers, alertingNotificationsAppProvider)
 	}
 	apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, providers...)
 
