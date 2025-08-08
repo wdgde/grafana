@@ -41,6 +41,19 @@ const getColumnIdx = async (loc: Page | Locator, columnName: string) => {
   return result;
 };
 
+const disableAllTextWrap = async (loc: Page | Locator) => {
+  // disable text wrapping for all of the columns, since long text with links in them can push the links off the screen.
+  const wrapTextToggle = loc.getByText('Wrap text');
+  const count = await wrapTextToggle.count();
+
+  for (let i = 0; i < count; i++) {
+    const toggle = wrapTextToggle.nth(i);
+    if ((await toggle.locator('//preceding-sibling::input').getAttribute('checked')) !== null) {
+      await toggle.click();
+    }
+  }
+};
+
 test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] }, () => {
   test('Tests word wrap, hover overflow, and cell inspect', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
@@ -211,8 +224,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // because of text wrapping, we're guaranteed to only be showing a single row when we enable pagination.
     await expect(page.getByText(/([\d]+) - ([\d]+) of ([\d]+) rows/)).toBeVisible();
 
-    // FIXME horrible selector for the "Wrap text" toggle for the "Long text" column.
-    await page.locator('[id="Override 13"]').getByText('Wrap text').click();
+    await disableAllTextWrap(page);
 
     // any number of rows that is not "1" is allowed here, we don't want to police the exact number of rows that
     // are rendered since there are tons of factors which could effect this. we do want to grab this number for comparison
@@ -275,10 +287,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
       dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Kitchen Sink'))
     ).toBeVisible();
 
-    // disable text wrapping for this test to make it easier to click the links, the long lorem ipsum
-    // can push the links off the screen.
-    // FIXME very bad selector to get the correct "wrap text" toggle here.
-    await page.locator('[id="Override 13"]').getByText('Wrap text').click();
+    await disableAllTextWrap(page);
 
     const infoColumnIdx = await getColumnIdx(page, 'Info');
     const pillColIdx = await getColumnIdx(page, 'Pills');
@@ -342,7 +351,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
   test('Empty Table panel', async ({ gotoDashboardPage, selectors }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
-      queryParams: new URLSearchParams({ editPanel: '2' }),
+      queryParams: new URLSearchParams({ editPanel: '3' }),
     });
 
     await expect(
