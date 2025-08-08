@@ -84,7 +84,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 	}
 
 	obj, err := ConvertToK8sResource(user.GetOrgID(), &rule, s.namespacer)
-	if err != nil && errors.Is(err, invalidRuleError) {
+	if err != nil && errors.Is(err, errInvalidRule) {
 		return nil, k8serrors.NewNotFound(ResourceInfo.GroupResource(), name)
 	}
 	return obj, err
