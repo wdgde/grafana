@@ -260,7 +260,7 @@ func runSimpleController(c *cli.Context) error {
 	fmt.Println("Creating informer factory", "namespace", *namespace, "resync_period", "10m")
 	informerFactory := informer.NewSharedInformerFactoryWithOptions(
 		provisioningClient,
-		10*time.Minute, // resync period
+		30*time.Second, // resync period
 		informer.WithNamespace(*namespace),
 	)
 	fmt.Println("Informer factory created successfully")
