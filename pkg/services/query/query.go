@@ -111,6 +111,12 @@ func (s *ServiceImpl) queryData(ctx context.Context, user identity.Requester, sk
 		return nil, err
 	}
 
+	// debugging remove before merging:
+	shouldLogEverything := ctx.Value("shouldLogEverything")
+	if shouldLogEverything != nil && shouldLogEverything == "true" {
+		s.log.Debug("parsed request", "parsedReq", parsedReq)
+	}
+
 	// If there are expressions, handle them and return
 	if parsedReq.hasExpression || fromAlert {
 		return s.handleExpressions(ctx, user, parsedReq)
@@ -269,6 +275,11 @@ func (s *ServiceImpl) handleExpressions(ctx context.Context, user identity.Reque
 				To:   pq.query.TimeRange.To,
 			},
 		})
+
+		shouldLogEverything := ctx.Value("shouldLogEverything")
+		if shouldLogEverything != nil && shouldLogEverything == "true" {
+			s.log.Debug("expression request", "exprReq", exprReq, "pq.query.TimeRange.From", pq.query.TimeRange.From, "pq.query.TimeRange.To", pq.query.TimeRange.To)
+		}
 	}
 
 	qdr, err := s.expressionService.TransformData(ctx, time.Now(), &exprReq) // use time now because all queries have absolute time range
@@ -371,6 +382,8 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 			req.parsedQueries[ds.UID] = []parsedQuery{}
 		}
 
+		shouldLogEverything := ctx.Value("shouldLogEverything")
+
 		var timeRange gtime.TimeRange
 		if supportLocalTimeRange {
 			from, to, err := getTimeRange(query, reqDTO.From, reqDTO.To)
@@ -378,8 +391,14 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 				return nil, err
 			}
 			timeRange = gtime.NewTimeRange(from, to)
+			if shouldLogEverything != nil && shouldLogEverything == "true" {
+				s.log.Debug("supporting localtime range", "timeRange", timeRange)
+			}
 		} else {
 			timeRange = gtime.NewTimeRange(reqDTO.From, reqDTO.To)
+			if shouldLogEverything != nil && shouldLogEverything == "true" {
+				s.log.Debug("not supporting localtime range", "timeRange", timeRange)
+			}
 		}
 
 		modelJSON, err := query.MarshalJSON()

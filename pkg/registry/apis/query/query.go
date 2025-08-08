@@ -257,6 +257,14 @@ func handleQuery(ctx context.Context, raw query.QueryDataRequest, b QueryAPIBuil
 
 	dsQuerierLoggerWithSlug := instance.GetLogger(connectLogger).New("ruleuid", headers["X-Rule-Uid"])
 
+	// debugging remove before merging:
+	shouldLogEverything := instance.ShouldLogEverything()
+	ctx = context.WithValue(ctx, "shouldLogEverything", shouldLogEverything)
+
+	if shouldLogEverything {
+		connectLogger.Debug("original request", "raw", raw)
+	}
+
 	mtDsClientBuilder := mtdsclient.NewMtDatasourceClientBuilderWithInstance(
 		instance,
 		ctx,

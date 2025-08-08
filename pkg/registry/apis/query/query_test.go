@@ -261,6 +261,10 @@ func (m mockClient) GetLogger(parent log.Logger) log.Logger {
 	return parent.New()
 }
 
+func (m mockClient) ShouldLogEverything() bool {
+	return false
+}
+
 func (m mockClient) GetDataSourceClient(ctx context.Context, ref dataapi.DataSourceRef, headers map[string]string) (clientapi.QueryDataClient, error) {
 	mclient := mockClient{
 		stubbedFrame: m.stubbedFrame,
