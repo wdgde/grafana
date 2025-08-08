@@ -4,19 +4,22 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/urfave/cli/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	k8srest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/transport"
 	"k8s.io/client-go/util/workqueue"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -28,14 +31,13 @@ import (
 )
 
 var (
-	kubeconfig = flag.String("kubeconfig", "", "Path to kubeconfig file")
-	namespace  = flag.String("namespace", "default", "Namespace to watch")
-	workers    = flag.Int("workers", 2, "Number of worker goroutines")
+	kubeconfig            = flag.String("kubeconfig", "", "Path to kubeconfig file")
+	token                 = flag.String("token", "", "Token to use for authentication")
+	tokenExchangeURL      = flag.String("token-exchange-url", "", "Token exchange URL")
+	provisioningServerURL = flag.String("provisioning-server-url", "", "Provisioning server URL")
 )
 
 func main() {
-	fmt.Println("Starting provisioning controller...")
-
 	app := &cli.App{
 		Name:  "provisioning-controller",
 		Usage: "Watch repositories and manage provisioning resources",
@@ -47,16 +49,22 @@ func main() {
 				Destination: kubeconfig,
 			},
 			&cli.StringFlag{
-				Name:        "namespace",
-				Usage:       "Namespace to watch",
-				Value:       "default",
-				Destination: namespace,
+				Name:        "token",
+				Usage:       "Token to use for authentication",
+				Value:       "",
+				Destination: token,
 			},
-			&cli.IntFlag{
-				Name:        "workers",
-				Usage:       "Number of worker goroutines",
-				Value:       2,
-				Destination: workers,
+			&cli.StringFlag{
+				Name:        "token-exchange-url",
+				Usage:       "Token exchange URL",
+				Value:       "",
+				Destination: tokenExchangeURL,
+			},
+			&cli.StringFlag{
+				Name:        "provisioning-server-url",
+				Usage:       "Provisioning server URL",
+				Value:       "",
+				Destination: provisioningServerURL,
 			},
 		},
 		Action: runSimpleController,
@@ -129,30 +137,20 @@ func (c *SimpleRepositoryController) enqueue(obj interface{}) {
 	c.queue.Add(key)
 }
 
-func (c *SimpleRepositoryController) Run(ctx context.Context, workerCount int) {
+func (c *SimpleRepositoryController) Run(ctx context.Context) {
 	defer c.queue.ShutDown()
-
-	fmt.Println("Starting SimpleRepositoryController")
-	defer fmt.Println("Shutting down SimpleRepositoryController")
 
 	if !cache.WaitForCacheSync(ctx.Done(), c.repoSynced) {
 		c.logger.Error("Failed to sync informer cache")
 		return
 	}
 
-	fmt.Println("Cache synced successfully, starting workers", "count", workerCount)
-	for i := 0; i < workerCount; i++ {
-		workerID := i
-		fmt.Println("Starting worker", "worker_id", workerID)
-		go func() {
-			wait.UntilWithContext(ctx, c.runWorker, time.Second)
-			fmt.Println("Worker stopped", "worker_id", workerID)
-		}()
-	}
+	go func() {
+		wait.UntilWithContext(ctx, c.runWorker, time.Second)
+		fmt.Println("Worker stopped")
+	}()
 
-	fmt.Println("All workers started, waiting for events")
 	<-ctx.Done()
-	fmt.Println("Shutting down workers")
 }
 
 func (c *SimpleRepositoryController) runWorker(ctx context.Context) {
@@ -219,95 +217,81 @@ func (c *SimpleRepositoryController) processRepository(ctx context.Context, key 
 }
 
 func runSimpleController(c *cli.Context) error {
-	fmt.Println("About to load kubeconfig...")
-	var config *k8srest.Config
-	var err error
-
-	if *kubeconfig != "" {
-		fmt.Println("Loading kubeconfig from file: %s\n", *kubeconfig)
-		config, err = clientcmd.BuildConfigFromFlags("", *kubeconfig)
-		fmt.Println("BuildConfigFromFlags completed")
-	} else {
-		fmt.Println("Loading in-cluster config")
-		config, err = k8srest.InClusterConfig()
-		fmt.Println("InClusterConfig completed")
-	}
+	tokenExchangeClient, err := authn.NewTokenExchangeClient(authn.TokenExchangeConfig{
+		TokenExchangeURL: *tokenExchangeURL,
+		Token:            *token,
+	})
 	if err != nil {
-		fmt.Println("Error loading kubeconfig: %v\n", err)
-		return fmt.Errorf("failed to load kubeconfig: %w", err)
+		return fmt.Errorf("failed to create token exchange client: %w", err)
 	}
 
-	fmt.Println("Successfully loaded kubeconfig, host: %s\n", config.Host)
-
-	// Create clients
-	fmt.Println("Creating Kubernetes client")
-	k8sClient, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return fmt.Errorf("failed to create kubernetes client: %w", err)
+	config := &k8srest.Config{
+		APIPath: "/apis",
+		Host:    *provisioningServerURL,
+		WrapTransport: transport.WrapperFunc(func(rt http.RoundTripper) http.RoundTripper {
+			return &authRoundTripper{
+				tokenExchangeClient: tokenExchangeClient,
+				transport:           rt,
+			}
+		}),
+		TLSClientConfig: rest.TLSClientConfig{
+			Insecure: true,
+		},
 	}
-	fmt.Println("Kubernetes client created successfully", "client_type", fmt.Sprintf("%T", k8sClient))
 
-	fmt.Println("Creating provisioning client")
 	provisioningClient, err := client.NewForConfig(config)
 	if err != nil {
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
-	fmt.Println("Provisioning client created successfully")
 
-	fmt.Println("Successfully created all clients")
-
-	// Create informer factory
-	fmt.Println("Creating informer factory", "namespace", *namespace, "resync_period", "10m")
+	// TODO: make this configurable
 	informerFactory := informer.NewSharedInformerFactoryWithOptions(
 		provisioningClient,
 		30*time.Second, // resync period
-		informer.WithNamespace(*namespace),
 	)
-	fmt.Println("Informer factory created successfully")
 
-	// Create repository informer
-	fmt.Println("Creating repository informer")
 	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
-	fmt.Println("Repository informer created successfully", "informer_type", fmt.Sprintf("%T", repoInformer))
-
-	// Create simple controller
-	fmt.Println("Creating SimpleRepositoryController")
 	controller := NewSimpleRepositoryController(
 		provisioningClient.ProvisioningV0alpha1(),
 		repoInformer,
 	)
-	fmt.Println("SimpleRepositoryController created successfully")
-
-	// Start informer factory
-	fmt.Println("Starting informer factory")
 	informerFactory.Start(context.Background().Done())
-	fmt.Println("Informer factory started")
-
-	// Wait for cache sync
-	fmt.Println("Waiting for cache sync")
 	if !cache.WaitForCacheSync(context.Background().Done(), repoInformer.Informer().HasSynced) {
 		return fmt.Errorf("failed to sync informer cache")
 	}
-	fmt.Println("Cache synced successfully")
 
-	// Create context with cancellation
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Handle shutdown signals
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
 	go func() {
 		<-sigChan
 		fmt.Println("Received shutdown signal, stopping controller")
 		cancel()
 	}()
 
-	// Run controller
-	fmt.Println("Starting simple repository controller", "workers", *workers)
-	controller.Run(ctx, *workers)
-
-	fmt.Println("Controller stopped")
+	controller.Run(ctx)
 	return nil
+}
+
+type authRoundTripper struct {
+	tokenExchangeClient *authn.TokenExchangeClient
+	transport           http.RoundTripper
+}
+
+func (t *authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	tokenResponse, err := t.tokenExchangeClient.Exchange(req.Context(), authn.TokenExchangeRequest{
+		Audiences: []string{"provisioning.grafana.app"},
+		Namespace: "*",
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to exchange token: %w", err)
+	}
+
+	// clone the request as RTs are not expected to mutate the passed request
+	req = utilnet.CloneRequest(req)
+
+	req.Header.Set("X-Access-Token", "Bearer "+tokenResponse.Token)
+	return t.transport.RoundTrip(req)
 }

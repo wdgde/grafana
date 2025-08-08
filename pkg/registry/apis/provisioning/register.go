@@ -26,6 +26,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/authlib/types"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -114,6 +115,8 @@ type APIBuilder struct {
 	// Extras provides additional functionality to the API.
 	extras                   []Extra
 	availableRepositoryTypes map[provisioning.RepositoryType]bool
+	accessClient             authlib.AccessClient
+	externalAuthorizer       bool
 }
 
 // NewAPIBuilder creates an API builder.
@@ -224,7 +227,8 @@ func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 
 func NewAPIService(ac authlib.AccessClient) *APIBuilder {
 	return &APIBuilder{
-		access: ac,
+		accessClient:       ac,
+		externalAuthorizer: true,
 	}
 }
 
@@ -274,6 +278,10 @@ func RegisterAPIService(
 // TODO: Move specific endpoint authorization together with the rest of the logic.
 // so that things are not spread out all over the place.
 func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
+	if b.externalAuthorizer {
+		return newMultiTenantAuthorizer(b.accessClient)
+	}
+
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (decision authorizer.Decision, reason string, err error) {
 			if identity.IsServiceIdentity(ctx) {
@@ -372,6 +380,41 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionDeny, "unmapped kind defaults to no access", nil
 			}
 		})
+}
+
+// newMultiTenantAuthorizer creates an authorizer sutiable to multi-tenant setup.
+// For now it only allow authorization of access tokens.
+func newMultiTenantAuthorizer(ac types.AccessClient) authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
+		info, ok := types.AuthInfoFrom(ctx)
+		if !ok {
+			return authorizer.DecisionDeny, "missing auth info", nil
+		}
+
+		// For now we only allow access policy to authorize with multi-tenant setup
+		if !types.IsIdentityType(info.GetIdentityType(), types.TypeAccessPolicy) {
+			return authorizer.DecisionDeny, "permission denied", nil
+		}
+
+		res, err := ac.Check(ctx, info, types.CheckRequest{
+			Verb:        a.GetVerb(),
+			Group:       a.GetAPIGroup(),
+			Resource:    a.GetResource(),
+			Name:        a.GetName(),
+			Namespace:   a.GetNamespace(),
+			Subresource: a.GetSubresource(),
+		})
+
+		if err != nil {
+			return authorizer.DecisionDeny, "faild to perform authorization", err
+		}
+
+		if !res.Allowed {
+			return authorizer.DecisionDeny, "permission denied", nil
+		}
+
+		return authorizer.DecisionAllow, "", nil
+	})
 }
 
 func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -593,6 +636,10 @@ func (b *APIBuilder) verifyAgaintsExistingRepositories(cfg *provisioning.Reposit
 }
 
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
+	if b.externalAuthorizer {
+		return nil, nil
+	}
+
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
 		"grafana-provisioning": func(postStartHookCtx genericapiserver.PostStartHookContext) error {
 			c, err := clientset.NewForConfig(postStartHookCtx.LoopbackClientConfig)
