@@ -2,47 +2,27 @@ import fs from 'fs';
 
 import { test, expect } from '@grafana/plugin-e2e';
 
-type PerformanceData = Record<string, { value: number | string }>;
+import { PageResponseRecorder } from '../utils/PageResponseRecorder';
 
-test('payload-size', { tag: '@performance' }, async ({ page }) => {
-  let inflatedSize = 0;
-  let transferSize = 0;
-  let requests = 0;
-
-  //page.on('console', msg => console.log(msg.text()));
-
-  const addSize = async (response) => {
-    if (response.status() === 200) {
-      let body = await response.body();
-      inflatedSize += body.length;
-
-      const sizes = await response.request().sizes();
-
-      transferSize += sizes.responseBodySize + sizes.responseHeadersSize;
-
-      requests++;
-    }
-  };
-
-  page.on('response', addSize);
+test('payload-size', { tag: '@performance' }, async ({ page, selectors }) => {
+  const responseRecorder = new PageResponseRecorder(page);
+  const stopListening = responseRecorder.listen();
 
   let start = performance.now();
-
   await page.goto('/d/e7146d1e-0fa6-4862-8658-2b734ba819e8/empty-dashboard');
 
-  let el = page.getByTestId('data-testid header-container');
-  await el.waitFor();
-
-  // weird but random expect() is required so this whole thing doesn't go tits up with
-  // "Error: page.goto: net::ERR_ABORTED; maybe frame was detached?"
-  await expect(el).toBeVisible();
+  // Wait for the page to load completely
+  const newPanelButton = page.getByTestId(selectors.pages.AddDashboard.itemButton('Create new panel button'));
+  await expect(newPanelButton).toBeVisible();
 
   let end = performance.now();
+  stopListening();
 
   let client = await page.context().newCDPSession(page);
-  // await page.evaluate(() => window.gc());
   await client.send('HeapProfiler.collectGarbage');
   let usedJSHeapSize = (await client.send('Runtime.getHeapUsage')).usedSize;
+
+  const { requests, inflatedSize, transferSize } = responseRecorder.getMetrics();
 
   // Create performance data object
   const metricsWithLabels: PerformanceData = {
@@ -63,26 +43,20 @@ test('payload-size', { tag: '@performance' }, async ({ page }) => {
     },
   };
 
-  // Write json data to file
+  // Metrics data to file
   const textExpositionData = convertToPrometheusFormat(metricsWithLabels);
-  console.log(textExpositionData);
   fs.writeFileSync('/tmp/asset-metrics.txt', textExpositionData);
 
-  // if we don't remove the listener the "test" will error.
-  page.removeListener('response', addSize);
-  //client.detach();
-  page.close();
+  await page.close();
 });
 
-// DISCLAIMER. I had claude write all of this so it's probably terrible.
+type PerformanceData = Record<string, { value: number | string }>;
 
 /**
  * Converts performance data with integrated labels to Prometheus exposition text format
  * https://github.com/prometheus/docs/blob/main/content/docs/instrumenting/exposition_formats.md#text-format-example
- * @param {Object} metrics - Object containing metrics with their values and labels
- * @returns {string} - Formatted Prometheus exposition text
  */
-function convertToPrometheusFormat(metrics: PerformanceData) {
+function convertToPrometheusFormat(metrics: PerformanceData): string {
   const lines: string[] = [];
   const timestamp = Date.now();
 
