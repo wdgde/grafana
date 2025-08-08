@@ -244,3 +244,4 @@ alertmanagerRemoteSecondaryWithRemoteState,experimental,@grafana/alerting-squad,
 adhocFiltersInTooltips,experimental,@grafana/datapro,false,false,true
 newLogContext,experimental,@grafana/observability-logs,false,false,true
 newClickhouseConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
+teamFolders,experimental,@grafana/grafana-search-navigate-organise,false,false,false

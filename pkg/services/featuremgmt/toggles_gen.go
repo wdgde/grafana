@@ -986,4 +986,8 @@ const (
 	// FlagNewClickhouseConfigPageDesign
 	// Enables new design for the Clickhouse data source configuration page
 	FlagNewClickhouseConfigPageDesign = "newClickhouseConfigPageDesign"
+
+	// FlagTeamFolders
+	// Enables team folders functionality
+	FlagTeamFolders = "teamFolders"
 )
