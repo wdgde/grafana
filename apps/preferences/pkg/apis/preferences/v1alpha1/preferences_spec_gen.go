@@ -52,6 +52,8 @@ type PreferencesSpec struct {
 	Language *string `json:"language,omitempty"`
 	// Selected locale (beta)
 	RegionalFormat *string `json:"regionalFormat,omitempty"`
+	// Date format style preference (international|localized)
+	DateFormat *string `json:"dateFormat,omitempty"`
 	// Explore query history preferences
 	QueryHistory *PreferencesQueryHistoryPreference `json:"queryHistory,omitempty"`
 	// Cookie preferences

@@ -4,7 +4,7 @@ import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetec
 import { initReactI18next, setDefaults, setI18n, Trans as I18NextTrans, getI18n } from 'react-i18next';
 
 import { DEFAULT_LANGUAGE, PSEUDO_LOCALE } from './constants';
-import { initRegionalFormat } from './dates';
+import { initRegionalFormat, initDateFormat } from './dates';
 import { LANGUAGES } from './languages';
 import { ResourceLoader, Resources, TFunction, TransProps, TransType } from './types';
 
@@ -180,9 +180,13 @@ export async function changeLanguage(language?: string) {
 
 export async function initializeI18n(
   { language, ns, module }: InitializeI18nOptions,
-  regionalFormat: string
+  regionalFormat: string,
+  dateFormat?: string
 ): Promise<{ language: string | undefined }> {
   initRegionalFormat(regionalFormat);
+  if (dateFormat) {
+    initDateFormat(dateFormat);
+  }
   return initTranslations({ language, ns, module });
 }
 

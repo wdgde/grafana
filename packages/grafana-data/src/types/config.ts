@@ -130,6 +130,7 @@ export interface CurrentUserDTO {
   timezone: string;
   weekStart: string;
   regionalFormat: string;
+  dateFormat: string;
   language: string;
   permissions?: Record<string, boolean>;
   analytics: AnalyticsSettings;

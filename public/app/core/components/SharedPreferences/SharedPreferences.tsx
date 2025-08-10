@@ -21,6 +21,7 @@ import {
   TextLink,
   WeekStart,
   isWeekStart,
+  RadioButtonGroup,
 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { LANGUAGES } from 'app/core/internationalization/constants';
@@ -80,6 +81,7 @@ function getRegionalFormatOptions(): ComboboxOption[] {
     value: v.code,
     label: v.name,
   })).sort((a, b) => {
+    // eslint-disable-next-line
     return a.label.localeCompare(b.label);
   });
 
@@ -93,11 +95,41 @@ function getRegionalFormatOptions(): ComboboxOption[] {
   return options;
 }
 
+function getDateFormatOptions(): ComboboxOption[] {
+  return [
+    {
+      value: '',
+      label: t('shared-preferences.fields.date-format-default', 'Default'),
+      description: t(
+        'shared-preferences.fields.date-format-default-description',
+        'Inherit the preference from your team or organization'
+      ),
+    },
+    {
+      value: 'localized',
+      label: t('shared-preferences.fields.date-format-localized', 'Regional'),
+      description: t(
+        'shared-preferences.fields.date-format-localized-description',
+        "Dates and times follow your region's formatting conventions"
+      ),
+    },
+    {
+      value: 'international',
+      label: t('shared-preferences.fields.date-format-international', 'International'),
+      description: t(
+        'shared-preferences.fields.date-format-international-description',
+        'Dates and times use standardized formatting (YYYY-MM-DD, 24-hour time)'
+      ),
+    },
+  ];
+}
+
 export class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;
   themeOptions: ComboboxOption[];
   languageOptions: ComboboxOption[];
   regionalFormatOptions: ComboboxOption[];
+  dateFormatOptions: ComboboxOption[];
 
   constructor(props: Props) {
     super(props);
@@ -111,6 +143,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       weekStart: '',
       language: '',
       regionalFormat: '',
+      dateFormat: '',
       queryHistory: { homeTab: '' },
       navbar: { bookmarkUrls: [] },
     };
@@ -126,6 +159,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     }));
     this.languageOptions = getLanguageOptions();
     this.regionalFormatOptions = getRegionalFormatOptions();
+    this.dateFormatOptions = getDateFormatOptions();
 
     // Add default option
     this.themeOptions.unshift({ value: '', label: t('shared-preferences.theme.default-label', 'Default') });
@@ -145,6 +179,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       weekStart: prefs.weekStart,
       language: prefs.language,
       regionalFormat: prefs.regionalFormat,
+      dateFormat: prefs.dateFormat,
       queryHistory: prefs.queryHistory,
       navbar: prefs.navbar,
     });
@@ -155,8 +190,17 @@ export class SharedPreferences extends PureComponent<Props, State> {
     const confirmationResult = this.props.onConfirm ? await this.props.onConfirm() : true;
 
     if (confirmationResult) {
-      const { homeDashboardUID, theme, timezone, weekStart, language, regionalFormat, queryHistory, navbar } =
-        this.state;
+      const {
+        homeDashboardUID,
+        theme,
+        timezone,
+        weekStart,
+        language,
+        regionalFormat,
+        dateFormat,
+        queryHistory,
+        navbar,
+      } = this.state;
       reportInteraction('grafana_preferences_save_button_clicked', {
         preferenceType: this.props.preferenceType,
         theme,
@@ -171,6 +215,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
           weekStart,
           language,
           regionalFormat,
+          dateFormat,
           queryHistory,
           navbar,
         })
@@ -226,9 +271,27 @@ export class SharedPreferences extends PureComponent<Props, State> {
     });
   };
 
+  onDateFormatChanged = (dateFormat: string) => {
+    this.setState({ dateFormat });
+
+    reportInteraction('grafana_preferences_date_format_changed', {
+      toDateFormat: dateFormat,
+      preferenceType: this.props.preferenceType,
+    });
+  };
+
   render() {
-    const { theme, timezone, weekStart, homeDashboardUID, language, isLoading, isSubmitting, regionalFormat } =
-      this.state;
+    const {
+      theme,
+      timezone,
+      weekStart,
+      homeDashboardUID,
+      language,
+      isLoading,
+      isSubmitting,
+      regionalFormat,
+      dateFormat,
+    } = this.state;
     const { disabled } = this.props;
     const styles = getStyles();
     const currentThemeOption = this.themeOptions.find((x) => x.value === theme) ?? this.themeOptions[0];
@@ -357,6 +420,28 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 options={this.regionalFormatOptions}
                 placeholder={t('shared-preferences.fields.locale-preference-placeholder', 'Choose region')}
                 id="locale-preference-select"
+              />
+            </Field>
+          )}
+          {config.featureToggles.localeFormatPreference && (
+            <Field
+              loading={isLoading}
+              disabled={isLoading}
+              label={
+                <Label htmlFor="date-format-preference">
+                  <span className={styles.labelText}>
+                    <Trans i18nKey="shared-preferences.fields.date-format-preference-label">Date format style</Trans>
+                  </span>
+                  <FeatureBadge featureState={FeatureState.preview} />
+                </Label>
+              }
+              data-testid="User preferences date format"
+            >
+              <RadioButtonGroup
+                value={dateFormat}
+                onChange={(value) => this.onDateFormatChanged(value)}
+                options={this.dateFormatOptions}
+                id="date-format-preference"
               />
             </Field>
           )}

@@ -133,13 +133,16 @@ export class GrafanaApp {
         ? config.regionalFormat
         : config.bootData.user.language;
 
+      const dateFormat = config.featureToggles.localeFormatPreference ? config.bootData.user.dateFormat : undefined;
+
       const initI18nPromise = initializeI18n(
         {
           language: config.bootData.user.language,
           ns: NAMESPACES,
           module: loadTranslations,
         },
-        regionalFormat
+        regionalFormat,
+        dateFormat
       );
 
       // This is a placeholder so we can put a 'comment' in the message json files.

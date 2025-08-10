@@ -202,3 +202,37 @@ func TestAPIEndpoint_PatchOrgPreferences(t *testing.T) {
 		require.NoError(t, response.Body.Close())
 	})
 }
+
+func TestAPIEndpoint_DateFormatPreferences(t *testing.T) {
+	cfg := setting.NewCfg()
+
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = cfg
+		hs.preferenceService = preftest.NewPreferenceServiceFake()
+		hs.DashboardService = dashboards.NewFakeDashboardService(t)
+	})
+
+	t.Run("Update user preferences with dateFormat", func(t *testing.T) {
+		testCmd := `{"dateFormat": "international", "theme": "dark"}`
+		input := strings.NewReader(testCmd)
+		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPatch, patchUserPreferencesUrl, input), &user.SignedInUser{
+			UserID:  1,
+			OrgID:   1,
+			OrgRole: org.RoleAdmin,
+		})
+		response, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+		require.NoError(t, response.Body.Close())
+	})
+
+	t.Run("Update org preferences with dateFormat", func(t *testing.T) {
+		testCmd := `{"dateFormat": "international", "theme": "light"}`
+		input := strings.NewReader(testCmd)
+		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPatch, patchOrgPreferencesUrl, input), userWithPermissions(1, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsPreferencesWrite}}))
+		response, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+		require.NoError(t, response.Body.Close())
+	})
+}

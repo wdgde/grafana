@@ -96,6 +96,7 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			JSONData: &pref.PreferenceJSONData{
 				Language:       "en-GB",
 				RegionalFormat: "en",
+				DateFormat:     "localized",
 			},
 		},
 		pref.Preference{
@@ -109,6 +110,7 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			JSONData: &pref.PreferenceJSONData{
 				Language:       "en-AU",
 				RegionalFormat: "es",
+				DateFormat:     "international",
 			},
 		},
 	)
@@ -126,6 +128,7 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			JSONData: &pref.PreferenceJSONData{
 				Language:       "en-AU",
 				RegionalFormat: "es",
+				DateFormat:     "international",
 			},
 		}
 		if diff := cmp.Diff(expected, preference); diff != "" {
@@ -147,6 +150,7 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 			JSONData: &pref.PreferenceJSONData{
 				Language:       "en-GB",
 				RegionalFormat: "en",
+				DateFormat:     "localized",
 			},
 		}
 		if diff := cmp.Diff(expected, preference); diff != "" {
@@ -169,6 +173,9 @@ func TestGetDefaults_JSONData(t *testing.T) {
 	}
 	orgPreferencesWithLocaleJsonData := pref.PreferenceJSONData{
 		RegionalFormat: "en",
+	}
+	orgPreferencesWithDateFormatJsonData := pref.PreferenceJSONData{
+		DateFormat: "international",
 	}
 	team2PreferencesJsonData := pref.PreferenceJSONData{}
 	team1PreferencesJsonData := pref.PreferenceJSONData{}
@@ -256,6 +263,36 @@ func TestGetDefaults_JSONData(t *testing.T) {
 			JSONData: &pref.PreferenceJSONData{
 				RegionalFormat: "en",
 				QueryHistory:   queryPreference,
+			},
+		}, preference)
+	})
+
+	t.Run("user JSONData with missing dateFormat does not override org preference", func(t *testing.T) {
+		prefService := &Service{
+			store:    newFake(),
+			defaults: prefsFromConfig(setting.NewCfg()),
+		}
+
+		insertPrefs(t, prefService.store,
+			pref.Preference{
+				OrgID:    1,
+				JSONData: &orgPreferencesWithDateFormatJsonData,
+			},
+			pref.Preference{
+				OrgID:    1,
+				UserID:   1,
+				JSONData: &userPreferencesJsonData,
+			},
+		)
+
+		query := &pref.GetPreferenceWithDefaultsQuery{OrgID: 1, UserID: 1}
+		preference, err := prefService.GetWithDefaults(context.Background(), query)
+		require.NoError(t, err)
+		require.Equal(t, &pref.Preference{
+			WeekStart: &weekStart,
+			JSONData: &pref.PreferenceJSONData{
+				DateFormat:   "international",
+				QueryHistory: queryPreference,
 			},
 		}, preference)
 	})
@@ -442,6 +479,26 @@ func TestSave(t *testing.T) {
 		assert.Equal(t, "", stored.HomeDashboardUID)
 		assert.Equal(t, "1", *stored.WeekStart)
 		assert.EqualValues(t, 2, stored.Version)
+	})
+
+	t.Run("save with dateFormat", func(t *testing.T) {
+		prefService := &Service{
+			store:    newFake(),
+			defaults: prefsFromConfig(setting.NewCfg()),
+		}
+
+		err := prefService.Save(context.Background(), &pref.SavePreferenceCommand{
+			OrgID:      2,
+			UserID:     3,
+			DateFormat: "international",
+		})
+		require.NoError(t, err)
+
+		stored := prefService.store.(*inmemStore).preference[preferenceKey{OrgID: 2, UserID: 3}]
+		assert.EqualValues(t, 2, stored.OrgID)
+		assert.EqualValues(t, 3, stored.UserID)
+		require.NotNil(t, stored.JSONData)
+		assert.Equal(t, "international", stored.JSONData.DateFormat)
 	})
 }
 

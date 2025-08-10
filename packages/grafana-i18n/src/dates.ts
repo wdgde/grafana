@@ -9,8 +9,19 @@ function clearMemoizedCache(fn: Memoized<AnyFn>) {
 }
 
 let regionalFormat: string | undefined;
+let dateFormat: string | undefined;
 
-const createDateTimeFormatter = deepMemoize((locale: string | undefined, options: Intl.DateTimeFormatOptions) => {
+const createDateTimeFormatter = deepMemoize((locale: string | undefined, baseOptions: Intl.DateTimeFormatOptions) => {
+  // If dateFormat is 'international', use ISO8601 calendar and force some standardizations
+  const options: Intl.DateTimeFormatOptions =
+    dateFormat === 'international'
+      ? {
+          ...baseOptions,
+          calendar: 'iso8601' as const,
+          hour12: false,
+        }
+      : baseOptions;
+
   return new Intl.DateTimeFormat(locale, options);
 });
 
@@ -52,4 +63,12 @@ export const initRegionalFormat = (regionalFormatArg: string) => {
   clearMemoizedCache(formatDuration);
 
   regionalFormat = regionalFormatArg;
+};
+
+export const initDateFormat = (dateFormatArg: string) => {
+  // Clear memoized cache when date format changes
+  clearMemoizedCache(formatDate);
+  clearMemoizedCache(formatDuration);
+
+  dateFormat = dateFormatArg;
 };

@@ -59,6 +59,10 @@ export interface Preferences {
    */
   regionalFormat?: string;
   /**
+   * Date format style preference (standardized|localized)
+   */
+  dateFormat?: string;
+  /**
    * light, dark, empty is default
    */
   theme?: string;

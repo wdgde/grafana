@@ -12386,6 +12386,15 @@
   },
   "shared-preferences": {
     "fields": {
+      "date-format-default": "Default",
+      "date-format-default-description": "Inherit the preference from your team or organization",
+      "date-format-international": "International",
+      "date-format-international-description": "Dates and times use standardized formatting (YYYY-MM-DD, 24-hour time)",
+      "date-format-localized": "Regional",
+      "date-format-localized-description": "Dates and times follow your region's formatting conventions",
+      "date-format-preference-description": "Choose between localized formatting or standardized ISO8601-style formatting for dates and times",
+      "date-format-preference-label": "Date format style",
+      "date-format-preference-placeholder": "Choose date format style",
       "home-dashboard-label": "Home Dashboard",
       "home-dashboard-placeholder": "Default dashboard",
       "language-preference-label": "Language",

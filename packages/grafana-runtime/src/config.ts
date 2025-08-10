@@ -219,6 +219,12 @@ export class GrafanaBootConfig implements GrafanaConfig {
    */
   regionalFormat: string;
 
+  /**
+   * Date format style preference used in Grafana's UI. Can be 'localized' or 'standardized'.
+   * This affects how dates are formatted throughout the application.
+   */
+  dateFormat: string;
+
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
 
@@ -255,6 +261,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     this.bootData.user.lightTheme = this.theme2.isLight;
     this.theme = this.theme2.v1;
     this.regionalFormat = options.bootData.user.regionalFormat;
+    this.dateFormat = options.bootData.user.dateFormat;
   }
   geomapDefaultBaseLayer?: MapLayerOptions<any> | undefined;
   listDashboardScopesEndpoint?: string | undefined;

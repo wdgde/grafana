@@ -26,6 +26,7 @@ import (
 type URLPrefs struct {
 	Language       string
 	RegionalFormat string
+	DateFormat     string
 	Theme          string
 }
 
@@ -34,10 +35,12 @@ func getURLPrefs(c *contextmodel.ReqContext) URLPrefs {
 	language := c.Query("lang")
 	theme := c.Query("theme")
 	regionalFormat := c.Query("regionalFormat")
+	dateFormat := c.Query("dateFormat")
 
 	return URLPrefs{
 		Language:       language,
 		RegionalFormat: regionalFormat,
+		DateFormat:     dateFormat,
 		Theme:          theme,
 	}
 }
@@ -114,6 +117,20 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		}
 	}
 
+	var dateFormat string
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagLocaleFormatPreference) {
+		dateFormat = "localized" // default value
+
+		// Date format preference order (from most-preferred to least):
+		// 1. URL parameter
+		// 2. dateFormat User preference
+		if urlPrefs.DateFormat != "" {
+			dateFormat = urlPrefs.DateFormat
+		} else if prefs.JSONData.DateFormat != "" {
+			dateFormat = prefs.JSONData.DateFormat
+		}
+	}
+
 	appURL := hs.Cfg.AppURL
 	appSubURL := hs.Cfg.AppSubURL
 
@@ -163,6 +180,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			WeekStart:                  weekStart,
 			Locale:                     locale, // << will be removed in favor of RegionalFormat
 			RegionalFormat:             regionalFormat,
+			DateFormat:                 dateFormat,
 			Language:                   language,
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
